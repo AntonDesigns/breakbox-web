@@ -1,0 +1,56 @@
+# breakbox-web CI. The React launcher (frontend) of BreakBox.
+# Max-Anton Horvat. Complex Software Systems (S6). sig 0x4D414836.
+#
+# For now this repo runs its own scan set. Once breakbox-security publishes the shared
+# reusable scan workflow, these jobs become `uses: AntonDesigns/breakbox-security/.github/workflows/scan.yml@main`
+# so every repo runs one owned-by-security scan set (that is the point of the split).
+
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run build
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: npm audit (known-vulnerable dependencies)
+        run: npm audit --audit-level=high
+        continue-on-error: true
+      - name: gitleaks (secret scan)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # SonarQube quality gate: coverage, maintainability, tech debt (ISO/IEC 25010).
+  # Gated so it stays inert until SONAR is configured (Settings > Variables: SONAR_ENABLED=true).
+  sonarqube:
+    if: ${{ vars.SONAR_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: SonarSource/sonarqube-scan-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}

@@ -1,32 +1,42 @@
-# React + TypeScript + Vite
+# BreakBox Web (breakbox-web)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+This is the **frontend** of BreakBox, my Sem6 reverse-engineering lab: the React launcher I use to
+pick a level and download a target to crack. It also holds my **living design sheet**, the single
+blueprint that documents the whole project.
 
-Currently, two official plugins are available:
+BreakBox is split across three repositories, one owner per concern:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **breakbox-web** this repo: the React launcher (front end) and the design sheet.
+- **breakbox-api** the API, the Roslyn target generator, the shared Core library, and the database.
+- **breakbox-security** my own tooling (Peek to look inside a program, Flip to patch one), the
+  security scans, the threat model, the crack write-ups, and the monitoring.
 
-## React Compiler
+## What's here
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+    src/                 the React + TypeScript launcher (Vite)
+    public/              static assets
+    design/              the source of my living design sheet:
+                           index.html + css/ + js/, bundled by build.py
+    docs/                the built, self-contained design sheet (breakboxDesign.html)
+    Dockerfile           builds the launcher image
+    .github/             the frontend CI
 
-## Expanding the Oxlint configuration
+## Run the launcher
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+    npm install
+    npm run dev          # Vite dev server
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+The launcher calls the API from **breakbox-api** (`docker compose up` there brings it up on
+`http://localhost:5080`).
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## The design sheet
+
+`design/` is a hand-authored, single-page "blueprint" that explains BreakBox end to end: the
+application, the architecture, the security model, the research behind each decision, the diagrams,
+and the per-sprint roadmap. It is one HTML file with its own CSS and JS, and `build.py` inlines them
+into one shareable file:
+
+    python design/build.py     # writes docs/breakboxDesign.html
+
+I keep it as source so it stays diffable and reviewable; the bundled `docs/breakboxDesign.html` is the
+version I open and share.

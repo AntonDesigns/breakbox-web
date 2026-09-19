@@ -1,0 +1,392 @@
+/* ===========================================================================
+   BreakBox design sheet, styles.
+   Written by Max-Anton Horvat.  MAH6 = 0x4D414836.  I wrote this by hand.
+   This is the same signature I stamp on every class in the app, so if you are
+   reading this you are reading my code, not a template. I split the sheet into
+   html + css + js on purpose, so the structure shows the work.
+
+   Palette note: I went with a drafting blue ground because this is an
+   architecture drawing, not a landing page. Now it is one family of blues
+   with cyan for the thing I want you to look at. Attacks are dashed, controls
+   are cyan. Meaning comes from shape and label, not from a traffic light.
+   =========================================================================== */
+
+:root {
+  --ground: #0e1d31; --sheet: #14273f; --sheet2: #1a3050;
+  --ink: #dce8f4; --ink-dim: #8aa2bd; --grid: rgba(150,185,220,0.09);
+  --line: #47618a; --cyan: #77b8d1;
+  --ctrl: #77b8d1;   /* control / defence = the cyan accent */
+  --stamp: #93a7c0;  /* attack / stamp = a muted slate, no red on purpose */
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --sans: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; color: var(--ink); font-family: var(--sans); line-height: 1.65; font-size: 15px;
+  background-color: var(--ground);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 27px 27px;   /* the grid is the blueprint paper */
+}
+.sheet { max-width: 1160px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem) 4rem; }
+
+/* each tab lays its cards out two-up, left to right, so the page reads full.
+   headers, prose and figures still span the whole width; only the cards pair up. */
+.panel { column-gap: 1.7rem; }
+.panel:not([data-panel="landing"]) { columns: 2; }
+.panel > h2, .panel > .sub, .panel > h3, .panel > p, .panel > ol, .panel > figure, .panel > .figdeck, .panel > .ai-note { column-span: all; }
+.panel > p { max-width: 86ch; }
+.panel > .comp, .panel > .dec, .panel > .refgroup, .panel > .finding, .panel > .roadcard { break-inside: avoid; margin: 0 0 1rem; }
+@media (max-width: 900px) { .panel:not([data-panel="landing"]) { columns: 1; } }
+a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid rgba(119,184,209,0.4); }
+a:hover { border-bottom-color: var(--cyan); }
+code { font-family: var(--mono); font-size: 0.87em; color: #cfe3ef; background: rgba(119,184,209,0.10); padding: 0.05em 0.35em; border-radius: 3px; }
+strong { color: #fff; font-weight: 700; }
+
+/* the sticky drawing header + the section tabs live together */
+.topbar { position: sticky; top: 0; z-index: 6; background: rgba(14,29,49,0.96); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+header.rule { display: flex; align-items: center; justify-content: center; gap: 0.7rem; padding: 0.55rem clamp(1rem, 4vw, 2rem) 0.4rem; font-family: var(--mono); }
+header.rule .name { font-weight: 700; letter-spacing: 0.02em; }
+header.rule .name .d { color: var(--ink-dim); font-weight: 400; }
+header.rule .rev { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stamp); border: 1px solid var(--stamp); border-radius: 3px; padding: 0.12rem 0.5rem; }
+header.rule .sig { font-size: 0.72rem; color: var(--cyan); }
+
+.tabs { display: flex; justify-content: center; gap: 2px; padding: 0 clamp(1rem, 4vw, 2rem); overflow-x: auto; }
+.tabs button { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-dim); background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 0.5rem 0.95rem 0.6rem; cursor: pointer; letter-spacing: 0.02em; white-space: nowrap; }
+.tabs button:hover { color: var(--ink); }
+.tabs button.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+/* ---- sprint rail: the living-doc "as of sprint N" switcher ---- */
+.sprintrail { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; padding: 0.4rem clamp(1rem,4vw,2rem) 0.5rem; border-top: 1px solid rgba(71,97,138,0.35); }
+.sprintrail-l { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--stamp); margin-right: 0.3rem; }
+.sprintpill { font-family: var(--mono); font-size: 0.66rem; color: var(--ink-dim); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 0.24rem 0.66rem; cursor: pointer; white-space: nowrap; letter-spacing: 0.02em; }
+.sprintpill b { color: var(--cyan); font-weight: 700; margin-right: 0.28rem; }
+.sprintpill:hover { color: var(--ink); border-color: rgba(119,184,209,0.6); }
+.sprintpill.active { color: var(--ground); background: var(--cyan); border-color: var(--cyan); }
+.sprintpill.active b { color: var(--ground); }
+
+/* ---- status: built vs designed vs idea, made explicit so nothing reads as done when it is not ---- */
+.statusrail { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; padding: 0.3rem clamp(1rem,4vw,2rem) 0.5rem; border-top: 1px solid rgba(71,97,138,0.35); }
+.statusrail-l { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--stamp); margin-right: 0.3rem; }
+.statuspill { font-family: var(--mono); font-size: 0.66rem; color: var(--ink-dim); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 0.24rem 0.66rem; cursor: pointer; white-space: nowrap; letter-spacing: 0.02em; }
+.statuspill .dot { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 0.34rem; vertical-align: middle; }
+.statuspill .dot.b { background: var(--cyan); }
+.statuspill .dot.d { background: transparent; border: 1px solid var(--cyan); }
+.statuspill .dot.i { background: transparent; border: 1px dashed var(--stamp); }
+.statuspill:hover { color: var(--ink); border-color: rgba(119,184,209,0.6); }
+.statuspill.active { color: var(--ground); background: var(--cyan); border-color: var(--cyan); }
+.statuspill.active .dot.b { border: 1px solid var(--ground); }
+.statuspill.active .dot.d, .statuspill.active .dot.i { border-color: var(--ground); }
+
+/* the per-figure status badge (top-left; the sprint badge sits top-right) */
+.fig-status { position: absolute; top: 8px; left: 10px; z-index: 2; font-family: var(--mono); font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12rem 0.46rem; border-radius: 3px; }
+figure[data-status="built"] .fig-status { color: var(--ground); background: var(--cyan); border: 1px solid var(--cyan); }
+figure[data-status="design"] .fig-status { color: var(--cyan); background: rgba(119,184,209,0.10); border: 1px solid var(--cyan); }
+figure[data-status="idea"] .fig-status { color: var(--stamp); background: transparent; border: 1px dashed var(--stamp); }
+
+/* the "Show" filter: dim what does not match the chosen view, so designs and ideas read as a faint sneak peek */
+body[data-sv] figure { transition: opacity 0.3s ease, filter 0.3s ease; }
+body[data-sv="built"] figure[data-status="design"],
+body[data-sv="built"] figure[data-status="idea"],
+body[data-sv="design"] figure[data-status="idea"] { opacity: 0.34; filter: grayscale(0.35); }
+
+/* the honest-status line under a design/idea figure's caption: the words match the badge */
+.fig-note { display: block; margin-top: 0.55rem; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.02em; color: var(--stamp); border-top: 1px dashed var(--line); padding-top: 0.45rem; }
+
+/* the Overview hero: a soft beam sweeps across once as the title decodes in */
+.panel[data-panel="landing"] .hero { position: relative; overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+  .panel[data-panel="landing"]:not([hidden]) .hero::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 130px; background: linear-gradient(90deg, transparent, rgba(119,184,209,0.16), transparent); transform: translateX(-170px); animation: bbxHeroSweep 1.5s cubic-bezier(.4,0,.2,1) 0.1s; pointer-events: none; }
+  @keyframes bbxHeroSweep { from { transform: translateX(-170px); } to { transform: translateX(1340px); } }
+}
+
+/* sprint chip on each figure tab */
+.figdeck-tab .sp { display: inline-block; font-size: 0.55rem; font-weight: 700; letter-spacing: 0.03em; color: var(--stamp); border: 1px solid var(--line); border-radius: 3px; padding: 0 0.26rem; margin-left: 0.5rem; vertical-align: middle; }
+.figdeck-tab.active .sp { color: var(--ground); border-color: rgba(14,29,49,0.5); }
+.figdeck-tab.is-future { display: none; }
+.figdeck-tab.is-future .sp, .figdeck-tab.is-new .sp { color: var(--cyan); border-color: var(--cyan); }
+.figdeck-tab.is-new::after { content: "new"; font-size: 0.5rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cyan); margin-left: 0.4rem; }
+.figdeck-tab.active.is-new::after { color: var(--ground); }
+
+/* roadmap cards + progression timeline */
+.roadcard { border: 1px solid var(--line); border-radius: 5px; background: var(--sheet); padding: 0.85rem 1.1rem; border-left: 3px solid var(--line); }
+.roadcard h4 { font-family: var(--mono); font-size: 0.9rem; color: var(--ink); margin: 0 0 0.35rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.roadcard h4 .s { font-size: 0.6rem; color: var(--cyan); border: 1px solid var(--cyan); border-radius: 3px; padding: 0 0.32rem; }
+.roadcard h4 .st { font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--stamp); border: 1px solid var(--line); border-radius: 3px; padding: 0 0.3rem; }
+.roadcard p { margin: 0.35rem 0; font-size: 0.88rem; color: #d3e0ed; text-align: left; }
+.roadcard p b { color: var(--cyan); font-weight: 600; }
+.roadcard.is-new { border-left-color: var(--cyan); }
+.roadcard.is-future { display: none; }
+.progrow.is-future { display: none; }
+.roadcard ul.deepen { margin: 0.35rem 0 0.1rem; padding-left: 1.15rem; }
+.roadcard ul.deepen li { font-size: 0.86rem; color: #d3e0ed; margin: 0.3rem 0; }
+.roadcard ul.deepen li b { color: var(--cyan); font-weight: 700; margin-right: 0.15rem; }
+
+.timeline { column-span: all; border-left: 2px solid var(--line); margin: 0.6rem 0 0 0.4rem; padding-left: 1.3rem; }
+.progrow { position: relative; margin: 0 0 1.4rem; break-inside: avoid; }
+.progrow::before { content: ""; position: absolute; left: -1.66rem; top: 0.35rem; width: 9px; height: 9px; border-radius: 50%; background: var(--ground); border: 2px solid var(--line); }
+.progrow.is-new::before, .progrow.done::before, .progrow.is-past::before { background: var(--cyan); border-color: var(--cyan); }
+.progrow h4 { font-family: var(--mono); font-size: 0.95rem; margin: 0 0 0.3rem; color: var(--ink); display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.progrow h4 .s { font-size: 0.62rem; color: var(--cyan); border: 1px solid var(--cyan); border-radius: 3px; padding: 0 0.34rem; }
+.progrow h4 .st { font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--stamp); border: 1px solid var(--line); border-radius: 3px; padding: 0 0.3rem; }
+.progrow p { margin: 0.25rem 0; font-size: 0.9rem; color: #cfdcea; }
+.progrow ul { margin: 0.35rem 0; padding-left: 1.1rem; }
+.progrow li { font-size: 0.88rem; color: #cfdcea; margin: 0.18rem 0; }
+.progrow li b { color: var(--cyan); font-weight: 600; }
+
+/* use-case diagram bits */
+.dg .uc { fill: rgba(119,184,209,0.08); stroke: var(--cyan); stroke-width: 1.5; }
+.dg .uc-plan { fill: rgba(147,167,192,0.05); stroke: var(--stamp); stroke-width: 1.4; stroke-dasharray: 6 4; }
+.dg .actor { fill: none; stroke: var(--ink); stroke-width: 1.7; }
+.dg .actor-plan { fill: none; stroke: var(--stamp); stroke-width: 1.5; stroke-dasharray: 5 4; }
+
+/* use-case cards: a meta line of actor + sprint + status under the title */
+.uc-meta { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.04em; text-transform: uppercase; margin: 0.1rem 0 0.5rem !important; display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+.uc-meta .a { color: var(--ink); }
+.uc-meta .s { color: var(--cyan); border: 1px solid var(--cyan); border-radius: 3px; padding: 0 0.3rem; }
+.uc-meta .built { color: var(--stamp); border: 1px solid var(--line); border-radius: 3px; padding: 0 0.3rem; }
+.uc-meta .plan { color: var(--stamp); border: 1px dashed var(--stamp); border-radius: 3px; padding: 0 0.3rem; }
+.uc-exp { font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.1em; color: var(--cyan); border: 1px solid var(--cyan); border-radius: 3px; padding: 0 0.32rem; margin-left: 0.4rem; vertical-align: middle; }
+.uc-sh { font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stamp); border: 1px dashed var(--stamp); border-radius: 3px; padding: 0 0.32rem; margin-left: 0.4rem; vertical-align: middle; }
+
+/* figure media: sprint badge + future dim */
+.fig-media { position: relative; }
+.fig-sprint { position: absolute; top: 8px; right: 10px; z-index: 2; font-family: var(--mono); font-size: 0.55rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--stamp); border: 1px solid var(--line); border-radius: 3px; padding: 0.1rem 0.4rem; background: rgba(14,29,49,0.72); }
+/* pick a sprint and the future is LOCKED away, not just dimmed, so the sheet only shows where I am */
+figure.is-future { display: none; }
+figure.is-future .fig-sprint, figure.is-new .fig-sprint { color: var(--cyan); border-color: var(--cyan); }
+figure.is-future .fig-sprint::before { content: "planned · "; }
+
+.hero { padding: 2.6rem 0 1rem; text-align: center; }
+.kicker { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--cyan); margin-bottom: 0.8rem; }
+h1 { font-family: var(--mono); font-weight: 700; font-size: clamp(1.9rem, 5vw, 2.7rem); line-height: 1.1; margin: 0 0 1rem; letter-spacing: -0.01em; text-wrap: balance; }
+.lede { font-size: 1.12rem; color: #e4ecf4; max-width: 62ch; margin: 0 auto; }
+.byline { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-dim); margin-top: 1.2rem; }
+.byline b { color: var(--cyan); font-weight: 500; }
+/* the manifesto is me talking. centred like the rest of the overview, with a
+   cyan hairline top and bottom instead of the old left margin. */
+.manifesto { border-top: 1px solid rgba(119,184,209,0.35); border-bottom: 1px solid rgba(119,184,209,0.35); background: rgba(119,184,209,0.05); padding: 1rem 1.4rem; margin: 1.6rem auto 0.4rem; max-width: 82ch; font-size: 1.02rem; color: #eef3f8; }
+
+/* Overview: at-a-glance fact cards + a "how to read this" guide, for a cleaner, more professional landing */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 0.9rem; margin: 1.9rem auto; max-width: 1000px; }
+.fact { border: 1px solid var(--line); border-radius: 6px; background: var(--sheet); padding: 0.9rem 1.05rem; border-top: 2px solid var(--cyan); }
+.fact .fl { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); display: block; margin-bottom: 0.4rem; }
+.fact p { margin: 0; font-size: 0.9rem; color: #d3e0ed; text-align: left; line-height: 1.5; }
+.guide { display: grid; gap: 0.7rem; max-width: 900px; margin: 0.7rem auto 1.6rem; }
+.grow { border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 5px; background: var(--sheet); padding: 0.7rem 1rem; font-size: 0.92rem; color: #d3e0ed; text-align: left; }
+.grow .gk { font-family: var(--mono); font-size: 0.7rem; color: var(--cyan); font-weight: 700; margin-right: 0.5rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ---- Sprint mode: the banner that drops in when a sprint is picked ---- */
+.sprintbanner { display: flex; align-items: center; gap: 1.15rem; max-width: 1160px; margin: 0.9rem auto 0.3rem; padding: 0.85rem 1.25rem; border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 8px; background: linear-gradient(100deg, rgba(119,184,209,0.12), rgba(20,39,63,0.5) 55%); position: relative; overflow: hidden; }
+.sprintbanner[hidden] { display: none; }
+.sb-num { font-family: var(--mono); font-weight: 700; font-size: 2.1rem; color: var(--cyan); line-height: 1; letter-spacing: 0.01em; flex: none; text-shadow: 0 0 16px rgba(119,184,209,0.45); }
+.sb-text { flex: 1 1 auto; min-width: 0; }
+.sb-title { font-family: var(--mono); font-weight: 700; font-size: 1.02rem; color: var(--ink); display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.sb-status { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan); border: 1px solid var(--cyan); border-radius: 3px; padding: 0.1rem 0.46rem; }
+.sb-desc { font-size: 0.86rem; color: var(--ink-dim); margin-top: 0.26rem; line-height: 1.5; }
+.sb-dots { display: flex; gap: 0.55rem; flex: none; align-items: center; }
+.sb-dots i { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--line); display: block; }
+.sb-dots i.is-past { background: var(--cyan); border-color: var(--cyan); opacity: 0.55; }
+.sb-dots i.is-now { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(119,184,209,0.20), 0 0 11px rgba(119,184,209,0.55); }
+@media (max-width: 620px) { .sb-dots { display: none; } .sb-num { font-size: 1.7rem; } }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes sbIn { from { transform: translateY(-9px); opacity: 0.35; } to { transform: none; opacity: 1; } }
+  .sprintbanner.in { animation: sbIn 0.42s cubic-bezier(.2,.7,.2,1); }
+  .sprintbanner.in::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 90px; background: linear-gradient(90deg, transparent, rgba(119,184,209,0.24), transparent); transform: translateX(-120px); animation: sbSweep 0.75s ease-out; pointer-events: none; }
+  @keyframes sbSweep { from { transform: translateX(-120px); } to { transform: translateX(1220px); } }
+}
+.panel-note { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.14em; margin: 2.2rem 0 0; text-align: center; }
+
+/* a numbered section header: the number reads left-to-right into the title,
+   with a rule under the whole thing, like a proper spec sheet */
+h2 { font-family: var(--mono); font-weight: 700; font-size: 1.2rem; letter-spacing: 0.01em; margin: 2.8rem 0 0.3rem; display: flex; align-items: center; gap: 0.9rem; padding-bottom: 0.55rem; border-bottom: 1px solid var(--line); }
+h2::before { content: attr(data-n); color: var(--cyan); background: transparent; border: 1px solid rgba(119,184,209,0.6); font-size: 0.78rem; font-weight: 700; padding: 0.18rem 0.5rem; border-radius: 4px; letter-spacing: 0.05em; flex: none; }
+h2 + .sub { color: var(--ink-dim); margin-top: 0.5rem; font-size: 0.9rem; }
+h3 { font-family: var(--mono); font-size: 0.98rem; color: var(--cyan); margin: 1.7rem 0 0.3rem; }
+p { margin: 0.6rem 0 1rem; }
+ul { margin: 0.4rem 0 1.1rem; padding-left: 1.1rem; } li { margin: 0.35rem 0; }
+.k-ctrl { color: var(--ctrl); } .k-stamp { color: var(--stamp); } .k-cyan { color: var(--cyan); }
+
+/* the headings and the explanations sit centred, in the middle of the sheet */
+.panel h2 { justify-content: center; text-align: center; }
+.panel h3, .panel .sub { text-align: center; }
+.panel > p { text-align: center; margin-left: auto; margin-right: auto; }
+
+.comp { border: 1px solid var(--line); border-radius: 4px; background: var(--sheet); padding: 0.9rem 1.1rem; margin: 0.7rem 0; }
+.comp h4 { font-family: var(--mono); font-size: 0.9rem; margin: 0 0 0.25rem; color: var(--ink); }
+.comp h4 .tag { float: right; font-size: 0.62rem; color: var(--ink-dim); border: 1px solid var(--line); border-radius: 3px; padding: 0.05rem 0.4rem; letter-spacing: 0.04em; }
+.comp p { margin: 0.3rem 0 0; font-size: 0.95rem; color: #d3e0ed; }
+.comp .sec { margin-top: 0.5rem; font-size: 0.86rem; color: var(--cyan); border-top: 1px dashed var(--line); padding-top: 0.4rem; }
+.comp .sec b { color: var(--cyan); font-weight: 600; }
+
+/* research findings: one decision per card, with the reasoning I can defend */
+.finding { border: 1px solid var(--line); border-radius: 5px; background: var(--sheet); padding: 0.85rem 1.1rem; }
+.finding h4 { font-family: var(--mono); font-size: 0.92rem; color: var(--ink); margin: 0 0 0.5rem; }
+.finding p { margin: 0.3rem 0; font-size: 0.9rem; color: #d3e0ed; text-align: left; }
+.finding p b { color: var(--cyan); font-weight: 600; }
+.finding p.chose { border-top: 1px dashed var(--line); padding-top: 0.45rem; margin-top: 0.5rem; }
+.finding p.chose b { color: var(--ctrl); }
+.finding code { text-align: left; }
+
+figure { margin: 1.4rem 0; border: 1px solid var(--line); border-radius: 4px; background: rgba(20,39,63,0.55); padding: 0.5rem 0.9rem 0.9rem; overflow-x: auto; }
+.fig-tab { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); border-bottom: 1px solid var(--line); padding: 0.4rem 0 0.5rem; margin-bottom: 0.8rem; }
+figcaption { font-size: 0.86rem; color: var(--ink-dim); margin-top: 0.7rem; padding: 0 0.2rem; }
+figcaption b { color: var(--ink); font-weight: 600; }
+
+/* every diagram uses these. drawn by hand, no chart library. */
+.dg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+.dg text { font-family: var(--mono); fill: var(--ink); }
+.dg .t-sm { font-size: 11px; } .dg .t-xs { font-size: 10px; }
+.dg .mut { fill: var(--ink-dim); }
+.dg .box { fill: rgba(120,165,210,0.05); stroke: var(--line); stroke-width: 1.3; }
+.dg .bound { fill: none; stroke: var(--line); stroke-width: 1.3; stroke-dasharray: 6 4; }
+/* every connector is a real, persistent arrow: a shaft thick enough to read at
+   any figure size, one weight across every drawing so the set stays consistent. */
+.dg .edge { stroke: var(--line); stroke-width: 1.9; fill: none; stroke-linecap: round; }
+.dg .lead { stroke: var(--line); stroke-width: 1.3; fill: none; }
+.dg .dep { stroke: var(--line); stroke-width: 1.7; fill: none; stroke-dasharray: 6 4; }
+.dg .flow { stroke: var(--cyan); stroke-width: 2.3; fill: none; stroke-linecap: round; }
+.dg .ctrlbox { fill: rgba(119,184,209,0.10); stroke: var(--ctrl); stroke-width: 1.2; }
+.dg .ctrl { fill: var(--ctrl); }
+/* attacks are dashed and slate, never red. the dash says "hostile / unverified" */
+.dg .threatbox { fill: rgba(147,167,192,0.10); stroke: var(--stamp); stroke-width: 1.2; stroke-dasharray: 5 3; }
+.dg .threat { fill: var(--stamp); }
+.dg .hd { fill: var(--cyan); font-weight: 700; }
+.dg .hdrow { fill: rgba(119,184,209,0.12); }
+.dg .data { fill: var(--cyan); }
+.dg .dot { fill: var(--ink); }
+.dg .arr { fill: var(--line); } .dg .arr-c { fill: var(--cyan); } .dg .arr-r { fill: var(--stamp); } .dg .arr-g { fill: var(--cyan); }
+.dg .scr { fill: rgba(120,165,210,0.035); stroke: var(--line); stroke-width: 1.3; }
+.dg .ph { fill: rgba(150,185,220,0.13); }
+.dg .btn { fill: rgba(119,184,209,0.14); stroke: var(--cyan); stroke-width: 1; }
+.dg .btnlock { fill: rgba(147,167,192,0.08); stroke: var(--stamp); stroke-width: 1; stroke-dasharray: 4 3; }
+.dg .chip { fill: rgba(119,184,209,0.16); stroke: var(--ctrl); stroke-width: 1; }
+.dg .win { fill: rgba(150,185,220,0.05); stroke: var(--line); stroke-width: 1.3; }
+.dg .umlhdr { fill: rgba(119,184,209,0.10); }
+.dg .pk { fill: var(--cyan); }   /* primary key marker in the schema */
+.dg .fk { fill: var(--ink-dim); } /* foreign key marker */
+
+.dec { border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 4px; background: var(--sheet); padding: 0.55rem 0.95rem; margin: 0.6rem 0; }
+.dec .h { font-family: var(--mono); font-size: 0.78rem; color: var(--cyan); }
+.steps { counter-reset: s; list-style: none; padding-left: 0; }
+.steps li { counter-increment: s; position: relative; padding-left: 2.1rem; margin: 0.5rem 0; }
+.steps li::before { content: counter(s); position: absolute; left: 0; top: 0.05rem; width: 1.5rem; height: 1.5rem; background: rgba(119,184,209,0.12); color: var(--cyan); border: 1px solid var(--line); border-radius: 3px; font-family: var(--mono); font-size: 0.78rem; display: grid; place-items: center; }
+
+/* references list */
+.refgroup { margin: 1.2rem 0; }
+.refgroup h3 { margin-bottom: 0.5rem; }
+.reflist { list-style: none; padding: 0; margin: 0; }
+.reflist li { border-bottom: 1px solid rgba(71,97,138,0.4); padding: 0.5rem 0; display: flex; gap: 0.8rem; align-items: baseline; flex-wrap: wrap; }
+.reflist .why { color: var(--ink-dim); font-size: 0.9rem; }
+.reflist a { font-family: var(--mono); font-size: 0.9rem; }
+
+/* the title block, like the corner of a real drawing sheet */
+.titleblock { margin-top: 3rem; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; font-family: var(--mono); }
+.titleblock .row { display: grid; grid-template-columns: repeat(4, 1fr); }
+.titleblock .cell { border-top: 1px solid var(--line); border-right: 1px solid var(--line); padding: 0.55rem 0.8rem; }
+.titleblock .cell:last-child { border-right: 0; }
+.titleblock .cell .l { font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
+.titleblock .cell .v { font-size: 0.86rem; color: var(--ink); margin-top: 0.15rem; }
+.titleblock .cell .v.sig { color: var(--cyan); } .titleblock .cell .v.stamp { color: var(--stamp); }
+.titleblock .banner { background: rgba(119,184,209,0.08); padding: 0.6rem 0.8rem; font-weight: 700; letter-spacing: 0.03em; }
+@media (max-width: 620px) { .titleblock .row { grid-template-columns: repeat(2, 1fr); } }
+
+/* the honest AI note on the landing page. I wrote the note; it is the truth about how I worked. */
+.ai-note { border: 1px dashed var(--cyan); border-radius: 6px; background: rgba(119,184,209,0.06); padding: 0.9rem 1.3rem; margin: 1.5rem auto; max-width: 82ch; font-size: 0.96rem; color: #e4ecf4; text-align: center; }
+.ai-note .h { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); display: block; margin-bottom: 0.4rem; }
+
+/* motion, kept subtle and switched off for anyone who opts out. my choice, hand-tuned. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes bbxFadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  /* panel fade removed: fill-mode "both" froze content at opacity 0 wherever animations are
+     throttled (e.g. a backgrounded tab). The decode-reveal is the figure animation now. */
+  .comp, .dec, figure { transition: transform 180ms ease, border-color 180ms ease; }
+  .comp:hover, .dec:hover { transform: translateY(-2px); border-color: rgba(119,184,209,0.6); }
+  figure:hover { border-color: rgba(119,184,209,0.5); }
+  .tabs button { transition: color 150ms ease, border-color 150ms ease; }
+  .reflist li { transition: background 150ms ease; }
+  .reflist li:hover { background: rgba(119,184,209,0.05); }
+}
+
+/* the figures are a slideshow with tabs: one big figure showing at a time, the
+   same size frame every time, and a strip of named tabs to switch between them.
+   no two-up, no clicking to zoom. I built the switching myself, no library. */
+.figdeck { border: 1px solid var(--line); border-radius: 6px; background: rgba(20,39,63,0.55); margin: 1.6rem auto; overflow: hidden; }
+.figdeck-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--line); background: rgba(14,29,49,0.55); }
+.figdeck-tab { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.03em; color: var(--ink-dim); background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 0.32rem 0.72rem; cursor: pointer; white-space: nowrap; }
+.figdeck-tab .n { color: var(--cyan); margin-right: 0.45rem; font-weight: 700; }
+.figdeck-tab:hover { color: var(--ink); border-color: rgba(119,184,209,0.6); }
+.figdeck-tab.active { color: var(--ground); background: var(--cyan); border-color: var(--cyan); font-weight: 700; }
+.figdeck-tab.active .n { color: var(--ground); }
+.figdeck-stage { padding: 1.4rem 1.4rem 0.5rem; }
+.figdeck figure { margin: 0; border: 0; background: transparent; border-radius: 0; padding: 0; }
+.figdeck figure .fig-tab { display: none; }   /* the active tab already names it */
+/* one big figure in a fixed frame, so every figure reads the same size */
+.fig-media { height: 600px; display: flex; align-items: center; justify-content: center; }
+.fig-media svg { max-width: 100%; max-height: 100%; width: auto; height: auto; }
+.figdeck figure figcaption { border-top: 1px solid var(--line); margin-top: 1.1rem; padding: 0.9rem 0.2rem 0.3rem; font-size: 0.9rem; text-align: center; }
+/* per-figure "why these choices": the rationale, left-aligned under the caption */
+.figdeck figure .whys { border-top: 1px dashed var(--line); margin-top: 0.4rem; padding: 0.7rem 0.2rem 0.2rem; text-align: left; }
+.figdeck figure .whys .wt { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); display: block; margin-bottom: 0.45rem; }
+.figdeck figure .whys p { margin: 0.28rem 0; font-size: 0.82rem; color: var(--ink-dim); text-align: left; max-width: none; }
+.figdeck figure .whys p b { color: var(--ink); font-weight: 600; }
+
+/* clickable diagram boxes: click one to open the popup with the research + decision */
+.dg text { pointer-events: none; }
+.dg .hdrow { pointer-events: none; } /* let a click on a table header fall through to its box */
+.dg .pick { cursor: pointer; }
+.dg .pick:hover { stroke: var(--cyan); stroke-width: 2; }
+.dg .pick.on { stroke: var(--cyan); stroke-width: 2.4; }
+.figdeck figure .pophint { margin-top: 0.5rem; padding-top: 0.55rem; border-top: 1px dashed var(--line); font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--stamp); text-align: center; }
+
+/* the "why I chose this" popup: opens over the sheet when a box is clicked */
+.pop { position: fixed; inset: 0; z-index: 80; display: none; place-items: center; padding: 6vh 5vw; background: rgba(6, 13, 24, 0.82); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.pop.open { display: grid; }
+.pop-card { position: relative; width: 100%; max-width: 540px; max-height: 88vh; overflow-y: auto; background: var(--sheet2); border: 1px solid var(--line); border-top: 2px solid var(--cyan); border-radius: 8px; padding: 1.4rem 1.5rem 1.5rem; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5); text-align: left; }
+.pop-eyebrow { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--stamp); display: block; margin-bottom: 0.3rem; }
+.pop-t { font-family: var(--mono); font-size: 1.02rem; color: var(--cyan); margin: 0 0 1rem; padding-right: 2rem; line-height: 1.3; }
+.pop-sec { margin: 0.9rem 0 0; }
+.pop-l { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--stamp); display: block; margin-bottom: 0.3rem; }
+.pop-sec p { margin: 0; font-size: 0.9rem; line-height: 1.55; text-align: left; max-width: none; }
+.pop-r { color: var(--ink-dim); }
+.pop-w { color: var(--ink); }
+.pop-links { margin: 0; font-family: var(--mono); font-size: 0.78rem; line-height: 1.7; }
+.pop-links a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid rgba(119,184,209,0.4); }
+.pop-links a:hover { border-bottom-color: var(--cyan); }
+.pop-x { position: absolute; top: 0.85rem; right: 0.9rem; background: transparent; border: 1px solid var(--line); border-radius: 4px; color: var(--ink-dim); font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.25rem 0.5rem; cursor: pointer; }
+.pop-x:hover { color: var(--cyan); border-color: var(--cyan); }
+@media (prefers-reduced-motion: no-preference) {
+  /* figdeck figure fade removed for the same throttle-safety reason; switching figures is instant. */
+
+  /* live-draw + flow on every figure (JS-driven, staggered so you watch it build element
+     by element). the arrows stay solid and clearly arrows; a bright comet rides along each
+     one (a cloned segment animated in app.js) so the flow reads without hiding the line. */
+}
+.dg .pulse-rider { fill: none; stroke: var(--cyan); stroke-linecap: round; opacity: 0.95; pointer-events: none; filter: drop-shadow(0 0 3px rgba(119,184,209,0.7)); }
+.dg .pulse-rider.attack { stroke: var(--stamp); filter: drop-shadow(0 0 3px rgba(147,167,192,0.7)); }
+/* the arrow's own arrowhead, cloned at its real size, lit bright as the comet arrives */
+.dg .tip-flash { pointer-events: none; filter: drop-shadow(0 0 3px rgba(119,184,209,0.9)); }
+.dg .tip-flash * { fill: var(--cyan); stroke: none; }
+.dg .tip-flash.attack { filter: none; }
+.dg .tip-flash.attack * { fill: var(--stamp); }
+/* per-tab pulse tempo, so each tab has its own live feel */
+.panel[data-panel="application"] { --pulse-dur: 1.15s; }
+.panel[data-panel="architecture"] { --pulse-dur: 1.5s; }
+.panel[data-panel="security"] { --pulse-dur: 0.85s; }
+.panel[data-panel="usecases"] { --pulse-dur: 1.25s; }
+.panel[data-panel="diagrams"] { --pulse-dur: 1.7s; }
+.panel[data-panel="roadmap"] { --pulse-dur: 1.25s; }
+
+/* Per-tab "signature" entrances removed on purpose: the blinking title caret, the igniting
+   timeline dots and the staggered hero reveals were too much motion. The one quiet panel fade
+   (bbxFadeUp, above) is all that stays, and only the big system figure still draws itself in. */
+/* the showcase figure is taller than the standard 600px frame and sizes to its content */
+.fig-media.big { height: auto; padding: 0.4rem 0 0.2rem; }
+.fig-media.big svg { max-height: none; width: 100%; height: auto; }
+.drawlive .repo { fill: rgba(119,184,209,0.03); stroke: var(--stamp); stroke-width: 1.3; stroke-dasharray: 7 5; }
+.drawlive .replbl { font-family: var(--mono); }
+/* the big system figure runs its own, larger type so nothing reads too small */
+.dg-lg .t-sm { font-size: 15px; }
+.dg-lg .t-xs { font-size: 13px; }
+/* the reveal scan beam: a bright cyan line that sweeps each figure as it decodes itself in */
+.dg .scan-beam { fill: var(--cyan); opacity: 0; pointer-events: none; filter: drop-shadow(0 0 7px rgba(119,184,209,0.85)); }

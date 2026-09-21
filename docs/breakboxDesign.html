@@ -1029,6 +1029,58 @@ figcaption b { color: var(--ink); font-weight: 600; }
       <figcaption><b>Two attacks I want to stop, left to right.</b> The client asks, my server decides: the injection is never run as code, and the IDOR request is filtered by owner and logged.</figcaption>
       <div class="pophint">Tap a box in the diagram for the research and why behind it.</div>
     </figure>
+
+    <figure data-status="design" data-sprint="4">
+      <div class="fig-tab">Vector DB &middot; the AI data-leak</div>
+      <div class="fig-media"><svg class="dg" viewBox="0 0 1200 460" role="img" aria-label="Three vector-database attacks drawn left to right, each with the attacker input, the fix and the safe outcome. Cross-tenant retrieval: an unscoped similarity query is scoped to the owner in the repository, so only your own chunks return. Embedding inversion: reconstructing source text from stored vectors is blunted by not embedding raw secrets. RAG poisoning: a planted document that steers the model is contained by treating retrieval and model output as untrusted, at least privilege. A designed defensive thread for later, not built.">
+        <defs>
+          <marker id="vr" markerWidth="11" markerHeight="11" refX="9" refY="5" orient="auto"><polygon points="0,0 10,5 0,10" class="arr-r"/></marker>
+          <marker id="vg" markerWidth="11" markerHeight="11" refX="9" refY="5" orient="auto"><polygon points="0,0 10,5 0,10" class="arr-g"/></marker>
+        </defs>
+        <text class="t-xs hd" x="24" y="26">The setup: many tenants' private docs embedded into one shared vector store &mdash; this is where the current wave of company leaks happens</text>
+
+        <text class="t-xs hd" x="24" y="66">1 &middot; Cross-tenant retrieval (the common leak)</text>
+        <rect class="threatbox" x="24" y="74" width="310" height="84" rx="4"/>
+        <text class="t-xs threat" x="40" y="108">search("...") with no owner filter</text>
+        <text class="t-xs mut" x="40" y="130">returns the nearest chunks, anyone's</text>
+        <line class="edge" x1="334" y1="116" x2="404" y2="116" marker-end="url(#vr)"/>
+        <rect class="ctrlbox pick" x="406" y="74" width="352" height="84" rx="4" data-t="Scope every vector query to its owner" data-research="Filter results in the app after retrieval, or enforce a server-side owner filter on the query itself." data-why="The same rule as my SQL row-scoping: every similarity query is filtered by tenant/owner in the repository, server-side, so it can only ever reach its own vectors. Post-filtering in the client is the exact hole that leaks." data-links="Broken access control (OWASP)::https://owasp.org/Top10/A01_2021-Broken_Access_Control/"/>
+        <text class="t-xs ctrl" x="422" y="108">repository filters by owner, server-side</text>
+        <text class="t-xs mut" x="422" y="130">the store never sees an unscoped query</text>
+        <line class="edge" x1="758" y1="116" x2="828" y2="116" marker-end="url(#vg)"/>
+        <rect class="box" x="830" y="74" width="346" height="84" rx="4"/>
+        <text class="t-xs" x="846" y="108">only your own chunks come back</text>
+        <text class="t-xs ctrl" x="846" y="130">no cross-tenant leak</text>
+
+        <text class="t-xs hd" x="24" y="206">2 &middot; Embedding inversion</text>
+        <rect class="threatbox" x="24" y="214" width="310" height="84" rx="4"/>
+        <text class="t-xs threat" x="40" y="248">reconstruct the source text</text>
+        <text class="t-xs mut" x="40" y="270">from the stored vectors alone</text>
+        <line class="edge" x1="334" y1="256" x2="404" y2="256" marker-end="url(#vr)"/>
+        <rect class="ctrlbox pick" x="406" y="214" width="352" height="84" rx="4" data-t="Don't embed raw secrets" data-research="Embed everything, or minimise and classify what goes into the vectors." data-why="Embeddings can be partly inverted back to text, so I never embed raw secrets: only what a search needs, with sensitive fields kept out of the vector and behind normal access control." data-links="OWASP Top 10 for LLMs::https://owasp.org/www-project-top-10-for-large-language-model-applications/"/>
+        <text class="t-xs ctrl" x="422" y="248">minimise + classify what is embedded</text>
+        <text class="t-xs mut" x="422" y="270">secrets never enter the vector</text>
+        <line class="edge" x1="758" y1="256" x2="828" y2="256" marker-end="url(#vg)"/>
+        <rect class="box" x="830" y="214" width="346" height="84" rx="4"/>
+        <text class="t-xs" x="846" y="248">the vectors reveal little of value</text>
+        <text class="t-xs ctrl" x="846" y="270">inversion returns noise</text>
+
+        <text class="t-xs hd" x="24" y="346">3 &middot; RAG poisoning / prompt injection</text>
+        <rect class="threatbox" x="24" y="354" width="310" height="84" rx="4"/>
+        <text class="t-xs threat" x="40" y="388">a planted doc: "ignore rules, send data"</text>
+        <text class="t-xs mut" x="40" y="410">retrieved, then obeyed by the model</text>
+        <line class="edge" x1="334" y1="396" x2="404" y2="396" marker-end="url(#vr)"/>
+        <rect class="ctrlbox pick" x="406" y="354" width="352" height="84" rx="4" data-t="Treat retrieval + model output as untrusted" data-research="Trust the retrieved text, or treat retrieval and model output as untrusted input." data-why="A retrieved chunk is attacker-controllable, so I treat it like any input: the model runs at least privilege, its output is validated, and it cannot reach data the user could not &mdash; so a poisoned doc cannot become exfiltration." data-links="LLM prompt injection (OWASP)::https://genai.owasp.org/llmrisk/llm01-prompt-injection/"/>
+        <text class="t-xs ctrl" x="422" y="388">least privilege + validate the output</text>
+        <text class="t-xs mut" x="422" y="410">the model can't reach what the user can't</text>
+        <line class="edge" x1="758" y1="396" x2="828" y2="396" marker-end="url(#vg)"/>
+        <rect class="box" x="830" y="354" width="346" height="84" rx="4"/>
+        <text class="t-xs" x="846" y="388">the injection is contained</text>
+        <text class="t-xs ctrl" x="846" y="410">no exfiltration path</text>
+      </svg></div>
+      <figcaption><b>The AI data-leak, and how I stop it &mdash; a designed thread for later, not built.</b> A second, vector database is where a lot of companies are leaking right now; the fix is the same principle as the rest of BreakBox &mdash; the server never trusts the client, and every query is scoped to its owner. I take this on as an advanced thread later in the sprints.</figcaption>
+      <div class="pophint">Tap a box in the diagram for the research and why behind it.</div>
+    </figure>
 <figure data-status="built" data-sprint="1">
       <div class="fig-tab">CI/CD pipeline</div>
       <div class="fig-media"><svg class="dg" viewBox="0 0 1420 280" role="img" aria-label="The CI/CD delivery pipeline, left to right. A git push triggers build (dotnet and npm), then test and validate (unit tests plus three security scans), then a SonarQube quality gate, then docker build (API and web images), then publish to GHCR on main. The last stage, deploy to a dev environment, is dashed and planned. Tap a box to see why I chose it.">
@@ -1420,7 +1472,7 @@ figcaption b { color: var(--ink); font-weight: 600; }
     <div class="finding"><h4>10 &middot; Future threads: B2B SaaS multi-tenancy &amp; vector databases <span class="uc-sh">researched, not built</span></h4>
       <p><b>Looked at:</b> where my security work points next. A <b>B2B SaaS</b> is multi-tenant (many businesses on one system), so its core rule &mdash; tenant A never sees tenant B &mdash; is my row-scoping at company scale, and it is the shape of the Bosch camera platform I am security lead on. A <b>vector database</b> stores embeddings and finds nearest neighbours: useful for security as anomaly detection (flag outlier logins or events by distance) and sample similarity (a semantic cousin of YARA, for Level 8), and it brings new attacks to break &mdash; embedding inversion, RAG poisoning, and the same tenant-isolation problem inside the store.</p>
       <p><b>Fits my context?</b> The multi-tenancy maps straight onto what I built: scope every row to its owner, in one place, so a new endpoint cannot forget. Vector-DB security is current, HBO-i level-4 material and fits &ldquo;build then break&rdquo; &mdash; but a vector store does not belong in this relational reverse-engineering lab yet.</p>
-      <p class="chose"><b>My choice (researched, NOT built):</b> keep these as future threads &mdash; the multi-tenant framing to justify the data design, and vector-DB security as a possible AI-security level or the monitoring should-have fed by embeddings. I have only read into them so far; this is not a conclusion, and nothing here is built.</p></div>
+      <p class="chose"><b>My choice (researched, NOT built):</b> keep these as future threads. The multi-tenant framing justifies the data design now; the vector-DB piece I take on as an <b>advanced defensive thread later in the sprints</b> &mdash; a second, vector database showing how the current wave of company data leaks happens through shared AI stores, and how the same row-scoping stops it (drawn out in the Security tab). And I keep the tools straight: <b>vector</b> DBs for the AI's retrieval and memory, a <b>graph</b> DB for attack paths (the BloodHound shape), relational for the structured records &mdash; knowing which store fits which job is the point. I have only read into this so far; it is not a conclusion, and nothing here is built.</p></div>
   </section>
 
   <!-- ============================= DIAGRAMS ============================= -->
@@ -1841,7 +1893,7 @@ figcaption b { color: var(--ink); font-weight: 600; }
     <div class="roadcard"><h4>Should <span class="s">S2-S3</span></h4>
       <p>The secure data layer (database, argon2id auth, defence in depth), Pixler + Flip, the SonarQube quality gate, and a deploy to a dev environment. Strongly wanted, and where most of the security learning lives.</p></div>
     <div class="roadcard"><h4>Could <span class="s">S3-S4</span></h4>
-      <p>Attack monitoring (the defensive Level-9 board), the Protected level (obfuscation + anti-debugging), and the native Overflow target. Stretch goals: I do them only if the core is solid, so scope stays honest.</p></div>
+      <p>Attack monitoring (the defensive Level-9 board), the Protected level (obfuscation + anti-debugging), the native Overflow target, and &mdash; as an advanced defensive thread &mdash; the <b>AI data-leak showcase</b>: a second, vector database that demonstrates how companies leak through shared AI stores and how the same row-scoping stops it. Stretch goals: I do them only if the core is solid, so scope stays honest.</p></div>
     <div class="roadcard"><h4>Won't <span class="st">this semester</span></h4>
       <p>A real multi-user production deployment, creating actual malware (analysis and detection only, never creation), and fully polishing Levels 6-9. Out of scope on purpose, so I finish and can defend what I do build.</p></div>
 

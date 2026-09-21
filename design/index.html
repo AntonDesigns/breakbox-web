@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>BreakBox System Design</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -644,7 +645,7 @@
           <marker id="vr" markerWidth="11" markerHeight="11" refX="9" refY="5" orient="auto"><polygon points="0,0 10,5 0,10" class="arr-r"/></marker>
           <marker id="vg" markerWidth="11" markerHeight="11" refX="9" refY="5" orient="auto"><polygon points="0,0 10,5 0,10" class="arr-g"/></marker>
         </defs>
-        <text class="t-xs hd" x="24" y="26">The setup: many tenants' private docs embedded into one shared vector store &mdash; this is where the current wave of company leaks happens</text>
+        <text class="t-xs hd" x="24" y="26">The setup: many tenants' private docs embedded into one shared vector store. This is where the current wave of company leaks happens</text>
 
         <text class="t-xs hd" x="24" y="66">1 &middot; Cross-tenant retrieval (the common leak)</text>
         <rect class="threatbox" x="24" y="74" width="310" height="84" rx="4"/>
@@ -677,7 +678,7 @@
         <text class="t-xs threat" x="40" y="388">a planted doc: "ignore rules, send data"</text>
         <text class="t-xs mut" x="40" y="410">retrieved, then obeyed by the model</text>
         <line class="edge" x1="334" y1="396" x2="404" y2="396" marker-end="url(#vr)"/>
-        <rect class="ctrlbox pick" x="406" y="354" width="352" height="84" rx="4" data-t="Treat retrieval + model output as untrusted" data-research="Trust the retrieved text, or treat retrieval and model output as untrusted input." data-why="A retrieved chunk is attacker-controllable, so I treat it like any input: the model runs at least privilege, its output is validated, and it cannot reach data the user could not &mdash; so a poisoned doc cannot become exfiltration." data-links="LLM prompt injection (OWASP)::https://genai.owasp.org/llmrisk/llm01-prompt-injection/"/>
+        <rect class="ctrlbox pick" x="406" y="354" width="352" height="84" rx="4" data-t="Treat retrieval + model output as untrusted" data-research="Trust the retrieved text, or treat retrieval and model output as untrusted input." data-why="A retrieved chunk is attacker-controllable, so I treat it like any input: the model runs at least privilege, its output is validated, and it cannot reach data the user could not, so a poisoned doc cannot become exfiltration." data-links="LLM prompt injection (OWASP)::https://genai.owasp.org/llmrisk/llm01-prompt-injection/"/>
         <text class="t-xs ctrl" x="422" y="388">least privilege + validate the output</text>
         <text class="t-xs mut" x="422" y="410">the model can't reach what the user can't</text>
         <line class="edge" x1="758" y1="396" x2="828" y2="396" marker-end="url(#vg)"/>
@@ -685,7 +686,7 @@
         <text class="t-xs" x="846" y="388">the injection is contained</text>
         <text class="t-xs ctrl" x="846" y="410">no exfiltration path</text>
       </svg></div>
-      <figcaption><b>The AI data-leak, and how I stop it &mdash; a designed thread for later, not built.</b> A second, vector database is where a lot of companies are leaking right now; the fix is the same principle as the rest of BreakBox &mdash; the server never trusts the client, and every query is scoped to its owner. I take this on as an advanced thread later in the sprints.</figcaption>
+      <figcaption><b>The AI data-leak, and how I stop it. A designed thread for later, not built.</b> A second, vector database is where a lot of companies are leaking right now. The fix is the same principle as the rest of BreakBox: the server never trusts the client, and every query is scoped to its owner. I take this on as an advanced thread later in the sprints.</figcaption>
       <div class="pophint">Tap a box in the diagram for the research and why behind it.</div>
     </figure>
 <figure data-status="built" data-sprint="1">
@@ -1077,9 +1078,9 @@
       <p class="chose"><b>My choice:</b> GitHub Actions + Docker with build, test/validation and image stages now, and a deploy-dev step I will size after asking the client how complex they want the deployment.</p></div>
 
     <div class="finding"><h4>10 &middot; Future threads: B2B SaaS multi-tenancy &amp; vector databases <span class="uc-sh">researched, not built</span></h4>
-      <p><b>Looked at:</b> where my security work points next. A <b>B2B SaaS</b> is multi-tenant (many businesses on one system), so its core rule &mdash; tenant A never sees tenant B &mdash; is my row-scoping at company scale, and it is the shape of the Bosch camera platform I am security lead on. A <b>vector database</b> stores embeddings and finds nearest neighbours: useful for security as anomaly detection (flag outlier logins or events by distance) and sample similarity (a semantic cousin of YARA, for Level 8), and it brings new attacks to break &mdash; embedding inversion, RAG poisoning, and the same tenant-isolation problem inside the store.</p>
-      <p><b>Fits my context?</b> The multi-tenancy maps straight onto what I built: scope every row to its owner, in one place, so a new endpoint cannot forget. Vector-DB security is current, HBO-i level-4 material and fits &ldquo;build then break&rdquo; &mdash; but a vector store does not belong in this relational reverse-engineering lab yet.</p>
-      <p class="chose"><b>My choice (researched, NOT built):</b> keep these as future threads. The multi-tenant framing justifies the data design now; the vector-DB piece I take on as an <b>advanced defensive thread later in the sprints</b> &mdash; a second, vector database showing how the current wave of company data leaks happens through shared AI stores, and how the same row-scoping stops it (drawn out in the Security tab). And I keep the tools straight: <b>vector</b> DBs for the AI's retrieval and memory, a <b>graph</b> DB for attack paths (the BloodHound shape), relational for the structured records &mdash; knowing which store fits which job is the point. I have only read into this so far; it is not a conclusion, and nothing here is built.</p></div>
+      <p><b>Looked at:</b> where my security work points next. A <b>B2B SaaS</b> is multi-tenant (many businesses on one system), so its core rule, that tenant A never sees tenant B, is my row-scoping at company scale, and it is the shape of the Bosch camera platform I am security lead on. A <b>vector database</b> stores embeddings and finds nearest neighbours: useful for security as anomaly detection (flag outlier logins or events by distance) and sample similarity (a semantic cousin of YARA, for Level 8), and it brings new attacks to break: embedding inversion, RAG poisoning, and the same tenant-isolation problem inside the store.</p>
+      <p><b>Fits my context?</b> The multi-tenancy maps straight onto what I built: scope every row to its owner, in one place, so a new endpoint cannot forget. Vector-DB security is current, HBO-i level-4 material and fits &ldquo;build then break&rdquo;. But a vector store does not belong in this relational reverse-engineering lab yet.</p>
+      <p class="chose"><b>My choice (researched, NOT built):</b> keep these as future threads. The multi-tenant framing justifies the data design now; the vector-DB piece I take on as an <b>advanced defensive thread later in the sprints</b>: a second, vector database showing how the current wave of company data leaks happens through shared AI stores, and how the same row-scoping stops it (drawn out in the Security tab). And I keep the tools straight: <b>vector</b> DBs for the AI's retrieval and memory, a <b>graph</b> DB for attack paths (the BloodHound shape), relational for the structured records. Knowing which store fits which job is the point. I have only read into this so far; it is not a conclusion, and nothing here is built.</p></div>
   </section>
 
   <!-- ============================= DIAGRAMS ============================= -->
@@ -1500,7 +1501,7 @@
     <div class="roadcard"><h4>Should <span class="s">S2-S3</span></h4>
       <p>The secure data layer (database, argon2id auth, defence in depth), Pixler + Flip, the SonarQube quality gate, and a deploy to a dev environment. Strongly wanted, and where most of the security learning lives.</p></div>
     <div class="roadcard"><h4>Could <span class="s">S3-S4</span></h4>
-      <p>Attack monitoring (the defensive Level-9 board), the Protected level (obfuscation + anti-debugging), the native Overflow target, and &mdash; as an advanced defensive thread &mdash; the <b>AI data-leak showcase</b>: a second, vector database that demonstrates how companies leak through shared AI stores and how the same row-scoping stops it. Stretch goals: I do them only if the core is solid, so scope stays honest.</p></div>
+      <p>Attack monitoring (the defensive Level-9 board), the Protected level (obfuscation + anti-debugging), the native Overflow target, and, as an advanced defensive thread, the <b>AI data-leak showcase</b>: a second, vector database that demonstrates how companies leak through shared AI stores and how the same row-scoping stops it. Stretch goals: I do them only if the core is solid, so scope stays honest.</p></div>
     <div class="roadcard"><h4>Won't <span class="st">this semester</span></h4>
       <p>A real multi-user production deployment, creating actual malware (analysis and detection only, never creation), and fully polishing Levels 6-9. Out of scope on purpose, so I finish and can defend what I do build.</p></div>
 

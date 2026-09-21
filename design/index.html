@@ -1007,7 +1007,7 @@
     <div class="finding"><h4>6 &middot; The data store: MySQL + EF Core behind a repository</h4>
       <p><b>Looked at:</b> the standard layered web-app reference (controllers &rarr; services &rarr; repositories &rarr; ORM &rarr; database). I checked whether it fits my context, not just copied it.</p>
       <p><b>Fits my context?</b> Yes. It gives me one seam to swap SQLite for MySQL, and one place (the repository) to enforce access control, which is exactly the thing I want to attack and defend.</p>
-      <p class="chose"><b>My choice (planned):</b> MySQL 8 + EF Core behind a repository interface, with the ownership check at the lowest layer so a new endpoint cannot forget it.</p></div>
+      <p class="chose"><b>My choice (built):</b> MySQL 8 + EF Core behind a repository interface, now built as a DbContext + initial migration (SQLite for local, both behind the same seam); the ownership check at the lowest layer is Sprint 2, so a new endpoint cannot forget it.</p></div>
 
     <div class="finding"><h4>7 &middot; Passwords: argon2id, not a fast hash</h4>
       <p><b>Looked at:</b> SHA-256, bcrypt and argon2id, against the OWASP password-storage guidance.</p>
@@ -1023,6 +1023,11 @@
       <p><b>Looked at:</b> the standard pipeline (build &rarr; test &rarr; scan &rarr; image) on GitHub Actions and Docker, and how complex to make deployment.</p>
       <p><b>Fits my context?</b> The build, test and scan part clearly fits. The deploy complexity does not decide itself &mdash; that depends on what the client actually needs.</p>
       <p class="chose"><b>My choice:</b> GitHub Actions + Docker with build, test/validation and image stages now, and a deploy-dev step I will size after asking the client how complex they want the deployment.</p></div>
+
+    <div class="finding"><h4>10 &middot; Future threads: B2B SaaS multi-tenancy &amp; vector databases <span class="uc-sh">researched, not built</span></h4>
+      <p><b>Looked at:</b> where my security work points next. A <b>B2B SaaS</b> is multi-tenant (many businesses on one system), so its core rule &mdash; tenant A never sees tenant B &mdash; is my row-scoping at company scale, and it is the shape of the Bosch camera platform I am security lead on. A <b>vector database</b> stores embeddings and finds nearest neighbours: useful for security as anomaly detection (flag outlier logins or events by distance) and sample similarity (a semantic cousin of YARA, for Level 8), and it brings new attacks to break &mdash; embedding inversion, RAG poisoning, and the same tenant-isolation problem inside the store.</p>
+      <p><b>Fits my context?</b> The multi-tenancy maps straight onto what I built: scope every row to its owner, in one place, so a new endpoint cannot forget. Vector-DB security is current, HBO-i level-4 material and fits &ldquo;build then break&rdquo; &mdash; but a vector store does not belong in this relational reverse-engineering lab yet.</p>
+      <p class="chose"><b>My choice (researched, NOT built):</b> keep these as future threads &mdash; the multi-tenant framing to justify the data design, and vector-DB security as a possible AI-security level or the monitoring should-have fed by embeddings. I have only read into them so far; this is not a conclusion, and nothing here is built.</p></div>
   </section>
 
   <!-- ============================= DIAGRAMS ============================= -->

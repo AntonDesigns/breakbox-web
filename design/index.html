@@ -1033,12 +1033,12 @@
     <div class="figdeck">
     <div class="figdeck-tabs" role="tablist" aria-label="figures"></div>
     <div class="figdeck-stage">
-<figure data-status="design" data-sprint="1">
+<figure data-status="built" data-sprint="1">
       <div class="fig-tab">Database schema (ERD)</div>
       <div class="fig-media"><svg class="dg" viewBox="0 0 1120 620" role="img" aria-label="The database I set up in Sprint 1 as the security foundation, with clean right-angle relationship lines. The core schema: users and level are the two hubs; session, audit_log and submission hang off users, and progress and challenge hang off both users and level, each with foreign keys, one owner to many rows. Potential later sprints, dashed and work in progress: login_attempt for rate limiting, hint and hint_unlock, and badge with user_badge for achievements. Foreign keys point to a table's id; the dot is the one side and the fork is the many side.">
         <rect class="box" x="40" y="14" width="1040" height="34" rx="4"/>
         <text class="t-xs hd" x="54" y="35">NOW &middot; SPRINT 1</text>
-        <text class="t-xs mut" x="150" y="35">the app is still stateless, so I am setting up this database now as the security foundation. The schema is designed; I build the tables in as I go.</text>
+        <text class="t-xs mut" x="150" y="35">the app is still stateless; the schema is now built as the security foundation (an EF Core DbContext + migration). Wiring it in and the auth on top is Sprint 2.</text>
         <text class="t-xs hd" x="40" y="72">SPRINT 1  &middot;  the core schema I set up now</text>
         <text class="t-xs hd" x="800" y="72">POTENTIAL  &middot;  later, if I need it (WIP)</text>
 
@@ -1129,7 +1129,7 @@
         <text class="t-xs hd" x="54" y="594">WIP</text>
         <text class="t-xs mut" x="100" y="594">These are the tables I plan to build first; the dashed ones I am still thinking about and might change.</text>
       </svg></div>
-      <figcaption><b>The database I set up in Sprint 1, as the security foundation.</b> <code>users</code> and <code>level</code> are my two hubs, and every line is a foreign key. The solid tables are the core schema I am standing up now; the dashed ones are later, if I need them.</figcaption>
+      <figcaption><b>The database I set up in Sprint 1, as the security foundation.</b> <code>users</code> and <code>level</code> are my two hubs, and every line is a foreign key. The solid tables are the core schema, now built as a DbContext and migration; the dashed ones are later, if I need them.</figcaption>
       <div class="pophint">Tap a box in the diagram for the research and why behind it.</div>
     </figure>
 <figure data-status="built" data-sprint="1">

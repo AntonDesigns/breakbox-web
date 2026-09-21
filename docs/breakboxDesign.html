@@ -181,24 +181,23 @@ h1 { font-family: var(--mono); font-weight: 700; font-size: clamp(1.9rem, 5vw, 2
 .grow { border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 5px; background: var(--sheet); padding: 0.7rem 1rem; font-size: 0.92rem; color: #d3e0ed; text-align: left; }
 .grow .gk { font-family: var(--mono); font-size: 0.7rem; color: var(--cyan); font-weight: 700; margin-right: 0.5rem; text-transform: uppercase; letter-spacing: 0.06em; }
 
-/* ---- Sprint mode: the banner that drops in when a sprint is picked ---- */
-.sprintbanner { display: flex; align-items: center; gap: 1.15rem; max-width: 1160px; margin: 0.9rem auto 0.3rem; padding: 0.85rem 1.25rem; border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 8px; background: linear-gradient(100deg, rgba(119,184,209,0.12), rgba(20,39,63,0.5) 55%); position: relative; overflow: hidden; }
+/* ---- Sprint mode: a restrained header strip when a sprint is picked ---- */
+.sprintbanner { display: flex; align-items: baseline; gap: 1rem; max-width: 1160px; margin: 0.9rem auto 0.3rem; padding: 0.7rem 1rem; border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 6px; background: rgba(119,184,209,0.05); }
 .sprintbanner[hidden] { display: none; }
-.sb-num { font-family: var(--mono); font-weight: 700; font-size: 2.1rem; color: var(--cyan); line-height: 1; letter-spacing: 0.01em; flex: none; text-shadow: 0 0 16px rgba(119,184,209,0.45); }
+.sb-num { font-family: var(--mono); font-weight: 600; font-size: 0.6rem; letter-spacing: 0.11em; text-transform: uppercase; color: var(--cyan); border: 1px solid var(--line); border-radius: 3px; padding: 0.17rem 0.46rem; flex: none; white-space: nowrap; }
 .sb-text { flex: 1 1 auto; min-width: 0; }
-.sb-title { font-family: var(--mono); font-weight: 700; font-size: 1.02rem; color: var(--ink); display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.sb-status { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan); border: 1px solid var(--cyan); border-radius: 3px; padding: 0.1rem 0.46rem; }
-.sb-desc { font-size: 0.86rem; color: var(--ink-dim); margin-top: 0.26rem; line-height: 1.5; }
-.sb-dots { display: flex; gap: 0.55rem; flex: none; align-items: center; }
-.sb-dots i { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--line); display: block; }
-.sb-dots i.is-past { background: var(--cyan); border-color: var(--cyan); opacity: 0.55; }
-.sb-dots i.is-now { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(119,184,209,0.20), 0 0 11px rgba(119,184,209,0.55); }
-@media (max-width: 620px) { .sb-dots { display: none; } .sb-num { font-size: 1.7rem; } }
+.sb-title { font-family: var(--mono); font-weight: 600; font-size: 0.95rem; color: var(--ink); display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+.sb-status { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.03em; color: var(--ink-dim); font-weight: 400; }
+.sb-status::before { content: "\00b7\00a0"; color: var(--line); }
+.sb-desc { font-size: 0.85rem; color: var(--ink-dim); margin-top: 0.28rem; line-height: 1.5; }
+.sb-dots { display: flex; gap: 0.4rem; flex: none; align-self: center; }
+.sb-dots i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--line); display: block; }
+.sb-dots i.is-past { background: var(--ink-dim); border-color: var(--ink-dim); }
+.sb-dots i.is-now { background: var(--cyan); border-color: var(--cyan); }
+@media (max-width: 620px) { .sb-dots { display: none; } }
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes sbIn { from { transform: translateY(-9px); opacity: 0.35; } to { transform: none; opacity: 1; } }
-  .sprintbanner.in { animation: sbIn 0.42s cubic-bezier(.2,.7,.2,1); }
-  .sprintbanner.in::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 90px; background: linear-gradient(90deg, transparent, rgba(119,184,209,0.24), transparent); transform: translateX(-120px); animation: sbSweep 0.75s ease-out; pointer-events: none; }
-  @keyframes sbSweep { from { transform: translateX(-120px); } to { transform: translateX(1220px); } }
+  @keyframes sbFade { from { opacity: 0; } to { opacity: 1; } }
+  .sprintbanner.in { animation: sbFade 0.2s ease-out; }
 }
 .panel-note { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.14em; margin: 2.2rem 0 0; text-align: center; }
 
@@ -1427,12 +1426,12 @@ figcaption b { color: var(--ink); font-weight: 600; }
     <div class="figdeck">
     <div class="figdeck-tabs" role="tablist" aria-label="figures"></div>
     <div class="figdeck-stage">
-<figure data-status="design" data-sprint="1">
+<figure data-status="built" data-sprint="1">
       <div class="fig-tab">Database schema (ERD)</div>
       <div class="fig-media"><svg class="dg" viewBox="0 0 1120 620" role="img" aria-label="The database I set up in Sprint 1 as the security foundation, with clean right-angle relationship lines. The core schema: users and level are the two hubs; session, audit_log and submission hang off users, and progress and challenge hang off both users and level, each with foreign keys, one owner to many rows. Potential later sprints, dashed and work in progress: login_attempt for rate limiting, hint and hint_unlock, and badge with user_badge for achievements. Foreign keys point to a table's id; the dot is the one side and the fork is the many side.">
         <rect class="box" x="40" y="14" width="1040" height="34" rx="4"/>
         <text class="t-xs hd" x="54" y="35">NOW &middot; SPRINT 1</text>
-        <text class="t-xs mut" x="150" y="35">the app is still stateless, so I am setting up this database now as the security foundation. The schema is designed; I build the tables in as I go.</text>
+        <text class="t-xs mut" x="150" y="35">the app is still stateless; the schema is now built as the security foundation (an EF Core DbContext + migration). Wiring it in and the auth on top is Sprint 2.</text>
         <text class="t-xs hd" x="40" y="72">SPRINT 1  &middot;  the core schema I set up now</text>
         <text class="t-xs hd" x="800" y="72">POTENTIAL  &middot;  later, if I need it (WIP)</text>
 
@@ -1523,7 +1522,7 @@ figcaption b { color: var(--ink); font-weight: 600; }
         <text class="t-xs hd" x="54" y="594">WIP</text>
         <text class="t-xs mut" x="100" y="594">These are the tables I plan to build first; the dashed ones I am still thinking about and might change.</text>
       </svg></div>
-      <figcaption><b>The database I set up in Sprint 1, as the security foundation.</b> <code>users</code> and <code>level</code> are my two hubs, and every line is a foreign key. The solid tables are the core schema I am standing up now; the dashed ones are later, if I need them.</figcaption>
+      <figcaption><b>The database I set up in Sprint 1, as the security foundation.</b> <code>users</code> and <code>level</code> are my two hubs, and every line is a foreign key. The solid tables are the core schema, now built as a DbContext and migration; the dashed ones are later, if I need them.</figcaption>
       <div class="pophint">Tap a box in the diagram for the research and why behind it.</div>
     </figure>
 <figure data-status="built" data-sprint="1">
@@ -2125,7 +2124,7 @@ figcaption b { color: var(--ink); font-weight: 600; }
   // Sprint mode: picking a sprint drops a banner in that says where I am, what it delivers, and how
   // far along the ladder it sits. "All" hides it and shows the whole living sheet.
   var SPRINTS = {
-    "1": { name: "Foundation", status: "built + securing", desc: "The platform, the Roslyn generator, Levels 1 and 2 with my keygen, Peek in Studio, Docker, and CI with the security scans. The database is the security foundation: designed and being set up." },
+    "1": { name: "Foundation", status: "built + securing", desc: "The platform, the Roslyn generator, Levels 1 and 2 with my keygen, Peek in Studio, Docker, and CI with the security scans. The database is the security foundation: the schema is now built (an EF Core DbContext and migration, MySQL in Docker with SQLite for local); the auth on top of it is Sprint 2." },
     "2": { name: "Pixler + Flip", status: "next", desc: "Patch a real app's licence check (Pixler) with my own patcher (Flip), add the SonarQube quality gate, and stand up the database auth I will attack." },
     "3": { name: "Obfuscation + native", status: "planned", desc: "Get past obfuscation and anti-debugging (Protected), then crack a native target with a memory bug (Overflow), for Ghidra and x64dbg." },
     "4": { name: "Polish + vision", status: "planned", desc: "Polish to a shareable build, the Bosch security vision, the five-minute demo, the reflection, and the attack-monitoring should-have." }
@@ -2135,7 +2134,7 @@ figcaption b { color: var(--ink); font-weight: 600; }
     if (!banner) return;
     var s = SPRINTS[sel];
     if (sel === "all" || !s) { banner.hidden = true; return; }
-    banner.querySelector(".sb-num").textContent = "S" + sel;
+    banner.querySelector(".sb-num").textContent = "Sprint " + sel;
     banner.querySelector(".sb-title").innerHTML = s.name + ' <span class="sb-status">' + s.status + '</span>';
     banner.querySelector(".sb-desc").textContent = s.desc;
     Array.prototype.slice.call(banner.querySelectorAll(".sb-dots i")).forEach(function (d) {

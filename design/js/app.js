@@ -103,7 +103,7 @@
   // Sprint mode: picking a sprint drops a banner in that says where I am, what it delivers, and how
   // far along the ladder it sits. "All" hides it and shows the whole living sheet.
   var SPRINTS = {
-    "1": { name: "Foundation", status: "built + securing", desc: "The platform, the Roslyn generator, Levels 1 and 2 with my keygen, Peek in Studio, Docker, and CI with the security scans. The database is the security foundation: designed and being set up." },
+    "1": { name: "Foundation", status: "built + securing", desc: "The platform, the Roslyn generator, Levels 1 and 2 with my keygen, Peek in Studio, Docker, and CI with the security scans. The database is the security foundation: the schema is now built (an EF Core DbContext and migration, MySQL in Docker with SQLite for local); the auth on top of it is Sprint 2." },
     "2": { name: "Pixler + Flip", status: "next", desc: "Patch a real app's licence check (Pixler) with my own patcher (Flip), add the SonarQube quality gate, and stand up the database auth I will attack." },
     "3": { name: "Obfuscation + native", status: "planned", desc: "Get past obfuscation and anti-debugging (Protected), then crack a native target with a memory bug (Overflow), for Ghidra and x64dbg." },
     "4": { name: "Polish + vision", status: "planned", desc: "Polish to a shareable build, the Bosch security vision, the five-minute demo, the reflection, and the attack-monitoring should-have." }
@@ -113,7 +113,7 @@
     if (!banner) return;
     var s = SPRINTS[sel];
     if (sel === "all" || !s) { banner.hidden = true; return; }
-    banner.querySelector(".sb-num").textContent = "S" + sel;
+    banner.querySelector(".sb-num").textContent = "Sprint " + sel;
     banner.querySelector(".sb-title").innerHTML = s.name + ' <span class="sb-status">' + s.status + '</span>';
     banner.querySelector(".sb-desc").textContent = s.desc;
     Array.prototype.slice.call(banner.querySelectorAll(".sb-dots i")).forEach(function (d) {

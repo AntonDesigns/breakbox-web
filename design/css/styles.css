@@ -176,24 +176,23 @@ h1 { font-family: var(--mono); font-weight: 700; font-size: clamp(1.9rem, 5vw, 2
 .grow { border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 5px; background: var(--sheet); padding: 0.7rem 1rem; font-size: 0.92rem; color: #d3e0ed; text-align: left; }
 .grow .gk { font-family: var(--mono); font-size: 0.7rem; color: var(--cyan); font-weight: 700; margin-right: 0.5rem; text-transform: uppercase; letter-spacing: 0.06em; }
 
-/* ---- Sprint mode: the banner that drops in when a sprint is picked ---- */
-.sprintbanner { display: flex; align-items: center; gap: 1.15rem; max-width: 1160px; margin: 0.9rem auto 0.3rem; padding: 0.85rem 1.25rem; border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 8px; background: linear-gradient(100deg, rgba(119,184,209,0.12), rgba(20,39,63,0.5) 55%); position: relative; overflow: hidden; }
+/* ---- Sprint mode: a restrained header strip when a sprint is picked ---- */
+.sprintbanner { display: flex; align-items: baseline; gap: 1rem; max-width: 1160px; margin: 0.9rem auto 0.3rem; padding: 0.7rem 1rem; border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 6px; background: rgba(119,184,209,0.05); }
 .sprintbanner[hidden] { display: none; }
-.sb-num { font-family: var(--mono); font-weight: 700; font-size: 2.1rem; color: var(--cyan); line-height: 1; letter-spacing: 0.01em; flex: none; text-shadow: 0 0 16px rgba(119,184,209,0.45); }
+.sb-num { font-family: var(--mono); font-weight: 600; font-size: 0.6rem; letter-spacing: 0.11em; text-transform: uppercase; color: var(--cyan); border: 1px solid var(--line); border-radius: 3px; padding: 0.17rem 0.46rem; flex: none; white-space: nowrap; }
 .sb-text { flex: 1 1 auto; min-width: 0; }
-.sb-title { font-family: var(--mono); font-weight: 700; font-size: 1.02rem; color: var(--ink); display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.sb-status { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan); border: 1px solid var(--cyan); border-radius: 3px; padding: 0.1rem 0.46rem; }
-.sb-desc { font-size: 0.86rem; color: var(--ink-dim); margin-top: 0.26rem; line-height: 1.5; }
-.sb-dots { display: flex; gap: 0.55rem; flex: none; align-items: center; }
-.sb-dots i { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--line); display: block; }
-.sb-dots i.is-past { background: var(--cyan); border-color: var(--cyan); opacity: 0.55; }
-.sb-dots i.is-now { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(119,184,209,0.20), 0 0 11px rgba(119,184,209,0.55); }
-@media (max-width: 620px) { .sb-dots { display: none; } .sb-num { font-size: 1.7rem; } }
+.sb-title { font-family: var(--mono); font-weight: 600; font-size: 0.95rem; color: var(--ink); display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+.sb-status { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.03em; color: var(--ink-dim); font-weight: 400; }
+.sb-status::before { content: "\00b7\00a0"; color: var(--line); }
+.sb-desc { font-size: 0.85rem; color: var(--ink-dim); margin-top: 0.28rem; line-height: 1.5; }
+.sb-dots { display: flex; gap: 0.4rem; flex: none; align-self: center; }
+.sb-dots i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--line); display: block; }
+.sb-dots i.is-past { background: var(--ink-dim); border-color: var(--ink-dim); }
+.sb-dots i.is-now { background: var(--cyan); border-color: var(--cyan); }
+@media (max-width: 620px) { .sb-dots { display: none; } }
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes sbIn { from { transform: translateY(-9px); opacity: 0.35; } to { transform: none; opacity: 1; } }
-  .sprintbanner.in { animation: sbIn 0.42s cubic-bezier(.2,.7,.2,1); }
-  .sprintbanner.in::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 90px; background: linear-gradient(90deg, transparent, rgba(119,184,209,0.24), transparent); transform: translateX(-120px); animation: sbSweep 0.75s ease-out; pointer-events: none; }
-  @keyframes sbSweep { from { transform: translateX(-120px); } to { transform: translateX(1220px); } }
+  @keyframes sbFade { from { opacity: 0; } to { opacity: 1; } }
+  .sprintbanner.in { animation: sbFade 0.2s ease-out; }
 }
 .panel-note { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.14em; margin: 2.2rem 0 0; text-align: center; }
 

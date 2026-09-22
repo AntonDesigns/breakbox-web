@@ -1032,54 +1032,59 @@ figcaption b { color: var(--ink); font-weight: 600; }
     </figure>
 
     <figure data-status="design" data-sprint="4">
-      <div class="fig-tab">Vector DB &middot; the AI data-leak</div>
-      <div class="fig-media"><svg class="dg" viewBox="0 0 1200 460" role="img" aria-label="Three vector-database attacks drawn left to right, each with the attacker input, the fix and the safe outcome. Cross-tenant retrieval: an unscoped similarity query is scoped to the owner in the repository, so only your own chunks return. Embedding inversion: reconstructing source text from stored vectors is blunted by not embedding raw secrets. RAG poisoning: a planted document that steers the model is contained by treating retrieval and model output as untrusted, at least privilege. A designed defensive thread for later, not built.">
-        <defs>
-          <marker id="vr" markerWidth="11" markerHeight="11" refX="9" refY="5" orient="auto"><polygon points="0,0 10,5 0,10" class="arr-r"/></marker>
-          <marker id="vg" markerWidth="11" markerHeight="11" refX="9" refY="5" orient="auto"><polygon points="0,0 10,5 0,10" class="arr-g"/></marker>
-        </defs>
-        <text class="t-xs hd" x="24" y="26">The setup: many tenants' private docs embedded into one shared vector store. This is where the current wave of company leaks happens</text>
+      <div class="fig-tab">Vector DB &middot; the second store</div>
+      <div class="fig-media"><svg class="dg" viewBox="0 0 1200 460" role="img" aria-label="The vector database drawn as architecture, designed for Sprint 4 and not built. Left to right in the backend: an AI search service calls an embedder that turns text into a vector, then an IVectorStore repository, the same owner-scoped seam as the SQL side, then Qdrant, the vector database, a second store in Docker alongside MySQL. Below, the shape of a Qdrant docs collection: each point has an id, a vector, an owner_id that scopes access, and the text and source in its payload. Every search is filtered by owner_id server-side, the same row-scoping as the relational database.">
+        <defs><marker id="va" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><polygon points="0,0 9,5 0,10" class="arr"/></marker></defs>
 
-        <text class="t-xs hd" x="24" y="66">1 &middot; Cross-tenant retrieval (the common leak)</text>
-        <rect class="threatbox" x="24" y="74" width="310" height="84" rx="4"/>
-        <text class="t-xs threat" x="40" y="108">search("...") with no owner filter</text>
-        <text class="t-xs mut" x="40" y="130">returns the nearest chunks, anyone's</text>
-        <line class="edge" x1="334" y1="116" x2="404" y2="116" marker-end="url(#vr)"/>
-        <rect class="ctrlbox pick" x="406" y="74" width="352" height="84" rx="4" data-t="Scope every vector query to its owner" data-research="Filter results in the app after retrieval, or enforce a server-side owner filter on the query itself." data-why="The same rule as my SQL row-scoping: every similarity query is filtered by tenant/owner in the repository, server-side, so it can only ever reach its own vectors. Post-filtering in the client is the exact hole that leaks." data-links="Broken access control (OWASP)::https://owasp.org/Top10/A01_2021-Broken_Access_Control/"/>
-        <text class="t-xs ctrl" x="422" y="108">repository filters by owner, server-side</text>
-        <text class="t-xs mut" x="422" y="130">the store never sees an unscoped query</text>
-        <line class="edge" x1="758" y1="116" x2="828" y2="116" marker-end="url(#vg)"/>
-        <rect class="box" x="830" y="74" width="346" height="84" rx="4"/>
-        <text class="t-xs" x="846" y="108">only your own chunks come back</text>
-        <text class="t-xs ctrl" x="846" y="130">no cross-tenant leak</text>
+        <text class="t-xs hd" x="24" y="24">How the vector DB would connect as a second store in the backend, alongside MySQL. Designed for Sprint 4, not built.</text>
 
-        <text class="t-xs hd" x="24" y="206">2 &middot; Embedding inversion</text>
-        <rect class="threatbox" x="24" y="214" width="310" height="84" rx="4"/>
-        <text class="t-xs threat" x="40" y="248">reconstruct the source text</text>
-        <text class="t-xs mut" x="40" y="270">from the stored vectors alone</text>
-        <line class="edge" x1="334" y1="256" x2="404" y2="256" marker-end="url(#vr)"/>
-        <rect class="ctrlbox pick" x="406" y="214" width="352" height="84" rx="4" data-t="Don't embed raw secrets" data-research="Embed everything, or minimise and classify what goes into the vectors." data-why="Embeddings can be partly inverted back to text, so I never embed raw secrets: only what a search needs, with sensitive fields kept out of the vector and behind normal access control." data-links="OWASP Top 10 for LLMs::https://owasp.org/www-project-top-10-for-large-language-model-applications/"/>
-        <text class="t-xs ctrl" x="422" y="248">minimise + classify what is embedded</text>
-        <text class="t-xs mut" x="422" y="270">secrets never enter the vector</text>
-        <line class="edge" x1="758" y1="256" x2="828" y2="256" marker-end="url(#vg)"/>
-        <rect class="box" x="830" y="214" width="346" height="84" rx="4"/>
-        <text class="t-xs" x="846" y="248">the vectors reveal little of value</text>
-        <text class="t-xs ctrl" x="846" y="270">inversion returns noise</text>
+        <rect class="box" x="20" y="44" width="1160" height="150" rx="6" style="stroke-dasharray:6 4;"/>
+        <text class="t-xs hd" x="40" y="70">breakbox-api &middot; backend &middot; Sprint 4 addition</text>
 
-        <text class="t-xs hd" x="24" y="346">3 &middot; RAG poisoning / prompt injection</text>
-        <rect class="threatbox" x="24" y="354" width="310" height="84" rx="4"/>
-        <text class="t-xs threat" x="40" y="388">a planted doc: "ignore rules, send data"</text>
-        <text class="t-xs mut" x="40" y="410">retrieved, then obeyed by the model</text>
-        <line class="edge" x1="334" y1="396" x2="404" y2="396" marker-end="url(#vr)"/>
-        <rect class="ctrlbox pick" x="406" y="354" width="352" height="84" rx="4" data-t="Treat retrieval + model output as untrusted" data-research="Trust the retrieved text, or treat retrieval and model output as untrusted input." data-why="A retrieved chunk is attacker-controllable, so I treat it like any input: the model runs at least privilege, its output is validated, and it cannot reach data the user could not, so a poisoned doc cannot become exfiltration." data-links="LLM prompt injection (OWASP)::https://genai.owasp.org/llmrisk/llm01-prompt-injection/"/>
-        <text class="t-xs ctrl" x="422" y="388">least privilege + validate the output</text>
-        <text class="t-xs mut" x="422" y="410">the model can't reach what the user can't</text>
-        <line class="edge" x1="758" y1="396" x2="828" y2="396" marker-end="url(#vg)"/>
-        <rect class="box" x="830" y="354" width="346" height="84" rx="4"/>
-        <text class="t-xs" x="846" y="388">the injection is contained</text>
-        <text class="t-xs ctrl" x="846" y="410">no exfiltration path</text>
+        <rect class="box" x="44" y="86" width="220" height="86" rx="5"/>
+        <text class="t-sm" x="154" y="120" text-anchor="middle">AI / search service</text>
+        <text class="t-xs mut" x="154" y="144" text-anchor="middle">"find in my notes"</text>
+
+        <line class="edge" x1="264" y1="129" x2="308" y2="129" marker-end="url(#va)"/>
+        <rect class="box pick" x="310" y="86" width="220" height="86" rx="5" data-t="Embedder: text to vector" data-research="Call a hosted embedding API, or run a small model locally." data-why="I would run a small embedding model locally, so BreakBox stays offline and self-contained like the rest of it. It turns a query or a document into a vector I can search by similarity."/>
+        <text class="t-sm" x="420" y="120" text-anchor="middle">Embedder</text>
+        <text class="t-xs mut" x="420" y="144" text-anchor="middle">text &rarr; vector, local model</text>
+
+        <line class="edge" x1="530" y1="129" x2="574" y2="129" marker-end="url(#va)"/>
+        <rect class="box pick" x="576" y="86" width="220" height="86" rx="5" data-t="IVectorStore: the same seam" data-research="Let the service call Qdrant directly, or hide it behind a repository interface." data-why="It goes behind an IVectorStore interface, the same seam as my SQL repository, so I can swap or test the store and there is one place to enforce access control. Every search is scoped to its owner here, server-side."/>
+        <text class="t-sm ctrl" x="686" y="120" text-anchor="middle">IVectorStore</text>
+        <text class="t-xs mut" x="686" y="144" text-anchor="middle">the seam &middot; owner-scoped</text>
+
+        <line class="edge" x1="796" y1="129" x2="840" y2="129" marker-end="url(#va)"/>
+        <rect class="box pick" x="842" y="86" width="314" height="86" rx="5" data-t="Qdrant, the vector database" data-research="Compared Qdrant, Chroma, and pgvector on Postgres." data-why="Qdrant is a purpose-built vector database with a .NET client and a Docker image, so it runs as a second service the same way MySQL does. pgvector would add a whole second engine; Qdrant keeps the vector concern its own clean store." data-links="Qdrant::https://qdrant.tech/documentation/"/>
+        <text class="t-sm data" x="999" y="120" text-anchor="middle">Qdrant</text>
+        <text class="t-xs mut" x="999" y="144" text-anchor="middle">vector DB &middot; the 2nd store, in Docker</text>
+
+        <text class="t-xs hd" x="24" y="238">The shape of a Qdrant collection, and the rule that stops the leak</text>
+
+        <rect class="box pick" x="24" y="252" width="440" height="180" rx="5" data-t="owner_id: the scope key" data-research="Put everything in one collection and hope, or carry an owner on every point and filter by it." data-why="Every point carries an owner_id in its payload, exactly like user_id in my SQL tables. IVectorStore filters every similarity search by owner_id server-side, so a query can only reach its owner's vectors. That is the cross-tenant leak, prevented." data-links="Broken access control (OWASP)::https://owasp.org/Top10/A01_2021-Broken_Access_Control/"/>
+        <rect class="hdrow" x="24" y="252" width="440" height="26" rx="5"/>
+        <text class="t-sm data" x="40" y="270">docs &middot; a Qdrant collection (points)</text>
+        <text class="t-xs pk" x="40" y="304">id</text><text class="t-xs mut" x="448" y="304" text-anchor="end">point id</text>
+        <text class="t-xs" x="40" y="330">vector</text><text class="t-xs mut" x="448" y="330" text-anchor="end">float[384], the embedding</text>
+        <text class="t-xs ctrl" x="40" y="356">owner_id</text><text class="t-xs mut" x="448" y="356" text-anchor="end">the scope, filtered on every search</text>
+        <text class="t-xs" x="40" y="382">text</text><text class="t-xs mut" x="448" y="382" text-anchor="end">payload &middot; the chunk</text>
+        <text class="t-xs" x="40" y="408">source</text><text class="t-xs mut" x="448" y="408" text-anchor="end">payload &middot; where it came from</text>
+
+        <text class="t-xs hd" x="500" y="276">Same row-scoping as the SQL side</text>
+        <text class="t-xs mut" x="500" y="300">Every similarity search is filtered by owner_id in</text>
+        <text class="t-xs mut" x="500" y="320">IVectorStore, server-side, so one tenant can never</text>
+        <text class="t-xs mut" x="500" y="340">retrieve another's vectors. That cross-tenant leak is the</text>
+        <text class="t-xs mut" x="500" y="360">number-one way companies leak through shared AI stores.</text>
+
+        <rect class="box" x="500" y="384" width="300" height="48" rx="5"/>
+        <text class="t-sm data" x="650" y="404" text-anchor="middle">MySQL 8</text>
+        <text class="t-xs mut" x="650" y="424" text-anchor="middle">relational &middot; built (S1)</text>
+        <rect class="box" x="820" y="384" width="336" height="48" rx="5" style="stroke-dasharray:6 4;"/>
+        <text class="t-sm data" x="988" y="404" text-anchor="middle">Qdrant</text>
+        <text class="t-xs mut" x="988" y="424" text-anchor="middle">vectors &middot; designed for S4, not built</text>
       </svg></div>
-      <figcaption><b>The AI data-leak, and how I stop it. A designed thread for later, not built.</b> A second, vector database is where a lot of companies are leaking right now. The fix is the same principle as the rest of BreakBox: the server never trusts the client, and every query is scoped to its owner. I take this on as an advanced thread later in the sprints.</figcaption>
+      <figcaption><b>The vector DB, drawn as architecture: a second store I would add in Sprint 4, not built.</b> It hangs off the same repository seam as MySQL, and carries an owner_id on every point so a search can only reach its owner's vectors. That is the row-scoping I use on the SQL side, applied to the store where companies are leaking now.</figcaption>
       <div class="pophint">Tap a box in the diagram for the research and why behind it.</div>
     </figure>
 <figure data-status="built" data-sprint="1">

@@ -14,7 +14,7 @@
 <div class="topbar">
   <header class="rule">
     <span class="name">BreakBox <span class="d">// design sheet</span></span>
-    <span class="rev">living sheet · Sprint 1 (expanded) · S2+ planned</span>
+    <span class="rev">living sheet &middot; Sprint 1 (expanded) &middot; S2+ planned</span>
     <span class="sig" title="my mark: MAH6">0x4D414836</span>
   </header>
   <nav class="tabs" role="tablist" aria-label="sections">
@@ -29,7 +29,7 @@
     <button data-tab="references">References</button>
   </nav>
   <div class="sprintrail" role="tablist" aria-label="sprint view">
-    <span class="sprintrail-l">Sprint focus · picking one hides later sprints</span>
+    <span class="sprintrail-l">Sprint focus &middot; picking one hides later sprints</span>
     <button class="sprintpill active" data-sprint="all">All</button>
     <button class="sprintpill" data-sprint="1"><b>S1</b> Foundation + security</button>
     <button class="sprintpill" data-sprint="2"><b>S2</b> Pixler + Flip</button>
@@ -55,7 +55,7 @@
     <div class="kicker">System design &amp; security architecture</div>
     <h1>BreakBox, drawn from the inside</h1>
     <p class="lede">My project, start to finish: what I have built, how the parts fit, and the secure system I am designing next. One place to read the whole idea, and to prove I understand every piece, because I made every piece.</p>
-    <p class="byline">drawn by <b>Max-Anton Horvat</b> · Complex Software Systems, semester 6 · signed 0x4D414836</p>
+    <p class="byline">drawn by <b>Max-Anton Horvat</b> &middot; Complex Software Systems, semester 6 &middot; signed 0x4D414836</p>
   </div>
 
   <p class="manifesto">I did not build BreakBox to hand in a simple key checker. I built it to actually understand how software gets broken, and then how you stop it, by working both sides myself. The breaking half I have built; the defending half I am researching and designing next. If I cannot explain why a thing is there, it does not stay.</p>
@@ -200,11 +200,11 @@
         <rect class="box" x="402" y="60" width="80" height="22" rx="3"/><text class="t-xs mut" x="416" y="75">Peek</text>
         <rect class="chip" x="402" y="86" width="80" height="22" rx="3"/><text class="t-xs ctrl" x="416" y="101">Keygen</text>
         <rect class="box" x="402" y="112" width="80" height="22" rx="3"/><text class="t-xs mut" x="416" y="127">Flip</text>
-        <rect class="box" x="496" y="60" width="232" height="40" rx="4"/><text class="t-xs" x="508" y="77">1 · the serial is computed,</text><text class="t-xs mut" x="508" y="92">not stored, not in the strings</text>
-        <rect class="box" x="496" y="106" width="232" height="30" rx="4"/><text class="t-xs ctrl" x="508" y="125">2 · found Seed = 1234</text>
-        <rect class="box" x="496" y="142" width="232" height="30" rx="4"/><text class="t-xs" x="508" y="161">3 · serial = Seed * 31 + 1337</text>
+        <rect class="box" x="496" y="60" width="232" height="40" rx="4"/><text class="t-xs" x="508" y="77">1 &middot; the serial is computed,</text><text class="t-xs mut" x="508" y="92">not stored, not in the strings</text>
+        <rect class="box" x="496" y="106" width="232" height="30" rx="4"/><text class="t-xs ctrl" x="508" y="125">2 &middot; found Seed = 1234</text>
+        <rect class="box" x="496" y="142" width="232" height="30" rx="4"/><text class="t-xs" x="508" y="161">3 &middot; serial = Seed * 31 + 1337</text>
         <rect class="box" x="496" y="178" width="232" height="70" rx="4"/>
-        <text class="t-xs" x="508" y="196">4 · your turn</text>
+        <text class="t-xs" x="508" y="196">4 &middot; your turn</text>
         <rect class="ph" x="508" y="206" width="120" height="22" rx="3"/><text class="t-xs mut" x="514" y="221">type the serial</text>
         <rect class="btn" x="636" y="206" width="52" height="22" rx="3"/><text class="t-xs" x="662" y="221" text-anchor="middle" fill="#77b8d1">Check</text>
         <text class="t-xs mut" x="508" y="242">or reveal it when you are stuck</text>
@@ -235,7 +235,7 @@
       <p>The path from easy to expert: a plain stored key, then a computed serial, then patching a real app, then obfuscation and anti-debugging, a native memory overflow, weak crypto, an integrity check, and safe malware analysis. Levels 1 and 2 are built and playable; the rest are the plan, one clear idea each, and a rung only opens once I have actually built it.</p>
       <div class="sec"><b>scope:</b> only my own generated targets, only authorised use. I break what I make.</div>
     </div>
-    <div class="comp"><h4>The pipeline and the containers <span class="tag">CI/CD · Docker</span></h4>
+    <div class="comp"><h4>The pipeline and the containers <span class="tag">CI/CD &middot; Docker</span></h4>
       <p>Every push builds, runs the tests, and runs three security scans: leaked secrets, vulnerable dependencies, and vulnerable code. Docker packages the API and the launcher so the whole thing comes up with one command, the same on any machine, and a health endpoint says whether it is alive.</p>
       <div class="sec"><b>security:</b> the scans are the boring breaches caught automatically. The same set I would bring to any serious project.</div>
     </div>
@@ -333,62 +333,62 @@
         <text class="t-xs mut" x="24" y="38">Solid = a runtime call. Dashed = offline, or the security repo governing the backend. It draws itself in once, then settles. Tap any box for the reasoning.</text>
 
         <rect class="repo pick" x="24" y="64" width="360" height="356" rx="10" data-t="Frontend repo (breakbox-web)" data-research="One monorepo, or a repo per part." data-why="Only the React launcher and its build. On its own it gets its own access, CI and scanning, so the front end is one contained blast radius." data-links="React::https://react.dev"/>
-        <text class="t-xs hd replbl" x="40" y="92">breakbox-web  ·  frontend repo</text>
+        <text class="t-xs hd replbl" x="40" y="92">breakbox-web  &middot;  frontend repo</text>
 
         <rect class="repo pick" x="424" y="64" width="620" height="662" rx="10" data-t="Backend repo (breakbox-api)" data-research="Keep the server, generator and data together, or split them out." data-why="The API, the generator, the Core contracts and the database: the whole server side, and the one place with the secrets and the data, so it is the repo I lock down hardest." data-links="ASP.NET Core::https://learn.microsoft.com/aspnet/core"/>
-        <text class="t-xs hd replbl" x="440" y="92">breakbox-api  ·  backend repo  ·  server trust boundary</text>
+        <text class="t-xs hd replbl" x="440" y="92">breakbox-api  &middot;  backend repo  &middot;  server trust boundary</text>
 
         <rect class="repo pick" x="1104" y="64" width="392" height="520" rx="10" data-mode="research" data-t="Security repo (breakbox-security)" data-research="As the security engineer I think in trust boundaries and blast radius: separate access and least privilege, and the offensive tooling kept away from the app it tests." data-why="Whether a third repo is worth the extra CI and versioning on a solo project. I started as a monorepo, so I keep checking where the split actually pays off." data-links="Least privilege::https://en.wikipedia.org/wiki/Principle_of_least_privilege"/>
-        <text class="t-xs hd replbl" x="1120" y="92">breakbox-security  ·  security repo</text>
+        <text class="t-xs hd replbl" x="1120" y="92">breakbox-security  &middot;  security repo</text>
 
         <rect class="box pick" x="54" y="130" width="300" height="100" rx="5" data-t="React launcher (SPA)" data-research="A server-rendered page, or a React single-page client (my group's stack)." data-why="A thin React client that lists levels, downloads a target and submits a key. It only renders what the server allows and never holds an answer." data-links="React::https://react.dev"/>
         <text class="t-sm" x="204" y="172" text-anchor="middle">React launcher (SPA)</text>
-        <text class="t-xs mut" x="204" y="200" text-anchor="middle">lists levels · downloads · submits</text>
+        <text class="t-xs mut" x="204" y="200" text-anchor="middle">lists levels &middot; downloads &middot; submits</text>
 
         <rect class="box pick" x="54" y="252" width="300" height="74" rx="5" data-t="api.ts (one client)" data-research="Scatter fetch calls, or funnel them through one file." data-why="Every call to the backend goes through one file with one base URL, so if I lock the origin down or move the API, I change it in one place." data-links=""/>
-        <text class="t-sm" x="204" y="284" text-anchor="middle">api.ts · one client</text>
+        <text class="t-sm" x="204" y="284" text-anchor="middle">api.ts &middot; one client</text>
         <text class="t-xs mut" x="204" y="308" text-anchor="middle">one base URL</text>
 
         <rect class="box pick" x="54" y="348" width="300" height="62" rx="5" data-t="Vite build + its own CI" data-research="Share one pipeline, or give each repo its own." data-why="The frontend builds with Vite and runs its own CI with the shared scan set. Its own pipeline means its own permissions, not the backend's." data-links="Vite::https://vitejs.dev/"/>
         <text class="t-sm" x="204" y="384" text-anchor="middle">Vite build + own CI</text>
 
         <rect class="bound" x="454" y="130" width="284" height="322" rx="6"/>
-        <text class="t-xs hd" x="470" y="156">ASP.NET Core API  ·  .NET 9</text>
+        <text class="t-xs hd" x="470" y="156">ASP.NET Core API  &middot;  .NET 9</text>
         <rect class="box pick" x="470" y="168" width="252" height="58" rx="4" data-t="ChallengesController" data-research="Logic in the controller, or thin over a service." data-why="The single HTTP door: Levels() and Generate(level), just HTTP and validation. It depends on an interface, not a class." data-links="Web API::https://learn.microsoft.com/aspnet/core/web-api"/>
         <text class="t-sm" x="596" y="203" text-anchor="middle">ChallengesController</text>
         <rect class="box pick" x="470" y="234" width="252" height="58" rx="4" data-t="Services" data-research="Skip a service layer, or keep the rules in their own layer." data-why="App rules live here, away from HTTP and the database. It is where the auth decisions sit, and the seam I test hardest." data-links=""/>
         <text class="t-sm" x="596" y="269" text-anchor="middle">Services</text>
         <rect class="box pick" x="470" y="300" width="252" height="58" rx="4" data-t="Repository (the swap seam)" data-research="Hit EF Core directly, or go through a repository interface." data-why="Every row is scoped to its owner here, and I can swap SQLite for MySQL without touching the app. One seam is what keeps IDOR from spreading." data-links="Repository pattern::https://learn.microsoft.com/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design"/>
-        <text class="t-sm" x="596" y="335" text-anchor="middle">Repository · the seam</text>
+        <text class="t-sm" x="596" y="335" text-anchor="middle">Repository &middot; the seam</text>
         <rect class="box pick" x="470" y="366" width="252" height="58" rx="4" data-t="EF Core (the ORM)" data-research="Hand-written SQL, or EF Core." data-why="EF Core parameterises every query by default, so SQL injection has no opening, and it is the group's data layer too." data-links="EF Core::https://learn.microsoft.com/ef/core"/>
-        <text class="t-sm" x="596" y="401" text-anchor="middle">EF Core · the ORM</text>
+        <text class="t-sm" x="596" y="401" text-anchor="middle">EF Core &middot; the ORM</text>
 
         <rect class="box pick" x="764" y="130" width="270" height="140" rx="5" data-t="Roslyn generator" data-research="Bundle fixed crackmes, or compile a fresh one per download." data-why="It compiles a brand new target in memory on every request, so no two people get the same file and the answer never ships. Split into a template source, a key maker and a compiler." data-links="Roslyn SDK::https://learn.microsoft.com/dotnet/csharp/roslyn-sdk/"/>
         <text class="t-sm hd" x="899" y="172" text-anchor="middle">Roslyn generator</text>
-        <text class="t-xs mut" x="899" y="200" text-anchor="middle">TemplateSource · KeyMaker · Compiler</text>
+        <text class="t-xs mut" x="899" y="200" text-anchor="middle">TemplateSource &middot; KeyMaker &middot; Compiler</text>
         <text class="t-xs ctrl" x="899" y="226" text-anchor="middle">a fresh target per download</text>
 
         <rect class="box pick" x="764" y="292" width="270" height="96" rx="5" data-t="Core (the contracts)" data-research="Depend on classes, or on interfaces." data-why="A small project of interfaces and records everything points inward to. It is why I can swap an implementation or drop in the database without a rewrite, and it ships as a package the security repo consumes. The SOLID seam." data-links="SOLID::https://en.wikipedia.org/wiki/SOLID"/>
-        <text class="t-sm" x="899" y="330" text-anchor="middle">Core · interfaces (SOLID)</text>
-        <text class="t-xs mut" x="899" y="356" text-anchor="middle">the contracts · shipped as a package</text>
+        <text class="t-sm" x="899" y="330" text-anchor="middle">Core &middot; interfaces (SOLID)</text>
+        <text class="t-xs mut" x="899" y="356" text-anchor="middle">the contracts &middot; shipped as a package</text>
 
         <rect class="box pick" x="494" y="500" width="250" height="120" rx="5" data-t="MySQL 8 (the S1 security foundation)" data-research="SQLite, PostgreSQL, or MySQL (the group ships MySQL)." data-why="MySQL 8 with a least-privilege role, read through EF Core with bound queries. It is my Sprint 1 security foundation: designed and being set up, the data system I secure then attack. SQLite runs locally behind the same seam." data-links="MySQL::https://dev.mysql.com/doc/"/>
         <text class="t-sm data" x="619" y="540" text-anchor="middle">MySQL 8</text>
         <text class="t-xs mut" x="619" y="566" text-anchor="middle">S1 security foundation</text>
-        <text class="t-xs mut" x="619" y="590" text-anchor="middle">bound queries · least-privilege</text>
+        <text class="t-xs mut" x="619" y="590" text-anchor="middle">bound queries &middot; least-privilege</text>
 
         <rect class="ctrlbox pick" x="454" y="660" width="580" height="52" rx="5" data-t="Defence in depth" data-research="One control, or a stack of them." data-why="Each boundary a request crosses adds one control I can name an attack for: TLS, CORS, argon2id, row-scoped access, a bound query, encryption at rest, and a full audit log. If I cannot name the attack, the layer comes out." data-links="OWASP Top 10::https://owasp.org/www-project-top-ten/"/>
-        <text class="t-sm ctrl" x="744" y="692" text-anchor="middle">Defence in depth · TLS · argon2id · row-scoped access · audit</text>
+        <text class="t-sm ctrl" x="744" y="692" text-anchor="middle">Defence in depth &middot; TLS &middot; argon2id &middot; row-scoped access &middot; audit</text>
 
         <rect class="box pick" x="1134" y="130" width="330" height="160" rx="5" data-t="BreakBox Studio (offline)" data-research="Just use dnSpy, or build my own on Mono.Cecil." data-why="My own toolkit: Peek reads an assembly, Keygen reproduces a serial, Flip patches a check. All offline, so it never trusts the server, and building it is how I prove I understand the tools." data-links="Mono.Cecil::https://github.com/jbevain/cecil||dnSpyEx::https://github.com/dnSpyEx/dnSpy"/>
         <text class="t-sm hd" x="1299" y="170" text-anchor="middle">BreakBox Studio</text>
-        <text class="t-xs ctrl" x="1299" y="198" text-anchor="middle">Peek · Keygen · Flip</text>
+        <text class="t-xs ctrl" x="1299" y="198" text-anchor="middle">Peek &middot; Keygen &middot; Flip</text>
         <text class="t-xs mut" x="1299" y="224" text-anchor="middle">offline, never talks to the server</text>
         <text class="t-xs mut" x="1299" y="250" text-anchor="middle">[Avalonia desktop]</text>
 
         <rect class="box pick" x="1134" y="322" width="330" height="130" rx="5" data-t="Scan configs (one set)" data-research="Configure scans per repo, or keep one set the security repo owns." data-why="The security repo owns the one scan set (secrets, dependencies, code, quality), and every repo's CI runs it. One place to reason about what a green build must mean." data-links="gitleaks::https://github.com/gitleaks/gitleaks||CodeQL::https://codeql.github.com/||SonarQube::https://www.sonarsource.com/products/sonarqube/"/>
-        <text class="t-sm hd" x="1299" y="360" text-anchor="middle">Scan configs · one set</text>
-        <text class="t-xs mut" x="1299" y="388" text-anchor="middle">gitleaks · dep · CodeQL · SonarQube</text>
+        <text class="t-sm hd" x="1299" y="360" text-anchor="middle">Scan configs &middot; one set</text>
+        <text class="t-xs mut" x="1299" y="388" text-anchor="middle">gitleaks &middot; dep &middot; CodeQL &middot; SonarQube</text>
         <text class="t-xs ctrl" x="1299" y="414" text-anchor="middle">runs in every repo's CI</text>
 
         <rect class="box pick" x="1134" y="484" width="330" height="90" rx="5" data-mode="research" data-t="Keygens + research notes" data-research="My reverse-engineering write-ups and keygens are security work, not app code, so they belong with the tooling." data-why="How much of my research (threat landscape, crack write-ups) lives in git versus stays notes, and how to keep it useful. I sort this out as the repo grows." data-links=""/>
@@ -396,11 +396,11 @@
         <text class="t-xs mut" x="1299" y="546" text-anchor="middle">where my RE work lives</text>
 
         <line class="edge" x1="354" y1="197" x2="466" y2="197" marker-end="url(#ra2)"/>
-        <text class="t-xs ctrl" x="410" y="180" text-anchor="middle">HTTPS · JSON</text>
-        <text class="t-xs mut" x="410" y="218" text-anchor="middle">/levels · /generate</text>
+        <text class="t-xs ctrl" x="410" y="180" text-anchor="middle">HTTPS &middot; JSON</text>
+        <text class="t-xs mut" x="410" y="218" text-anchor="middle">/levels &middot; /generate</text>
 
         <polyline class="edge" points="596,424 596,462 619,462 619,498" fill="none" marker-end="url(#ra2)"/>
-        <text class="t-xs mut" x="662" y="452">EF Core · bound query</text>
+        <text class="t-xs mut" x="662" y="452">EF Core &middot; bound query</text>
 
         <line class="dep" x1="1034" y1="196" x2="1132" y2="196" marker-end="url(#rd2)"/>
         <text class="t-xs mut" x="1084" y="180" text-anchor="middle">downloaded</text>
@@ -410,7 +410,7 @@
         <text class="t-xs mut" x="1068" y="332" text-anchor="middle">packages</text>
 
         <line class="dep" x1="1104" y1="548" x2="748" y2="548" marker-end="url(#rd2)"/>
-        <text class="t-xs mut" x="926" y="536" text-anchor="middle">governs the data: monitor · scan · harden</text>
+        <text class="t-xs mut" x="926" y="536" text-anchor="middle">governs the data: monitor &middot; scan &middot; harden</text>
 
         <text class="t-xs mut" x="24" y="762">Three repos, one owner per concern. Every runtime call is solid; the offline path, the packages and the security governance are dashed. The one scan set in breakbox-security runs in every repo's CI.</text>
       </svg></div>
@@ -568,31 +568,31 @@
         <defs><marker id="dd" markerWidth="11" markerHeight="11" refX="9" refY="5" orient="auto"><polygon points="0,0 10,5 0,10" class="arr-c"/></marker></defs>
         <text class="t-xs mut" x="8" y="104">request</text>
         <line class="flow" x1="44" y1="100" x2="66" y2="100" marker-end="url(#dd)"/>
-        <rect class="box pick" x="70" y="58" width="110" height="84" rx="4" data-t="1 · Transport (TLS everywhere)" data-research="I looked at leaving plain HTTP inside a 'trusted' network, versus TLS on every hop." data-why="I put TLS everywhere because it is the cheapest control and it stops eavesdropping and tampering before anything else. It goes at the very front so nothing travels in the clear." data-links="TLS config (Mozilla)::https://ssl-config.mozilla.org/||Transport security (OWASP)::https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"/>
+        <rect class="box pick" x="70" y="58" width="110" height="84" rx="4" data-t="1 &middot; Transport (TLS everywhere)" data-research="I looked at leaving plain HTTP inside a 'trusted' network, versus TLS on every hop." data-why="I put TLS everywhere because it is the cheapest control and it stops eavesdropping and tampering before anything else. It goes at the very front so nothing travels in the clear." data-links="TLS config (Mozilla)::https://ssl-config.mozilla.org/||Transport security (OWASP)::https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"/>
         <text class="t-xs hd" x="78" y="76">1</text><text class="t-sm" x="125" y="96" text-anchor="middle">Transport</text><text class="t-xs mut" x="125" y="115" text-anchor="middle">TLS everywhere</text>
         <text class="t-xs threat" x="125" y="170" text-anchor="middle">eavesdrop</text><text class="t-xs mut" x="125" y="187" text-anchor="middle">and tamper</text>
         <line class="edge" x1="182" y1="100" x2="236" y2="100" marker-end="url(#dd)"/>
-        <rect class="box pick" x="240" y="58" width="110" height="84" rx="4" data-t="2 · Edge (CORS + rate limit)" data-research="I considered opening CORS for convenience, versus locking it to my origin, and whether to add a rate limit." data-why="I lock CORS to my own origin and add a rate limit, because that stops another site calling my API with a user's session, and slows password guessing before a request reaches the app." data-links="CORS (MDN)::https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS||Rate limiting::https://learn.microsoft.com/aspnet/core/performance/rate-limit"/>
+        <rect class="box pick" x="240" y="58" width="110" height="84" rx="4" data-t="2 &middot; Edge (CORS + rate limit)" data-research="I considered opening CORS for convenience, versus locking it to my origin, and whether to add a rate limit." data-why="I lock CORS to my own origin and add a rate limit, because that stops another site calling my API with a user's session, and slows password guessing before a request reaches the app." data-links="CORS (MDN)::https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS||Rate limiting::https://learn.microsoft.com/aspnet/core/performance/rate-limit"/>
         <text class="t-xs hd" x="248" y="76">2</text><text class="t-sm" x="295" y="96" text-anchor="middle">Edge</text><text class="t-xs mut" x="295" y="115" text-anchor="middle">CORS, rate limit</text>
         <text class="t-xs threat" x="295" y="170" text-anchor="middle">cross-site</text><text class="t-xs mut" x="295" y="187" text-anchor="middle">brute force</text>
         <line class="edge" x1="352" y1="100" x2="406" y2="100" marker-end="url(#dd)"/>
-        <rect class="box pick" x="410" y="58" width="110" height="84" rx="4" data-t="3 · AuthN (argon2id)" data-research="I compared SHA-256, bcrypt and argon2id for password hashing." data-why="I chose argon2id because it is the current OWASP first choice: memory-hard and slow on purpose, so a stolen dump is not a stolen login. A fast hash like SHA-256 falls to a GPU in hours." data-links="Password storage (OWASP)::https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html||Argon2::https://github.com/P-H-C/phc-winner-argon2"/>
+        <rect class="box pick" x="410" y="58" width="110" height="84" rx="4" data-t="3 &middot; AuthN (argon2id)" data-research="I compared SHA-256, bcrypt and argon2id for password hashing." data-why="I chose argon2id because it is the current OWASP first choice: memory-hard and slow on purpose, so a stolen dump is not a stolen login. A fast hash like SHA-256 falls to a GPU in hours." data-links="Password storage (OWASP)::https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html||Argon2::https://github.com/P-H-C/phc-winner-argon2"/>
         <text class="t-xs hd" x="418" y="76">3</text><text class="t-sm" x="465" y="96" text-anchor="middle">AuthN</text><text class="t-xs mut" x="465" y="115" text-anchor="middle">argon2id</text>
         <text class="t-xs threat" x="465" y="170" text-anchor="middle">dumped</text><text class="t-xs mut" x="465" y="187" text-anchor="middle">credentials</text>
         <line class="edge" x1="522" y1="100" x2="576" y2="100" marker-end="url(#dd)"/>
-        <rect class="box pick" x="580" y="58" width="110" height="84" rx="4" data-t="4 · AuthZ (row-scoped)" data-research="I looked at checking ownership in each endpoint, versus once at the lowest data layer." data-why="I scope every row to its owner in the repository, because a check at the lowest layer cannot be forgotten by a new endpoint. That is what stops IDOR, reading someone else's data by changing an id." data-links="Broken access control (OWASP)::https://owasp.org/Top10/A01_2021-Broken_Access_Control/||IDOR prevention::https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html"/>
+        <rect class="box pick" x="580" y="58" width="110" height="84" rx="4" data-t="4 &middot; AuthZ (row-scoped)" data-research="I looked at checking ownership in each endpoint, versus once at the lowest data layer." data-why="I scope every row to its owner in the repository, because a check at the lowest layer cannot be forgotten by a new endpoint. That is what stops IDOR, reading someone else's data by changing an id." data-links="Broken access control (OWASP)::https://owasp.org/Top10/A01_2021-Broken_Access_Control/||IDOR prevention::https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html"/>
         <text class="t-xs hd" x="588" y="76">4</text><text class="t-sm" x="635" y="96" text-anchor="middle">AuthZ</text><text class="t-xs mut" x="635" y="115" text-anchor="middle">row-scoped</text>
         <text class="t-xs threat" x="635" y="170" text-anchor="middle">IDOR</text><text class="t-xs mut" x="635" y="187" text-anchor="middle">access control</text>
         <line class="edge" x1="692" y1="100" x2="746" y2="100" marker-end="url(#dd)"/>
-        <rect class="box pick" x="750" y="58" width="110" height="84" rx="4" data-t="5 · Data access (bound query)" data-research="I looked at building SQL by string, versus parameterised queries plus a least-privilege role." data-why="I use parameterised queries so input is never run as code, which stops SQL injection, and a least-privilege role so a leaked account still cannot drop tables. Two controls, because one failing should not be the end." data-links="SQL injection prevention (OWASP)::https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html"/>
+        <rect class="box pick" x="750" y="58" width="110" height="84" rx="4" data-t="5 &middot; Data access (bound query)" data-research="I looked at building SQL by string, versus parameterised queries plus a least-privilege role." data-why="I use parameterised queries so input is never run as code, which stops SQL injection, and a least-privilege role so a leaked account still cannot drop tables. Two controls, because one failing should not be the end." data-links="SQL injection prevention (OWASP)::https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html"/>
         <text class="t-xs hd" x="758" y="76">5</text><text class="t-sm" x="805" y="96" text-anchor="middle">Data access</text><text class="t-xs mut" x="805" y="115" text-anchor="middle">bound query</text>
         <text class="t-xs threat" x="805" y="170" text-anchor="middle">SQL</text><text class="t-xs mut" x="805" y="187" text-anchor="middle">injection</text>
         <line class="edge" x1="862" y1="100" x2="916" y2="100" marker-end="url(#dd)"/>
-        <rect class="box pick" x="920" y="58" width="110" height="84" rx="4" data-t="6 · At rest (encryption)" data-research="I weighed storing data plain, versus encrypting at rest." data-why="I encrypt at rest because it shrinks what a stolen database is worth. With hashed passwords and keys on top, a copied file is far less useful to an attacker." data-links="Cryptographic storage (OWASP)::https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"/>
+        <rect class="box pick" x="920" y="58" width="110" height="84" rx="4" data-t="6 &middot; At rest (encryption)" data-research="I weighed storing data plain, versus encrypting at rest." data-why="I encrypt at rest because it shrinks what a stolen database is worth. With hashed passwords and keys on top, a copied file is far less useful to an attacker." data-links="Cryptographic storage (OWASP)::https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"/>
         <text class="t-xs hd" x="928" y="76">6</text><text class="t-sm" x="975" y="96" text-anchor="middle">At rest</text><text class="t-xs mut" x="975" y="115" text-anchor="middle">encryption</text>
         <text class="t-xs threat" x="975" y="170" text-anchor="middle">stolen</text><text class="t-xs mut" x="975" y="187" text-anchor="middle">database</text>
         <line class="edge" x1="1032" y1="100" x2="1086" y2="100" marker-end="url(#dd)"/>
-        <rect class="box pick" x="1090" y="58" width="110" height="84" rx="4" data-t="7 · Audit (full log)" data-research="I looked at logging only errors, versus logging every security-relevant action." data-why="I keep a full audit log because a control I cannot see working is a blind spot. If someone probes the app I want the attempt written down, so I can read the trace: that is the defensive half of the lesson, and it feeds the monitoring should-have." data-links="Logging (OWASP)::https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html"/>
+        <rect class="box pick" x="1090" y="58" width="110" height="84" rx="4" data-t="7 &middot; Audit (full log)" data-research="I looked at logging only errors, versus logging every security-relevant action." data-why="I keep a full audit log because a control I cannot see working is a blind spot. If someone probes the app I want the attempt written down, so I can read the trace: that is the defensive half of the lesson, and it feeds the monitoring should-have." data-links="Logging (OWASP)::https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html"/>
         <text class="t-xs hd" x="1098" y="76">7</text><text class="t-sm" x="1145" y="96" text-anchor="middle">Audit</text><text class="t-xs mut" x="1145" y="115" text-anchor="middle">full log</text>
         <text class="t-xs mut" x="1145" y="170" text-anchor="middle">no blind</text><text class="t-xs mut" x="1145" y="187" text-anchor="middle">spots</text>
         <line class="flow" x1="1202" y1="100" x2="1238" y2="100" marker-end="url(#dd)"/>
@@ -711,7 +711,7 @@
         <rect class="box pick" x="576" y="96" width="172" height="96" rx="4" data-t="SonarQube (quality gate)" data-research="Rely on the security scans alone, or add a code-quality gate as its own stage." data-why="SonarQube runs after the tests as its own gate: it measures coverage, maintainability and reliability, and a build that drops below the bar fails. The security scans catch what is dangerous, SonarQube catches what is decaying. That is the ISO 25010 quality side, and it is gated in my CI behind a flag until I stand up the server." data-links="SonarQube::https://www.sonarsource.com/products/sonarqube/||ISO 25010::https://en.wikipedia.org/wiki/ISO/IEC_25010"/>
         <text class="t-sm" x="662" y="134" text-anchor="middle">SonarQube</text>
         <text class="t-xs mut" x="662" y="154" text-anchor="middle">quality gate</text>
-        <text class="t-xs ctrl" x="662" y="172" text-anchor="middle">coverage · maintainability</text>
+        <text class="t-xs ctrl" x="662" y="172" text-anchor="middle">coverage &middot; maintainability</text>
 
         <rect class="box pick" x="788" y="96" width="150" height="96" rx="4" data-t="Docker build" data-research="I could ship raw binaries, or build container images." data-why="I build a Docker image for the API and one for the web, because a container runs the same on any host and it is what the group deploys. One command brings the whole stack up." data-links="Docker::https://docs.docker.com/get-started/"/>
         <text class="t-sm" x="863" y="134" text-anchor="middle">Docker build</text>
@@ -773,8 +773,8 @@
         <text class="t-xs mut" x="818" y="154" text-anchor="middle">GHCR, main only</text>
         <rect class="bound" x="156" y="306" width="728" height="58" rx="6"/>
         <text class="t-xs hd" x="172" y="326">planned, sprint by sprint (this is where it gets serious)</text>
-        <text class="t-xs mut" x="172" y="344">SBOM (a bill of every dependency) · sign artifacts + provenance (SLSA) · scan the container image</text>
-        <text class="t-xs mut" x="172" y="360">branch protection · a deploy gate that refuses a build with any open finding</text>
+        <text class="t-xs mut" x="172" y="344">SBOM (a bill of every dependency) &middot; sign artifacts + provenance (SLSA) &middot; scan the container image</text>
+        <text class="t-xs mut" x="172" y="360">branch protection &middot; a deploy gate that refuses a build with any open finding</text>
       </svg></div>
       <figcaption><b>My scans are a gate, not a report.</b> A leaked secret, a vulnerable package, or a risky pattern stops the change on the spot. The three scans and the publish step run now; the dashed part is the roadmap I want to add sprint by sprint. These three are the <b>security</b> scans; a <b>SonarQube quality gate</b> runs beside them as its own stage (the quality half), which is why it sits on its own in the pipeline figure.</figcaption>
       <div class="pophint">Tap a box in the diagram for the research and why behind it.</div>
@@ -806,23 +806,23 @@
 
         <rect class="bound" x="760" y="16" width="404" height="54" rx="6"/>
         <text class="t-xs hd" x="962" y="38" text-anchor="middle">the expert reach, beyond my own code</text>
-        <text class="t-xs mut" x="962" y="58" text-anchor="middle">SLSA build provenance · SBOM · OWASP SAMM maturity</text>
+        <text class="t-xs mut" x="962" y="58" text-anchor="middle">SLSA build provenance &middot; SBOM &middot; OWASP SAMM maturity</text>
         <line class="dep" x1="962" y1="70" x2="962" y2="84" marker-end="url(#ex)"/>
 
-        <rect class="box pick" x="40" y="252" width="330" height="86" rx="4" data-t="ASVS L1 · Proficient" data-research="What 'good enough' means, measured against a standard instead of a feeling." data-why="Proficient is meeting the OWASP Top 10 baseline with a build that tests. It is the standard, met, and it maps to HBO-i level 3." data-links="OWASP Top 10::https://owasp.org/www-project-top-ten/"/>
-        <text class="t-sm hd" x="205" y="284" text-anchor="middle">ASVS L1 · Proficient</text>
+        <rect class="box pick" x="40" y="252" width="330" height="86" rx="4" data-t="ASVS L1 &middot; Proficient" data-research="What 'good enough' means, measured against a standard instead of a feeling." data-why="Proficient is meeting the OWASP Top 10 baseline with a build that tests. It is the standard, met, and it maps to HBO-i level 3." data-links="OWASP Top 10::https://owasp.org/www-project-top-ten/"/>
+        <text class="t-sm hd" x="205" y="284" text-anchor="middle">ASVS L1 &middot; Proficient</text>
         <text class="t-xs mut" x="205" y="306" text-anchor="middle">meet the OWASP Top 10</text>
         <text class="t-xs mut" x="205" y="324" text-anchor="middle">HBO-i level 3</text>
 
-        <rect class="ctrlbox pick" x="420" y="168" width="340" height="86" rx="4" data-t="ASVS L2 · Advanced (where I am)" data-research="OWASP ASVS defines three verification levels; L2 is the standard for most real apps." data-why="Advanced is verifying against ASVS L2 and adding SAST, dependency and secret scanning to the pipeline. This is where my work sits today, and where I can already defend the choices." data-links="OWASP ASVS::https://owasp.org/asvs/"/>
-        <text class="t-sm hd" x="590" y="200" text-anchor="middle">ASVS L2 · Advanced</text>
+        <rect class="ctrlbox pick" x="420" y="168" width="340" height="86" rx="4" data-t="ASVS L2 &middot; Advanced (where I am)" data-research="OWASP ASVS defines three verification levels; L2 is the standard for most real apps." data-why="Advanced is verifying against ASVS L2 and adding SAST, dependency and secret scanning to the pipeline. This is where my work sits today, and where I can already defend the choices." data-links="OWASP ASVS::https://owasp.org/asvs/"/>
+        <text class="t-sm hd" x="590" y="200" text-anchor="middle">ASVS L2 &middot; Advanced</text>
         <text class="t-xs mut" x="590" y="222" text-anchor="middle">+ SAST, dependency, secret scans</text>
         <text class="t-xs ctrl" x="590" y="240" text-anchor="middle">the standard for most apps</text>
 
-        <rect class="box pick" x="810" y="84" width="350" height="86" rx="4" style="stroke-dasharray:6 4;" data-t="ASVS L3 · Expert (the aim)" data-research="ASVS L3 is per-control, high-assurance verification; SLSA and SAMM reach past my own code into the supply chain and the process." data-why="Expert is verifying against ASVS L3 with defence in depth, securing the supply chain with an SBOM and SLSA provenance, and tracking maturity with SAMM, then being able to advise on it. That is HBO-i level 4, where I aim." data-links="OWASP ASVS::https://owasp.org/asvs/||SLSA::https://slsa.dev/||OWASP SAMM::https://owaspsamm.org/"/>
-        <text class="t-sm hd" x="985" y="116" text-anchor="middle">ASVS L3 · Expert</text>
+        <rect class="box pick" x="810" y="84" width="350" height="86" rx="4" style="stroke-dasharray:6 4;" data-t="ASVS L3 &middot; Expert (the aim)" data-research="ASVS L3 is per-control, high-assurance verification; SLSA and SAMM reach past my own code into the supply chain and the process." data-why="Expert is verifying against ASVS L3 with defence in depth, securing the supply chain with an SBOM and SLSA provenance, and tracking maturity with SAMM, then being able to advise on it. That is HBO-i level 4, where I aim." data-links="OWASP ASVS::https://owasp.org/asvs/||SLSA::https://slsa.dev/||OWASP SAMM::https://owaspsamm.org/"/>
+        <text class="t-sm hd" x="985" y="116" text-anchor="middle">ASVS L3 &middot; Expert</text>
         <text class="t-xs mut" x="985" y="138" text-anchor="middle">per-control, defence in depth</text>
-        <text class="t-xs mut" x="985" y="156" text-anchor="middle">HBO-i level 4 · the aim</text>
+        <text class="t-xs mut" x="985" y="156" text-anchor="middle">HBO-i level 4 &middot; the aim</text>
 
         <line class="flow" x1="372" y1="284" x2="416" y2="226" marker-end="url(#ex)"/>
         <line class="flow" x1="762" y1="200" x2="806" y2="142" marker-end="url(#ex)"/>
@@ -1386,7 +1386,7 @@
     <h2 data-n="02">The thread, sprint by sprint</h2>
     <div class="sub">what each sprint delivers and how I picture it. Pick a sprint up top to light up its point on the line.</div>
     <div class="timeline">
-      <div class="progrow done" data-sprint="1"><h4>Sprint 1 <span class="s">S1</span> <span class="st">built + securing</span> · Foundation</h4>
+      <div class="progrow done" data-sprint="1"><h4>Sprint 1 <span class="s">S1</span> <span class="st">built + securing</span> &middot; Foundation</h4>
         <p>Expanded on purpose: I pulled what I first planned as a second sprint into here, so it is one combined delivery.</p>
         <ul>
           <li><b>Built:</b> the React launcher, the ASP.NET Core API split into small projects, the Roslyn generator (a fresh target per download), Level 1 and Level 2 with my keygen, Peek in Studio, Docker, and CI with the security scans.</li>
@@ -1395,7 +1395,7 @@
           <li><b>Outcomes it deepens:</b> Software Engineering (the SOLID architecture), Software Delivery (Docker + CI + scans), Professional Standard (decision log + threat-landscape research), Personal Leadership (the PDP and first feedback).</li>
         </ul></div>
 
-      <div class="progrow" data-sprint="2"><h4>Sprint 2 <span class="s">S2</span> <span class="st">next</span> · Pixler + Flip</h4>
+      <div class="progrow" data-sprint="2"><h4>Sprint 2 <span class="s">S2</span> <span class="st">next</span> &middot; Pixler + Flip</h4>
         <p>The step up from toy checks to a real app.</p>
         <ul>
           <li><b>Add:</b> Pixler, a small photo app with a locked premium feature (Level 3), Flip (my own patcher tool), and the SonarQube quality gate in the pipeline.</li>
@@ -1403,7 +1403,7 @@
           <li><b>Outcomes it deepens:</b> Software Engineering (measurable feedback: how fast a check falls), Software Quality Control (SonarQube joins the scans: coverage + maintainability), Professional Standard (applied research on how apps lock features; ethics, only my own targets).</li>
         </ul></div>
 
-      <div class="progrow" data-sprint="3"><h4>Sprint 3 <span class="s">S3</span> <span class="st">planned</span> · Obfuscation + native</h4>
+      <div class="progrow" data-sprint="3"><h4>Sprint 3 <span class="s">S3</span> <span class="st">planned</span> &middot; Obfuscation + native</h4>
         <p>Get past protection, and drop out of managed code.</p>
         <ul>
           <li><b>Add:</b> Protected (Pixler with obfuscation and anti-debugging, Level 4) and my first native C target with a memory bug (Overflow, Level 5), for Ghidra and x64dbg.</li>
@@ -1411,7 +1411,7 @@
           <li><b>Outcomes it deepens:</b> Software Engineering (harder trade-offs, the native memory model, system thinking), Software Quality Control (performance + security benchmarks on hardened targets), Software Delivery (3-repo delivery with the reusable scan workflow), Professional Standard (deeper research; GDPR on the data).</li>
         </ul></div>
 
-      <div class="progrow" data-sprint="4"><h4>Sprint 4 <span class="s">S4</span> <span class="st">planned</span> · Polish + vision</h4>
+      <div class="progrow" data-sprint="4"><h4>Sprint 4 <span class="s">S4</span> <span class="st">planned</span> &middot; Polish + vision</h4>
         <p>Make it shareable, and step up to strategy.</p>
         <ul>
           <li><b>Add:</b> polish so someone else can use BreakBox, the strategic security vision for the Bosch project, the five-minute demo, my reflection, and the should-have below: attack monitoring.</li>
@@ -1422,28 +1422,28 @@
 
     <h2 data-n="03">The weekly plan</h2>
     <div class="sub">the roadmap above, broken into the weeks I actually work in, so the plan is concrete and easy to follow, not four big blocks. Weeks are indicative and shift (the sheet is living); Sprint 1's weeks are mostly behind me.</div>
-    <div class="roadcard done" data-sprint="1"><h4>Sprint 1 <span class="s">S1</span> <span class="st">built + finishing</span> · Foundation</h4>
+    <div class="roadcard done" data-sprint="1"><h4>Sprint 1 <span class="s">S1</span> <span class="st">built + finishing</span> &middot; Foundation</h4>
       <ul class="deepen">
         <li><b>Week 1</b> the repo, the React launcher, the API skeleton, and the fixed Level 1 target.</li>
         <li><b>Week 2</b> the Roslyn generator, Level 2 with my keygen, and Peek in Studio.</li>
         <li><b>Week 3</b> Docker and CI (the three scans, SonarQube, package publishing); design and set up the database schema.</li>
         <li><b>Week 4</b> deploy to a dev host; the first ISO 25010 metrics; the threat-landscape, reading-guide and PDP; first coach and peer feedback.</li>
       </ul></div>
-    <div class="roadcard" data-sprint="2"><h4>Sprint 2 <span class="s">S2</span> <span class="st">next</span> · Pixler + Flip</h4>
+    <div class="roadcard" data-sprint="2"><h4>Sprint 2 <span class="s">S2</span> <span class="st">next</span> &middot; Pixler + Flip</h4>
       <ul class="deepen">
         <li><b>Week 1</b> design and build Pixler, a small photo app with its premium features behind one IsPremium check.</li>
         <li><b>Week 2</b> build Flip (Mono.Cecil rewrites the check's IL); crack Pixler end to end and write the walkthrough.</li>
         <li><b>Week 3</b> stand up the database auth: argon2id hashing, server-side sessions, and a row-scoped repository; enforce the SonarQube gate.</li>
         <li><b>Week 4</b> attack the data layer myself (SQL injection, IDOR), harden it, and take feedback.</li>
       </ul></div>
-    <div class="roadcard" data-sprint="3"><h4>Sprint 3 <span class="s">S3</span> <span class="st">planned</span> · Obfuscation + native</h4>
+    <div class="roadcard" data-sprint="3"><h4>Sprint 3 <span class="s">S3</span> <span class="st">planned</span> &middot; Obfuscation + native</h4>
       <ul class="deepen">
         <li><b>Week 1</b> obfuscate and anti-debug Pixler (Protected, Level 4); research the techniques.</li>
         <li><b>Week 2</b> defeat the protection; set up Ghidra and x64dbg.</li>
         <li><b>Week 3</b> build the native Overflow target (Level 5); crash and exploit it.</li>
         <li><b>Week 4</b> defend it; run performance and security benchmarks; a GDPR pass on the data.</li>
       </ul></div>
-    <div class="roadcard" data-sprint="4"><h4>Sprint 4 <span class="s">S4</span> <span class="st">planned</span> · Polish + vision</h4>
+    <div class="roadcard" data-sprint="4"><h4>Sprint 4 <span class="s">S4</span> <span class="st">planned</span> &middot; Polish + vision</h4>
       <ul class="deepen">
         <li><b>Week 1</b> polish to a shareable build; the attack-monitoring should-have, if the ladder is on track.</li>
         <li><b>Week 2</b> the Bosch security vision and roadmap, and the stakeholder material.</li>
@@ -1534,7 +1534,7 @@
         <!-- monitor -->
         <rect class="bound pick" x="330" y="120" width="200" height="150" rx="6" data-t="Monitor: how to score (should-have)" data-research="How to collect the security-table events and turn them into a simple 'this looks wrong' score, without a heavy SIEM." data-why="Whether a small rules engine over my own logs is enough, or whether I need a real tool. Last-sprint should-have, so I research it near the end." data-mode="research" data-links="Logging (OWASP)::https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html"/>
         <text class="t-sm hd" x="430" y="176" text-anchor="middle">Monitor</text>
-        <text class="t-xs mut" x="430" y="198" text-anchor="middle">collect · apply rules</text>
+        <text class="t-xs mut" x="430" y="198" text-anchor="middle">collect &middot; apply rules</text>
         <text class="t-xs mut" x="430" y="216" text-anchor="middle">score what looks wrong</text>
 
         <!-- monitor -> detections -->
@@ -1667,7 +1667,7 @@
   </section>
 
   <div class="titleblock" role="group" aria-label="drawing title block">
-    <div class="banner">BreakBox · system design and security architecture</div>
+    <div class="banner">BreakBox &middot; system design and security architecture</div>
     <div class="row">
       <div class="cell"><div class="l">Drawn by</div><div class="v">Max-Anton Horvat</div></div>
       <div class="cell"><div class="l">Signature</div><div class="v sig">0x4D414836 (MAH6)</div></div>

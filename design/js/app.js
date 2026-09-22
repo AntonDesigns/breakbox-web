@@ -289,7 +289,7 @@
         a.textContent = bits[0];
         a.target = "_blank";
         a.rel = "noopener noreferrer";
-        if (i) linksBox.appendChild(document.createTextNode("  ·  "));
+        if (i) linksBox.appendChild(document.createTextNode("  " + String.fromCharCode(0xB7) + "  "));
         linksBox.appendChild(a);
       });
     }

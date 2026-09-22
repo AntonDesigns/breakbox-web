@@ -155,7 +155,7 @@ body[data-sv="design"] figure[data-status="idea"] { opacity: 0.34; filter: grays
 /* pick a sprint and the future is LOCKED away, not just dimmed, so the sheet only shows where I am */
 figure.is-future { display: none; }
 figure.is-future .fig-sprint, figure.is-new .fig-sprint { color: var(--cyan); border-color: var(--cyan); }
-figure.is-future .fig-sprint::before { content: "planned · "; }
+figure.is-future .fig-sprint::before { content: "planned \0000B7 "; }
 
 .hero { padding: 2.6rem 0 1rem; text-align: center; }
 .kicker { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--cyan); margin-bottom: 0.8rem; }

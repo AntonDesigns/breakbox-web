@@ -717,7 +717,7 @@ figcaption b { color: var(--ink); font-weight: 600; }
     <p>This is the whole thing in one picture, split the way I want it as the security engineer: three repos, each with its own access and its own scanning, so a problem in one does not reach the others. The frontend calls the backend over HTTPS; the backend owns the generator, the layers and the database; and the security repo holds my offline tools and the one scan set every repo runs. Watch it draw, then tap a box to see why each piece is there, or, where I have not built it yet, why it is already on my radar.</p>
 
     <figure data-status="built" class="drawlive">
-      <div class="fig-media big"><svg class="dg dg-lg" viewBox="0 0 1520 800" role="img" aria-label="The full three-repo design, drawn live. Left, breakbox-web: the React launcher, its api client and Vite build. Centre, breakbox-api behind a server trust boundary: the ASP.NET Core API as a stack of Controller, Services, Repository and EF Core; the Roslyn generator; the Core interfaces; the MySQL database that is the Sprint 1 security foundation; and a defence-in-depth strip. Right, breakbox-security: BreakBox Studio offline, the one scan set, and my keygens and research. The frontend calls the backend over HTTPS; EF Core reads MySQL with bound queries; the generator compiles a fresh Level.dll that is downloaded and opened offline in Studio; Core and Generator move as pinned NuGet packages; and the security repo governs the database and runs its one scan set in every repo's CI.">
+      <div class="fig-media big"><svg class="dg dg-lg" viewBox="0 0 1584 800" role="img" aria-label="The full three-repo design, drawn live. Left, breakbox-web: the React launcher, its api client and Vite build. Centre, breakbox-api behind a server trust boundary: the ASP.NET Core API as a stack of Controller, Services, Repository and EF Core; the Roslyn generator; the Core interfaces; the MySQL database that is the Sprint 1 security foundation; and a defence-in-depth strip. Right, breakbox-security: BreakBox Studio offline, the one scan set, and my keygens and research. The frontend calls the backend over HTTPS; EF Core reads MySQL with bound queries; the generator compiles a fresh Level.dll that is downloaded and opened offline in Studio; Core and Generator move as pinned NuGet packages; and the security repo governs the database and runs its one scan set in every repo's CI.">
         <defs>
           <marker id="ra2" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><polygon points="0,0 9,5 0,10" class="arr"/></marker>
           <marker id="rd2" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><polygon points="0,0 9,5 0,10" class="arr-c"/></marker>
@@ -731,8 +731,8 @@ figcaption b { color: var(--ink); font-weight: 600; }
         <rect class="repo pick" x="424" y="64" width="620" height="662" rx="10" data-t="Backend repo (breakbox-api)" data-research="Keep the server, generator and data together, or split them out." data-why="The API, the generator, the Core contracts and the database: the whole server side, and the one place with the secrets and the data, so it is the repo I lock down hardest." data-links="ASP.NET Core::https://learn.microsoft.com/aspnet/core"/>
         <text class="t-xs hd replbl" x="440" y="92">breakbox-api  &middot;  backend repo  &middot;  server trust boundary</text>
 
-        <rect class="repo pick" x="1104" y="64" width="392" height="520" rx="10" data-mode="research" data-t="Security repo (breakbox-security)" data-research="As the security engineer I think in trust boundaries and blast radius: separate access and least privilege, and the offensive tooling kept away from the app it tests." data-why="Whether a third repo is worth the extra CI and versioning on a solo project. I started as a monorepo, so I keep checking where the split actually pays off." data-links="Least privilege::https://en.wikipedia.org/wiki/Principle_of_least_privilege"/>
-        <text class="t-xs hd replbl" x="1120" y="92">breakbox-security  &middot;  security repo</text>
+        <rect class="repo pick" x="1164" y="64" width="392" height="520" rx="10" data-mode="research" data-t="Security repo (breakbox-security)" data-research="As the security engineer I think in trust boundaries and blast radius: separate access and least privilege, and the offensive tooling kept away from the app it tests." data-why="Whether a third repo is worth the extra CI and versioning on a solo project. I started as a monorepo, so I keep checking where the split actually pays off." data-links="Least privilege::https://en.wikipedia.org/wiki/Principle_of_least_privilege"/>
+        <text class="t-xs hd replbl" x="1180" y="92">breakbox-security  &middot;  security repo</text>
 
         <rect class="box pick" x="54" y="130" width="300" height="100" rx="5" data-t="React launcher (SPA)" data-research="A server-rendered page, or a React single-page client (my group's stack)." data-why="A thin React client that lists levels, downloads a target and submits a key. It only renders what the server allows and never holds an answer." data-links="React::https://react.dev"/>
         <text class="t-sm" x="204" y="172" text-anchor="middle">React launcher (SPA)</text>
@@ -756,12 +756,12 @@ figcaption b { color: var(--ink); font-weight: 600; }
         <rect class="box pick" x="470" y="366" width="252" height="58" rx="4" data-t="EF Core (the ORM)" data-research="Hand-written SQL, or EF Core." data-why="EF Core parameterises every query by default, so SQL injection has no opening, and it is the group's data layer too." data-links="EF Core::https://learn.microsoft.com/ef/core"/>
         <text class="t-sm" x="596" y="401" text-anchor="middle">EF Core &middot; the ORM</text>
 
-        <rect class="box pick" x="764" y="130" width="270" height="140" rx="5" data-t="Roslyn generator" data-research="Bundle fixed crackmes, or compile a fresh one per download." data-why="It compiles a brand new target in memory on every request, so no two people get the same file and the answer never ships. Split into a template source, a key maker and a compiler." data-links="Roslyn SDK::https://learn.microsoft.com/dotnet/csharp/roslyn-sdk/"/>
+        <rect class="box pick" x="754" y="130" width="290" height="140" rx="5" data-t="Roslyn generator" data-research="Bundle fixed crackmes, or compile a fresh one per download." data-why="It compiles a brand new target in memory on every request, so no two people get the same file and the answer never ships. Split into a template source, a key maker and a compiler." data-links="Roslyn SDK::https://learn.microsoft.com/dotnet/csharp/roslyn-sdk/"/>
         <text class="t-sm hd" x="899" y="172" text-anchor="middle">Roslyn generator</text>
         <text class="t-xs mut" x="899" y="200" text-anchor="middle">TemplateSource &middot; KeyMaker &middot; Compiler</text>
         <text class="t-xs ctrl" x="899" y="226" text-anchor="middle">a fresh target per download</text>
 
-        <rect class="box pick" x="764" y="292" width="270" height="96" rx="5" data-t="Core (the contracts)" data-research="Depend on classes, or on interfaces." data-why="A small project of interfaces and records everything points inward to. It is why I can swap an implementation or drop in the database without a rewrite, and it ships as a package the security repo consumes. The SOLID seam." data-links="SOLID::https://en.wikipedia.org/wiki/SOLID"/>
+        <rect class="box pick" x="754" y="292" width="290" height="96" rx="5" data-t="Core (the contracts)" data-research="Depend on classes, or on interfaces." data-why="A small project of interfaces and records everything points inward to. It is why I can swap an implementation or drop in the database without a rewrite, and it ships as a package the security repo consumes. The SOLID seam." data-links="SOLID::https://en.wikipedia.org/wiki/SOLID"/>
         <text class="t-sm" x="899" y="330" text-anchor="middle">Core &middot; interfaces (SOLID)</text>
         <text class="t-xs mut" x="899" y="356" text-anchor="middle">the contracts &middot; shipped as a package</text>
 
@@ -773,37 +773,38 @@ figcaption b { color: var(--ink); font-weight: 600; }
         <rect class="ctrlbox pick" x="454" y="660" width="580" height="52" rx="5" data-t="Defence in depth" data-research="One control, or a stack of them." data-why="Each boundary a request crosses adds one control I can name an attack for: TLS, CORS, argon2id, row-scoped access, a bound query, encryption at rest, and a full audit log. If I cannot name the attack, the layer comes out." data-links="OWASP Top 10::https://owasp.org/www-project-top-ten/"/>
         <text class="t-sm ctrl" x="744" y="692" text-anchor="middle">Defence in depth &middot; TLS &middot; argon2id &middot; row-scoped access &middot; audit</text>
 
-        <rect class="box pick" x="1134" y="130" width="330" height="160" rx="5" data-t="BreakBox Studio (offline)" data-research="Just use dnSpy, or build my own on Mono.Cecil." data-why="My own toolkit: Peek reads an assembly, Keygen reproduces a serial, Flip patches a check. All offline, so it never trusts the server, and building it is how I prove I understand the tools." data-links="Mono.Cecil::https://github.com/jbevain/cecil||dnSpyEx::https://github.com/dnSpyEx/dnSpy"/>
-        <text class="t-sm hd" x="1299" y="170" text-anchor="middle">BreakBox Studio</text>
-        <text class="t-xs ctrl" x="1299" y="198" text-anchor="middle">Peek &middot; Keygen &middot; Flip</text>
-        <text class="t-xs mut" x="1299" y="224" text-anchor="middle">offline, never talks to the server</text>
-        <text class="t-xs mut" x="1299" y="250" text-anchor="middle">[Avalonia desktop]</text>
+        <rect class="box pick" x="1194" y="130" width="330" height="160" rx="5" data-t="BreakBox Studio (offline)" data-research="Just use dnSpy, or build my own on Mono.Cecil." data-why="My own toolkit: Peek reads an assembly, Keygen reproduces a serial, Flip patches a check. All offline, so it never trusts the server, and building it is how I prove I understand the tools." data-links="Mono.Cecil::https://github.com/jbevain/cecil||dnSpyEx::https://github.com/dnSpyEx/dnSpy"/>
+        <text class="t-sm hd" x="1359" y="170" text-anchor="middle">BreakBox Studio</text>
+        <text class="t-xs ctrl" x="1359" y="198" text-anchor="middle">Peek &middot; Keygen &middot; Flip</text>
+        <text class="t-xs mut" x="1359" y="224" text-anchor="middle">offline, never talks to the server</text>
+        <text class="t-xs mut" x="1359" y="250" text-anchor="middle">[Avalonia desktop]</text>
 
-        <rect class="box pick" x="1134" y="322" width="330" height="130" rx="5" data-t="Scan configs (one set)" data-research="Configure scans per repo, or keep one set the security repo owns." data-why="The security repo owns the one scan set (secrets, dependencies, code, quality), and every repo's CI runs it. One place to reason about what a green build must mean." data-links="gitleaks::https://github.com/gitleaks/gitleaks||CodeQL::https://codeql.github.com/||SonarQube::https://www.sonarsource.com/products/sonarqube/"/>
-        <text class="t-sm hd" x="1299" y="360" text-anchor="middle">Scan configs &middot; one set</text>
-        <text class="t-xs mut" x="1299" y="388" text-anchor="middle">gitleaks &middot; dep &middot; CodeQL &middot; SonarQube</text>
-        <text class="t-xs ctrl" x="1299" y="414" text-anchor="middle">runs in every repo's CI</text>
+        <rect class="box pick" x="1194" y="322" width="330" height="130" rx="5" data-t="Scan configs (one set)" data-research="Configure scans per repo, or keep one set the security repo owns." data-why="The security repo owns the one scan set (secrets, dependencies, code, quality), and every repo's CI runs it. One place to reason about what a green build must mean." data-links="gitleaks::https://github.com/gitleaks/gitleaks||CodeQL::https://codeql.github.com/||SonarQube::https://www.sonarsource.com/products/sonarqube/"/>
+        <text class="t-sm hd" x="1359" y="360" text-anchor="middle">Scan configs &middot; one set</text>
+        <text class="t-xs mut" x="1359" y="388" text-anchor="middle">gitleaks &middot; dep &middot; CodeQL &middot; SonarQube</text>
+        <text class="t-xs ctrl" x="1359" y="414" text-anchor="middle">runs in every repo's CI</text>
 
-        <rect class="box pick" x="1134" y="484" width="330" height="90" rx="5" data-mode="research" data-t="Keygens + research notes" data-research="My reverse-engineering write-ups and keygens are security work, not app code, so they belong with the tooling." data-why="How much of my research (threat landscape, crack write-ups) lives in git versus stays notes, and how to keep it useful. I sort this out as the repo grows." data-links=""/>
-        <text class="t-sm" x="1299" y="522" text-anchor="middle">Keygens + research notes</text>
-        <text class="t-xs mut" x="1299" y="546" text-anchor="middle">where my RE work lives</text>
+        <rect class="box pick" x="1194" y="484" width="330" height="90" rx="5" data-mode="research" data-t="Keygens + research notes" data-research="My reverse-engineering write-ups and keygens are security work, not app code, so they belong with the tooling." data-why="How much of my research (threat landscape, crack write-ups) lives in git versus stays notes, and how to keep it useful. I sort this out as the repo grows." data-links=""/>
+        <text class="t-sm" x="1359" y="522" text-anchor="middle">Keygens + research notes</text>
+        <text class="t-xs mut" x="1359" y="546" text-anchor="middle">where my RE work lives</text>
 
         <line class="edge" x1="354" y1="197" x2="466" y2="197" marker-end="url(#ra2)"/>
         <text class="t-xs ctrl" x="410" y="180" text-anchor="middle">HTTPS &middot; JSON</text>
         <text class="t-xs mut" x="410" y="218" text-anchor="middle">/levels &middot; /generate</text>
 
         <polyline class="edge" points="596,424 596,462 619,462 619,498" fill="none" marker-end="url(#ra2)"/>
-        <text class="t-xs mut" x="662" y="452">EF Core &middot; bound query</text>
+        <text class="t-xs mut" x="662" y="474">EF Core &middot; bound query</text>
 
-        <line class="dep" x1="1034" y1="196" x2="1132" y2="196" marker-end="url(#rd2)"/>
-        <text class="t-xs mut" x="1084" y="180" text-anchor="middle">downloaded</text>
-        <text class="t-xs mut" x="1084" y="222" text-anchor="middle">offline</text>
+        <line class="dep" x1="1044" y1="196" x2="1192" y2="196" marker-end="url(#rd2)"/>
+        <text class="t-xs mut" x="1104" y="180" text-anchor="middle">downloaded</text>
+        <text class="t-xs mut" x="1104" y="222" text-anchor="middle">offline</text>
 
-        <polyline class="dep" points="1034,340 1090,340 1090,292 1130,292" fill="none" marker-end="url(#rd2)"/>
-        <text class="t-xs mut" x="1068" y="332" text-anchor="middle">packages</text>
+        <polyline class="dep" points="1044,340 1090,340 1090,292 1190,292" fill="none" marker-end="url(#rd2)"/>
+        <text class="t-xs mut" x="1104" y="332" text-anchor="middle">packages</text>
 
-        <line class="dep" x1="1104" y1="548" x2="748" y2="548" marker-end="url(#rd2)"/>
-        <text class="t-xs mut" x="926" y="536" text-anchor="middle">governs the data: monitor &middot; scan &middot; harden</text>
+        <line class="dep" x1="1164" y1="548" x2="748" y2="548" marker-end="url(#rd2)"/>
+        <text class="t-xs mut" x="890" y="524" text-anchor="middle">governs the data:</text>
+        <text class="t-xs mut" x="890" y="544" text-anchor="middle">monitor &middot; scan &middot; harden</text>
 
         <text class="t-xs mut" x="24" y="762">Three repos, one owner per concern. Every runtime call is solid; the offline path, the packages and the security governance are dashed. The one scan set in breakbox-security runs in every repo's CI.</text>
       </svg></div>

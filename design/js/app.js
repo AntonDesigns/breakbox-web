@@ -330,8 +330,11 @@
     function boxX(el) { try { return el.getBBox().x; } catch (e) { return 0; } }
 
     function prep(svg) {
+      // .qvec / .qbranch are the sprint-reactive vector-DB node and its feed: their dashed vs
+      // solid state is driven by CSS (body[data-sprint]), so keep the draw-in from stamping an
+      // inline stroke-dasharray on them, which would override that state.
       var all = Array.prototype.slice.call(svg.querySelectorAll("line,polyline,path,rect,circle,ellipse"))
-        .filter(function (el) { return !el.closest("defs") && !el.classList.contains("scan-beam"); });
+        .filter(function (el) { return !el.closest("defs") && !el.classList.contains("scan-beam") && !el.classList.contains("qvec") && !el.classList.contains("qbranch"); });
       svg._draw = all;
       svg._texts = Array.prototype.slice.call(svg.querySelectorAll("text"));
       svg._texts.forEach(function (t) { if (t._orig == null) t._orig = t.textContent; });

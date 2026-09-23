@@ -321,7 +321,7 @@ figcaption b { color: var(--ink); font-weight: 600; }
 .figdeck figure { margin: 0; border: 0; background: transparent; border-radius: 0; padding: 0; }
 .figdeck figure .fig-tab { display: none; }   /* the active tab already names it */
 /* one big figure in a fixed frame, so every figure reads the same size */
-.fig-media { height: 600px; display: flex; align-items: center; justify-content: center; }
+.fig-media { height: 600px; box-sizing: border-box; padding-top: 30px; display: flex; align-items: center; justify-content: center; }
 .fig-media svg { max-width: 100%; max-height: 100%; width: auto; height: auto; }
 .figdeck figure figcaption { border-top: 1px solid var(--line); margin-top: 1.1rem; padding: 0.9rem 0.2rem 0.3rem; font-size: 0.9rem; text-align: center; }
 /* per-figure "why these choices": the rationale, left-aligned under the caption */
@@ -380,12 +380,25 @@ figcaption b { color: var(--ink); font-weight: 600; }
    timeline dots and the staggered hero reveals were too much motion. The one quiet panel fade
    (bbxFadeUp, above) is all that stays, and only the big system figure still draws itself in. */
 /* the showcase figure is taller than the standard 600px frame and sizes to its content */
-.fig-media.big { height: auto; padding: 0.4rem 0 0.2rem; }
+.fig-media.big { height: auto; padding: 32px 0 0.2rem; }
 .fig-media.big svg { max-height: none; width: 100%; height: auto; }
 .drawlive .repo { fill: rgba(119,184,209,0.03); stroke: var(--stamp); stroke-width: 1.3; stroke-dasharray: 7 5; }
 .drawlive .replbl { font-family: var(--mono); }
 /* the big system figure runs its own, larger type so nothing reads too small */
 .dg-lg .t-sm { font-size: 15px; }
 .dg-lg .t-xs { font-size: 13px; }
+/* ---- the vector DB is one node with two states. By default it is a greyed-out,
+   dashed 'potential' store. The moment Sprint 4 is picked (body[data-sprint="4"]),
+   the same node is redrawn as an integrated, built store: solid cyan, a solid feed,
+   and its label swaps from 'potential add-on' to 'wired in'. One figure, two designs. */
+.dg .qvec { fill: rgba(147,167,192,0.10); stroke: var(--stamp); stroke-width: 1.2; stroke-dasharray: 5 3; transition: fill .35s ease, stroke .35s ease; }
+.dg .qbranch { stroke: var(--stamp); stroke-width: 1.7; fill: none; stroke-dasharray: 6 4; transition: stroke .35s ease; }
+.dg .qtitle { fill: var(--stamp); transition: fill .35s ease; }
+.dg .q-s4 { display: none; }
+body[data-sprint="4"] .dg .qvec { fill: rgba(120,165,210,0.06); stroke: var(--cyan); stroke-dasharray: none; }
+body[data-sprint="4"] .dg .qbranch { stroke: var(--cyan); stroke-dasharray: none; }
+body[data-sprint="4"] .dg .qtitle { fill: var(--cyan); }
+body[data-sprint="4"] .dg .q-s1 { display: none; }
+body[data-sprint="4"] .dg .q-s4 { display: inline; }
 /* the reveal scan beam: a bright cyan line that sweeps each figure as it decodes itself in */
 .dg .scan-beam { fill: var(--cyan); opacity: 0; pointer-events: none; filter: drop-shadow(0 0 7px rgba(119,184,209,0.85)); }

@@ -207,3 +207,137 @@ body {
   color: var(--dim);
   font-size: 0.72rem;
 }
+
+/* two-column workspace: the level ladder on the left, the run/download guide on the right */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 336px;
+  gap: 1.1rem;
+  align-items: start;
+}
+.ladder { min-width: 0; }
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+}
+
+/* cards are now selectable: clicking one drives the guide panel */
+.target { cursor: pointer; }
+.target.is-locked { cursor: pointer; }
+.target.is-active {
+  border-color: var(--green);
+  box-shadow: inset 2px 0 0 var(--green);
+}
+.target:focus-visible { outline: 1px solid var(--border-bright); outline-offset: 1px; }
+.pick { font-size: 0.68rem; color: var(--dim); white-space: nowrap; }
+.target.is-active .pick { color: var(--green); }
+
+/* the run/download guide panel */
+.guide {
+  position: sticky;
+  top: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel);
+  padding: 0.85rem 0.9rem;
+}
+@media (max-width: 900px) {
+  .guide { position: static; }
+}
+.guide-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--dim);
+  font-weight: 600;
+}
+.guide-title .addr { font-size: 0.8rem; }
+
+/* prerequisite: install the runtime once */
+.prereq {
+  border: 1px solid var(--border-bright);
+  border-left: 2px solid var(--amber);
+  border-radius: 3px;
+  background: var(--panel-2);
+  padding: 0.6rem 0.7rem;
+}
+.prereq h4 { margin: 0 0 0.3rem; font-size: 0.82rem; color: var(--text); font-weight: 600; }
+.prereq p { margin: 0 0 0.55rem; color: var(--dim); font-size: 0.75rem; }
+.prereq.is-done { border-left-color: var(--green); }
+.link-btn {
+  display: inline-block;
+  font-size: 0.74rem;
+  color: var(--amber);
+  background: transparent;
+  border: 1px solid var(--amber);
+  border-radius: 3px;
+  padding: 0.22rem 0.55rem;
+  text-decoration: none;
+}
+.link-btn:hover { background: var(--amber); color: var(--bg); }
+.prereq-done-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+  font-size: 0.72rem;
+  color: var(--dim);
+  cursor: pointer;
+  user-select: none;
+}
+.prereq-done-row input { accent-color: var(--green); margin: 0; }
+
+/* selected level heading inside the guide */
+.guide-level { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+.guide-level .name { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+.guide-obj { margin: 0; color: var(--dim); font-size: 0.76rem; }
+
+/* numbered run/crack steps */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  counter-reset: step;
+}
+.steps li {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: start;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+.steps li::before {
+  counter-increment: step;
+  content: counter(step);
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-bright);
+  color: var(--dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+.step-body { min-width: 0; }
+.steps code {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0.02rem 0.3rem;
+  font-size: 0.73rem;
+  color: var(--text);
+  word-break: break-word;
+}
+.step-note { color: var(--dim); }
+.btn-dl { margin-top: 0.35rem; }

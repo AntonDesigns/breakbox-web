@@ -10,6 +10,16 @@ const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';
 // Show the level number as an address, like a row in a disassembler (0x01, 0x02, ...).
 const addr = (n: number) => '0x' + n.toString(16).toUpperCase().padStart(2, '0');
 
+// A small "break box" mark: a box outline with a bolt through it.
+function Logo() {
+  return (
+    <svg className="logo" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="4.5" y="4.5" width="23" height="23" rx="6" fill="none" stroke="#2a333e" strokeWidth="2" />
+      <path d="M18 5.5 L10 17.5 L15.5 16 L14 26.5 L22 14 L16.5 15.5 Z" fill="#3ee0a0" />
+    </svg>
+  );
+}
+
 // The one decisive step per built level: how you actually find the key. Kept short and specific to
 // the real app, so the guide teaches the move rather than just saying "reverse it". Only the built
 // levels have a target; the rest are on the ladder as a preview of later sprints.
@@ -63,7 +73,7 @@ function LevelCard({ lvl, active, onSelect }: { lvl: Level; active: boolean; onS
         <span className={`tag tag-${lvl.difficulty.toLowerCase()}`}>{lvl.difficulty}</span>
         {!lvl.available && <span className="tag tag-locked">LOCKED</span>}
         <span className="spacer" />
-        <span className="pick">{active ? 'selected' : lvl.available ? 'open ▸' : 'preview ▸'}</span>
+        <span className="pick">{active ? 'selected' : lvl.available ? 'open ›' : 'preview ›'}</span>
       </div>
       <p className="target-summary">{lvl.summary}</p>
       <p className="target-learn"><span className="label">learn</span>{lvl.learn}</p>
@@ -176,26 +186,48 @@ export default function App() {
   const core = levels?.filter((l) => l.tier === 'core') ?? [];
   const advanced = levels?.filter((l) => l.tier === 'advanced') ?? [];
   const selectedLevel = levels?.find((l) => l.number === selected) ?? null;
+  const available = levels?.filter((l) => l.available).length ?? 0;
+
+  const status = error ? 'offline' : levels ? 'online' : 'connecting';
+  const statusLabel = error ? 'api offline' : levels ? 'api online' : 'connecting';
 
   return (
     <div className="app">
-      <header className="titlebar">
+      <header className="topbar">
         <div className="brand">
-          <span className="brand-name">BreakBox</span>
-          <span className="brand-sub">// reverse-engineering lab</span>
+          <Logo />
+          <span className="brand-text">
+            <span className="brand-name">BreakBox</span>
+            <span className="brand-sub">reverse-engineering lab</span>
+          </span>
         </div>
-        <span className="sig" title="author signature (MAH6)">0x4D414836</span>
+        <div className="topbar-right">
+          <span className={`status status-${status}`}><span className="dot" />{statusLabel}</span>
+          <span className="sig" title="author signature (MAH6)">0x4D414836</span>
+        </div>
       </header>
 
-      <div className="meta">
-        <span>ladder: {levels ? levels.length : 0} levels</span>
-        <span className="sep">/</span>
-        <span>engine: roslyn (fresh .exe per download)</span>
-        <span className="sep">/</span>
-        <span>targets: my own only</span>
-        <span className="spacer" />
-        <span>pick a level, install the runtime once, take it apart</span>
-      </div>
+      <section className="hero">
+        <h1 className="hero-title">Climb the reverse-engineering <span className="accent">ladder</span>.</h1>
+        <p className="hero-sub">
+          Every level generates a fresh target you download and take apart, from a key you can read
+          straight out to protection you have to defeat. All of them are yours, and legal to break.
+        </p>
+        <div className="hero-stats">
+          <div className="stat">
+            <span className="stat-num">{levels ? levels.length : '–'}</span>
+            <span className="stat-lbl">levels</span>
+          </div>
+          <div className="stat">
+            <span className="stat-num">{levels ? available : '–'}</span>
+            <span className="stat-lbl">playable now</span>
+          </div>
+          <div className="stat">
+            <span className="stat-num is-word">roslyn</span>
+            <span className="stat-lbl">fresh target each time</span>
+          </div>
+        </div>
+      </section>
 
       <main className="content">
         {error && (

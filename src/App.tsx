@@ -10,6 +10,16 @@ const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';
 // Show the level number as an address, like a row in a disassembler (0x01, 0x02, ...).
 const addr = (n: number) => '0x' + n.toString(16).toUpperCase().padStart(2, '0');
 
+// A small "break box" mark: a box outline with a bolt through it.
+function Logo() {
+  return (
+    <svg className="logo" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="4.5" y="4.5" width="23" height="23" rx="6" fill="none" stroke="#375c82" strokeWidth="2" />
+      <path d="M18 5.5 L10 17.5 L15.5 16 L14 26.5 L22 14 L16.5 15.5 Z" fill="#77b8d1" />
+    </svg>
+  );
+}
+
 // The one decisive step per built level: how you actually find the key. Kept short and specific to
 // the real app, so the guide teaches the move rather than just saying "reverse it". Only the built
 // levels have a target; the rest are on the ladder as a preview of later sprints.
@@ -63,7 +73,7 @@ function LevelCard({ lvl, active, onSelect }: { lvl: Level; active: boolean; onS
         <span className={`tag tag-${lvl.difficulty.toLowerCase()}`}>{lvl.difficulty}</span>
         {!lvl.available && <span className="tag tag-locked">LOCKED</span>}
         <span className="spacer" />
-        <span className="pick">{active ? 'selected' : lvl.available ? 'open ▸' : 'preview ▸'}</span>
+        <span className="pick">{active ? 'selected' : lvl.available ? 'open ›' : 'preview ›'}</span>
       </div>
       <p className="target-summary">{lvl.summary}</p>
       <p className="target-learn"><span className="label">learn</span>{lvl.learn}</p>
@@ -176,26 +186,40 @@ export default function App() {
   const core = levels?.filter((l) => l.tier === 'core') ?? [];
   const advanced = levels?.filter((l) => l.tier === 'advanced') ?? [];
   const selectedLevel = levels?.find((l) => l.number === selected) ?? null;
+  const available = levels?.filter((l) => l.available).length ?? 0;
+
+  const status = error ? 'offline' : levels ? 'online' : 'connecting';
+  const statusLabel = error ? 'api offline' : levels ? 'api online' : 'connecting';
 
   return (
     <div className="app">
-      <header className="titlebar">
+      <header className="topbar">
         <div className="brand">
-          <span className="brand-name">BreakBox</span>
-          <span className="brand-sub">// reverse-engineering lab</span>
+          <Logo />
+          <span className="brand-text">
+            <span className="brand-name">BreakBox</span>
+            <span className="brand-sub">reverse-engineering lab</span>
+          </span>
         </div>
-        <span className="sig" title="author signature (MAH6)">0x4D414836</span>
+        <div className="topbar-right">
+          <span className={`status status-${status}`}><span className="dot" />{statusLabel}</span>
+          <span className="sig" title="author signature (MAH6)">0x4D414836</span>
+        </div>
       </header>
 
       <div className="meta">
-        <span>ladder: {levels ? levels.length : 0} levels</span>
+        <span><b>{levels ? levels.length : 9}</b> levels</span>
         <span className="sep">/</span>
-        <span>engine: roslyn (fresh .exe per download)</span>
+        <span><b>{levels ? available : 2}</b> playable now</span>
         <span className="sep">/</span>
-        <span>targets: my own only</span>
-        <span className="spacer" />
-        <span>pick a level, install the runtime once, take it apart</span>
+        <span>roslyn builds a fresh target each download</span>
+        <span className="sep">/</span>
+        <span>my own targets only</span>
       </div>
+      <p className="tagline">
+        Pick a level, install the runtime once, and take the target apart. Every one is generated just
+        for you, and legal to break.
+      </p>
 
       <main className="content">
         {error && (
@@ -206,25 +230,29 @@ export default function App() {
         {!levels && !error && <div className="banner">loading levels...</div>}
 
         {levels && (
-          <div className="workspace">
-            <div className="ladder">
-              <h2 className="section">core</h2>
-              <ol className="targets">
-                {core.map((l) => (
-                  <LevelCard key={l.number} lvl={l} active={l.number === selected} onSelect={setSelected} />
-                ))}
-              </ol>
+          <>
+            <div className="worktop">
+              <section className="ladder-core">
+                <h2 className="section">core</h2>
+                <ol className="targets targets-core">
+                  {core.map((l) => (
+                    <LevelCard key={l.number} lvl={l} active={l.number === selected} onSelect={setSelected} />
+                  ))}
+                </ol>
+              </section>
 
+              <Guide level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} />
+            </div>
+
+            <section className="ladder-adv">
               <h2 className="section">advanced <span className="dim">later sprints</span></h2>
-              <ol className="targets">
+              <ol className="targets targets-adv">
                 {advanced.map((l) => (
                   <LevelCard key={l.number} lvl={l} active={l.number === selected} onSelect={setSelected} />
                 ))}
               </ol>
-            </div>
-
-            <Guide level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} />
-          </div>
+            </section>
+          </>
         )}
       </main>
 

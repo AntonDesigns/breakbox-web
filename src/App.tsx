@@ -14,8 +14,8 @@ const addr = (n: number) => '0x' + n.toString(16).toUpperCase().padStart(2, '0')
 function Logo() {
   return (
     <svg className="logo" viewBox="0 0 32 32" aria-hidden="true">
-      <rect x="4.5" y="4.5" width="23" height="23" rx="6" fill="none" stroke="#2a333e" strokeWidth="2" />
-      <path d="M18 5.5 L10 17.5 L15.5 16 L14 26.5 L22 14 L16.5 15.5 Z" fill="#3ee0a0" />
+      <rect x="4.5" y="4.5" width="23" height="23" rx="6" fill="none" stroke="#375c82" strokeWidth="2" />
+      <path d="M18 5.5 L10 17.5 L15.5 16 L14 26.5 L22 14 L16.5 15.5 Z" fill="#77b8d1" />
     </svg>
   );
 }
@@ -207,27 +207,19 @@ export default function App() {
         </div>
       </header>
 
-      <section className="hero">
-        <h1 className="hero-title">Climb the reverse-engineering <span className="accent">ladder</span>.</h1>
-        <p className="hero-sub">
-          Every level generates a fresh target you download and take apart, from a key you can read
-          straight out to protection you have to defeat. All of them are yours, and legal to break.
-        </p>
-        <div className="hero-stats">
-          <div className="stat">
-            <span className="stat-num">{levels ? levels.length : '–'}</span>
-            <span className="stat-lbl">levels</span>
-          </div>
-          <div className="stat">
-            <span className="stat-num">{levels ? available : '–'}</span>
-            <span className="stat-lbl">playable now</span>
-          </div>
-          <div className="stat">
-            <span className="stat-num is-word">roslyn</span>
-            <span className="stat-lbl">fresh target each time</span>
-          </div>
-        </div>
-      </section>
+      <div className="meta">
+        <span><b>{levels ? levels.length : 9}</b> levels</span>
+        <span className="sep">/</span>
+        <span><b>{levels ? available : 2}</b> playable now</span>
+        <span className="sep">/</span>
+        <span>roslyn builds a fresh target each download</span>
+        <span className="sep">/</span>
+        <span>my own targets only</span>
+      </div>
+      <p className="tagline">
+        Pick a level, install the runtime once, and take the target apart. Every one is generated just
+        for you, and legal to break.
+      </p>
 
       <main className="content">
         {error && (
@@ -238,25 +230,29 @@ export default function App() {
         {!levels && !error && <div className="banner">loading levels...</div>}
 
         {levels && (
-          <div className="workspace">
-            <div className="ladder">
-              <h2 className="section">core</h2>
-              <ol className="targets">
-                {core.map((l) => (
-                  <LevelCard key={l.number} lvl={l} active={l.number === selected} onSelect={setSelected} />
-                ))}
-              </ol>
+          <>
+            <div className="worktop">
+              <section className="ladder-core">
+                <h2 className="section">core</h2>
+                <ol className="targets targets-core">
+                  {core.map((l) => (
+                    <LevelCard key={l.number} lvl={l} active={l.number === selected} onSelect={setSelected} />
+                  ))}
+                </ol>
+              </section>
 
+              <Guide level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} />
+            </div>
+
+            <section className="ladder-adv">
               <h2 className="section">advanced <span className="dim">later sprints</span></h2>
-              <ol className="targets">
+              <ol className="targets targets-adv">
                 {advanced.map((l) => (
                   <LevelCard key={l.number} lvl={l} active={l.number === selected} onSelect={setSelected} />
                 ))}
               </ol>
-            </div>
-
-            <Guide level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} />
-          </div>
+            </section>
+          </>
         )}
       </main>
 

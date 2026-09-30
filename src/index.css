@@ -403,6 +403,47 @@ code {
   font-size: 0.68rem;
 }
 
+/* ---------- crack arcade: claim the flag ---------- */
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.tag-solved { color: var(--cyan); border-color: var(--cyan-line); background: var(--cyan-soft); }
+.target.is-solved { box-shadow: inset 2px 0 0 var(--cyan); }
+
+.arcade { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; padding-top: 14px; border-top: 1px dashed var(--edge-2); }
+.arcade-label { font-family: var(--mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.13em; color: var(--ink-3); }
+.arcade-row { display: flex; gap: 8px; }
+.arcade-input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--ink);
+  background: var(--ground-2);
+  border: 1px solid var(--edge-2);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.arcade-input::placeholder { color: var(--ink-3); }
+.arcade-input:focus { outline: none; border-color: var(--cyan-line); }
+.arcade-submit { flex: none; }
+.arcade-wrong { font-family: var(--mono); font-size: 0.74rem; color: var(--expert); }
+.arcade-done {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 12px 14px;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--cyan);
+  background: var(--cyan-soft);
+  border: 1px solid var(--cyan-line);
+  border-radius: 6px;
+  animation: solvePop 0.3s ease;
+}
+.arcade-check { font-size: 1.05rem; }
+@keyframes solvePop { from { transform: scale(0.96); opacity: 0.35; } to { transform: none; opacity: 1; } }
+
 @keyframes xrayFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes xrayIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 

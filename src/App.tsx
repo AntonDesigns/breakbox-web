@@ -1,8 +1,31 @@
 // BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
-import { useEffect, useState, type ReactNode } from 'react';
-import { fetchLevels, fetchXray, generateUrl, type Level, type Xray } from './api';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { downloadTarget, fetchLevels, fetchXray, sha256Hex, type Level, type Xray } from './api';
+
+// Which levels I have solved, kept per browser so the ladder remembers between visits.
+function useSolved(): { solved: Set<number>; markSolved: (n: number) => void } {
+  const [solved, setSolved] = useState<Set<number>>(() => {
+    try { return new Set<number>(JSON.parse(localStorage.getItem('bb_solved') || '[]')); } catch { return new Set(); }
+  });
+  const markSolved = (n: number) => setSolved((prev) => {
+    const next = new Set(prev); next.add(n);
+    try { localStorage.setItem('bb_solved', JSON.stringify([...next])); } catch { /* storage unavailable */ }
+    return next;
+  });
+  return { solved, markSolved };
+}
+
+// The flag hash the server sent with the most recent download of a level, kept so the arcade can
+// still check a flag after a reload. It is a hash, so it never reveals the flag.
+const flagHashKey = (n: number) => `bb_flaghash_${n}`;
+const getFlagHash = (n: number): string | null => {
+  try { return localStorage.getItem(flagHashKey(n)); } catch { return null; }
+};
+const setFlagHash = (n: number, h: string | null) => {
+  try { if (h) localStorage.setItem(flagHashKey(n), h); } catch { /* storage unavailable */ }
+};
 
 // The .NET 9 Desktop Runtime, which the level apps need to run. Installed once, then every level runs.
 const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';
@@ -52,8 +75,8 @@ function usePersistentBool(key: string): [boolean, (v: boolean) => void] {
   return [value, set];
 }
 
-function LevelCard({ lvl, active, onSelect }: { lvl: Level; active: boolean; onSelect: (n: number) => void }) {
-  const className = ['target', lvl.available ? '' : 'is-locked', active ? 'is-active' : '']
+function LevelCard({ lvl, active, solved, onSelect }: { lvl: Level; active: boolean; solved: boolean; onSelect: (n: number) => void }) {
+  const className = ['target', lvl.available ? '' : 'is-locked', active ? 'is-active' : '', solved ? 'is-solved' : '']
     .filter(Boolean)
     .join(' ');
   return (
@@ -72,6 +95,7 @@ function LevelCard({ lvl, active, onSelect }: { lvl: Level; active: boolean; onS
         <span className="target-name">{lvl.name}</span>
         <span className={`tag tag-${lvl.difficulty.toLowerCase()}`}>{lvl.difficulty}</span>
         {!lvl.available && <span className="tag tag-locked">LOCKED</span>}
+        {solved && <span className="tag tag-solved" title="you solved this">&#10003; solved</span>}
         <span className="spacer" />
         <span className="pick">{active ? 'selected' : lvl.available ? 'open ›' : 'preview ›'}</span>
       </div>
@@ -165,12 +189,48 @@ function XrayModal({ level, onClose }: { level: Level; onClose: () => void }) {
   );
 }
 
-function Guide({ level, prereqDone, setPrereqDone, onXray }: {
+function Guide({ level, prereqDone, setPrereqDone, onXray, solved, onSolved }: {
   level: Level | null;
   prereqDone: boolean;
   setPrereqDone: (v: boolean) => void;
   onXray: (n: number) => void;
+  solved: Set<number>;
+  onSolved: (n: number) => void;
 }) {
+  const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+  const [flag, setFlag] = useState('');
+  const [wrong, setWrong] = useState<string | null>(null);
+
+  // Reset the arcade whenever the selected level changes; remember if this level was downloaded before.
+  useEffect(() => {
+    setDownloading(false); setFlag(''); setWrong(null);
+    setDownloaded(level ? !!getFlagHash(level.number) : false);
+  }, [level?.number]);
+
+  const isSolved = !!level && solved.has(level.number);
+
+  const download = async () => {
+    if (!level) return;
+    setDownloading(true);
+    try {
+      const hash = await downloadTarget(level.number);
+      setFlagHash(level.number, hash);
+      setDownloaded(true);
+    } catch { setWrong('download failed. is the backend running?'); }
+    finally { setDownloading(false); }
+  };
+
+  const submitFlag = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!level) return;
+    const stored = getFlagHash(level.number);
+    if (!stored) { setWrong('download the target first, then crack it.'); return; }
+    const typed = await sha256Hex(flag.trim());
+    if (typed === stored) { onSolved(level.number); setWrong(null); }
+    else { setWrong('not the flag for your download. keep going.'); }
+  };
+
   return (
     <aside className="guide" aria-label="run guide">
       <div className="guide-title">
@@ -203,6 +263,7 @@ function Guide({ level, prereqDone, setPrereqDone, onXray }: {
           <div className="guide-level">
             <span className="name">{level.name}</span>
             <span className={`tag tag-${level.difficulty.toLowerCase()}`}>{level.difficulty}</span>
+            {isSolved && <span className="tag tag-solved">&#10003; solved</span>}
           </div>
           <p className="guide-obj">{level.summary}</p>
 
@@ -213,31 +274,53 @@ function Guide({ level, prereqDone, setPrereqDone, onXray }: {
           )}
 
           {level.available ? (
-            <ol className="steps">
-              <li>
-                <div className="step-body">
-                  Download the target.
-                  <div>
-                    <a className="btn btn-dl" href={generateUrl(level.number)}>
-                      download {level.name} (.zip)
-                    </a>
+            <>
+              <ol className="steps">
+                <li>
+                  <div className="step-body">
+                    Download the target.
+                    <div>
+                      <button className="btn btn-dl" onClick={download} disabled={downloading}>
+                        {downloading ? 'downloading...' : downloaded ? `download ${level.name} again` : `download ${level.name} (.zip)`}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </li>
-              <li><div className="step-body">Unzip it to its own folder.</div></li>
-              <li>
-                <div className="step-body">
-                  Double-click <code>Level{level.number}.exe</code> to run it.{' '}
-                  <span className="step-note">(needs the runtime above)</span>
-                </div>
-              </li>
-              <li><div className="step-body">{findStep[level.number]}</div></li>
-              <li>
-                <div className="step-body">
-                  Enter it in the app. The feature unlocks and it shows the flag <code>{'BR{…}'}</code>.
-                </div>
-              </li>
-            </ol>
+                </li>
+                <li><div className="step-body">Unzip it to its own folder.</div></li>
+                <li>
+                  <div className="step-body">
+                    Double-click <code>Level{level.number}.exe</code> to run it.{' '}
+                    <span className="step-note">(needs the runtime above)</span>
+                  </div>
+                </li>
+                <li><div className="step-body">{findStep[level.number]}</div></li>
+                <li>
+                  <div className="step-body">
+                    Enter it in the app. The feature unlocks and it shows the flag <code>{'BR{…}'}</code>.
+                  </div>
+                </li>
+              </ol>
+
+              {isSolved ? (
+                <div className="arcade-done"><span className="arcade-check">&#10003;</span> solved. flag accepted for your download.</div>
+              ) : (
+                <form className="arcade" onSubmit={submitFlag}>
+                  <div className="arcade-label">found the flag? claim it</div>
+                  <div className="arcade-row">
+                    <input
+                      className="arcade-input"
+                      value={flag}
+                      spellCheck={false}
+                      placeholder={'BR{....}'}
+                      aria-label="flag"
+                      onChange={(e) => { setFlag(e.target.value); setWrong(null); }}
+                    />
+                    <button className="btn arcade-submit" type="submit" disabled={!flag.trim()}>check</button>
+                  </div>
+                  {wrong && <div className="arcade-wrong">{wrong}</div>}
+                </form>
+              )}
+            </>
           ) : (
             <p className="guide-obj">
               Planned for a later sprint. It is on the ladder so you can see where this is going, but
@@ -256,6 +339,7 @@ export default function App() {
   const [selected, setSelected] = useState<number | null>(null);
   const [xrayLevel, setXrayLevel] = useState<number | null>(null);
   const [prereqDone, setPrereqDone] = usePersistentBool('bb_prereq_done');
+  const { solved, markSolved } = useSolved();
 
   useEffect(() => {
     fetchLevels()
@@ -300,6 +384,7 @@ export default function App() {
         <span><b>{levels ? levels.length : 9}</b> levels</span>
         <span className="sep">/</span>
         <span><b>{levels ? available : 2}</b> playable now</span>
+        {solved.size > 0 && (<><span className="sep">/</span><span><b>{solved.size}</b> solved</span></>)}
         <span className="sep">/</span>
         <span>roslyn builds a fresh target each download</span>
         <span className="sep">/</span>
@@ -325,19 +410,19 @@ export default function App() {
                 <h2 className="section">core</h2>
                 <ol className="targets targets-core">
                   {core.map((l) => (
-                    <LevelCard key={l.number} lvl={l} active={l.number === selected} onSelect={setSelected} />
+                    <LevelCard key={l.number} lvl={l} active={l.number === selected} solved={solved.has(l.number)} onSelect={setSelected} />
                   ))}
                 </ol>
               </section>
 
-              <Guide level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} onXray={setXrayLevel} />
+              <Guide level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} onXray={setXrayLevel} solved={solved} onSolved={markSolved} />
             </div>
 
             <section className="ladder-adv">
               <h2 className="section">advanced <span className="dim">later sprints</span></h2>
               <ol className="targets targets-adv">
                 {advanced.map((l) => (
-                  <LevelCard key={l.number} lvl={l} active={l.number === selected} onSelect={setSelected} />
+                  <LevelCard key={l.number} lvl={l} active={l.number === selected} solved={solved.has(l.number)} onSelect={setSelected} />
                 ))}
               </ol>
             </section>

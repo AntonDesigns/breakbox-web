@@ -50,3 +50,28 @@ export async function fetchXray(level: number): Promise<Xray> {
   if (!res.ok) throw new Error(`inspect request failed: ${res.status}`);
   return res.json() as Promise<Xray>;
 }
+
+// SHA-256 of a string as hex, via the browser's Web Crypto. I compare the hash of a submitted flag
+// against the hash the server sent with the download, so the flag is never checked in the clear.
+export async function sha256Hex(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Downloads the target and returns the flag hash the server sent for THIS exact download, so the
+// arcade can later confirm a submitted flag against the target you actually took apart.
+export async function downloadTarget(level: number): Promise<string | null> {
+  const res = await fetch(generateUrl(level));
+  if (!res.ok) throw new Error(`download failed: ${res.status}`);
+  const hash = res.headers.get('X-Flag-Hash');
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `challenge_${level}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  return hash;
+}

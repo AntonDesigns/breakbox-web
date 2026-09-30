@@ -2,7 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { fetchLevels, generateUrl, type Level } from './api';
+import { fetchLevels, fetchXray, generateUrl, type Level, type Xray } from './api';
 
 // The .NET 9 Desktop Runtime, which the level apps need to run. Installed once, then every level runs.
 const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';
@@ -85,10 +85,91 @@ function LevelCard({ lvl, active, onSelect }: { lvl: Level; active: boolean; onS
   );
 }
 
-function Guide({ level, prereqDone, setPrereqDone }: {
+// The "look inside" X-ray: a live view of what a decompiler sees in a freshly generated target. It
+// teaches the level before you even download it. Level 1 shows a hidden key string; Level 2 shows no
+// answer at all, because the serial is computed, which is the whole point of the jump between them.
+function XrayModal({ level, onClose }: { level: Level; onClose: () => void }) {
+  const [xray, setXray] = useState<Xray | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setXray(null); setErr(null); setRevealed(false);
+    fetchXray(level.number).then((x) => alive && setXray(x)).catch((e: unknown) => alive && setErr(String(e)));
+    return () => { alive = false; };
+  }, [level.number]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const hasSensitive = !!xray?.strings.some((s) => s.sensitive);
+
+  return (
+    <div className="xray-backdrop" onClick={onClose}>
+      <div className="xray" role="dialog" aria-modal="true" aria-label={`inside ${level.name}`} onClick={(e) => e.stopPropagation()}>
+        <div className="xray-head">
+          <div className="xray-headline">
+            <span className="addr">{addr(level.number)}</span>
+            <span className="xray-title">inside {xray?.assembly ?? `Level${level.number}.dll`}</span>
+          </div>
+          <button className="xray-close" onClick={onClose} aria-label="close">&#10005;</button>
+        </div>
+
+        {!xray && !err && <div className="xray-msg">reading the binary...</div>}
+        {err && <div className="xray-msg xray-err">could not read the target. is the backend on? ({err})</div>}
+
+        {xray && (
+          <>
+            <p className="xray-note">{xray.note}</p>
+            <div className="xray-grid">
+              <div className="xray-col">
+                <h4 className="xray-h">methods<span className="xray-count">{xray.methods.length}</span></h4>
+                <ul className="xray-methods">
+                  {xray.methods.map((m, i) => (
+                    <li key={i} className={m.likelyCheck ? 'is-check' : ''}>
+                      <span className="m-type">{m.type}</span><span className="m-dot">.</span>
+                      <span className="m-name">{m.name}</span>
+                      {m.likelyCheck && <span className="m-flag">check</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="xray-col">
+                <h4 className="xray-h">
+                  strings<span className="xray-count">{xray.strings.length}</span>
+                  {hasSensitive && (
+                    <button className="xray-reveal" onClick={() => setRevealed((r) => !r)}>
+                      {revealed ? 'hide answer' : 'reveal answer'}
+                    </button>
+                  )}
+                </h4>
+                <ul className="xray-strings">
+                  {xray.strings.map((s, i) => (
+                    <li key={i} className={s.sensitive ? 'is-sensitive' : ''}>
+                      <span className={`s-val${s.sensitive && !revealed ? ' blurred' : ''}`}>{s.value}</span>
+                      <span className="s-in">{s.method}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="xray-foot">read only, generated fresh. this is what a decompiler shows before you run it.</div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Guide({ level, prereqDone, setPrereqDone, onXray }: {
   level: Level | null;
   prereqDone: boolean;
   setPrereqDone: (v: boolean) => void;
+  onXray: (n: number) => void;
 }) {
   return (
     <aside className="guide" aria-label="run guide">
@@ -124,6 +205,12 @@ function Guide({ level, prereqDone, setPrereqDone }: {
             <span className={`tag tag-${level.difficulty.toLowerCase()}`}>{level.difficulty}</span>
           </div>
           <p className="guide-obj">{level.summary}</p>
+
+          {level.available && (
+            <button className="btn-xray" onClick={() => onXray(level.number)}>
+              <span className="xray-icon" aria-hidden="true">&#9906;</span> look inside the binary
+            </button>
+          )}
 
           {level.available ? (
             <ol className="steps">
@@ -167,6 +254,7 @@ export default function App() {
   const [levels, setLevels] = useState<Level[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
+  const [xrayLevel, setXrayLevel] = useState<number | null>(null);
   const [prereqDone, setPrereqDone] = usePersistentBool('bb_prereq_done');
 
   useEffect(() => {
@@ -186,6 +274,7 @@ export default function App() {
   const core = levels?.filter((l) => l.tier === 'core') ?? [];
   const advanced = levels?.filter((l) => l.tier === 'advanced') ?? [];
   const selectedLevel = levels?.find((l) => l.number === selected) ?? null;
+  const xrayLevelObj = levels?.find((l) => l.number === xrayLevel) ?? null;
   const available = levels?.filter((l) => l.available).length ?? 0;
 
   const status = error ? 'offline' : levels ? 'online' : 'connecting';
@@ -241,7 +330,7 @@ export default function App() {
                 </ol>
               </section>
 
-              <Guide level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} />
+              <Guide level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} onXray={setXrayLevel} />
             </div>
 
             <section className="ladder-adv">
@@ -265,6 +354,8 @@ export default function App() {
         <span className="spacer" />
         <span>own generated targets only / authorized use</span>
       </footer>
+
+      {xrayLevelObj && <XrayModal level={xrayLevelObj} onClose={() => setXrayLevel(null)} />}
     </div>
   );
 }

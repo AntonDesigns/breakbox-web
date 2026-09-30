@@ -30,3 +30,23 @@ export async function fetchLevels(): Promise<Level[]> {
 export function generateUrl(level: number): string {
   return `${API_BASE}/generate/${level}`;
 }
+
+// The "look inside" X-ray: what a decompiler sees in a freshly generated target. Read only, no
+// executable is sent. A sensitive string is one that gives the answer away, which the UI hides.
+export interface XrayMethod { type: string; name: string; likelyCheck: boolean; }
+export interface XrayString { value: string; method: string; sensitive: boolean; }
+export interface Xray {
+  level: number;
+  name: string;
+  assembly: string;
+  methods: XrayMethod[];
+  strings: XrayString[];
+  likelyChecks: string[];
+  note: string;
+}
+
+export async function fetchXray(level: number): Promise<Xray> {
+  const res = await fetch(`${API_BASE}/inspect/${level}`);
+  if (!res.ok) throw new Error(`inspect request failed: ${res.status}`);
+  return res.json() as Promise<Xray>;
+}

@@ -228,11 +228,15 @@ code {
 .statusbar .sep { color: var(--edge-2); }
 .statusbar .spacer { flex: 1; }
 
+/* ---------- download button states ---------- */
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.step-fail { margin-top: 8px; font-family: var(--mono); font-size: 0.74rem; color: var(--expert); }
+
 @media (max-width: 560px) {
   .target-top { flex-wrap: wrap; row-gap: 6px; }
   .pick { display: none; }
   .app { padding: 0 16px 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
+  * { transition: none !important; animation: none !important; }
 }

@@ -2,7 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { fetchLevels, generateUrl, type Level } from './api';
+import { downloadTarget, fetchLevels, type Level } from './api';
 
 // The .NET 9 Desktop Runtime, which the level apps need to run. Installed once, then every level runs.
 const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';
@@ -90,6 +90,25 @@ function Guide({ level, prereqDone, setPrereqDone }: {
   prereqDone: boolean;
   setPrereqDone: (v: boolean) => void;
 }) {
+  const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  // Reset the download state whenever the selected level changes.
+  useEffect(() => {
+    setDownloading(false); setDownloaded(false); setFailed(false);
+  }, [level?.number]);
+
+  const download = async () => {
+    if (!level) return;
+    setDownloading(true); setFailed(false);
+    try {
+      await downloadTarget(level.number);
+      setDownloaded(true);
+    } catch { setFailed(true); }
+    finally { setDownloading(false); }
+  };
+
   return (
     <aside className="guide" aria-label="run guide">
       <div className="guide-title">
@@ -115,7 +134,7 @@ function Guide({ level, prereqDone, setPrereqDone }: {
         </label>
       </div>
 
-      {!level && <p className="guide-obj">Pick a level on the left to see how to run and crack it.</p>}
+      {!level && <p className="guide-obj">Pick a level on the left to download it and see how to run it.</p>}
 
       {level && (
         <>
@@ -131,10 +150,11 @@ function Guide({ level, prereqDone, setPrereqDone }: {
                 <div className="step-body">
                   Download the target.
                   <div>
-                    <a className="btn btn-dl" href={generateUrl(level.number)}>
-                      download {level.name} (.zip)
-                    </a>
+                    <button className="btn btn-dl" onClick={download} disabled={downloading}>
+                      {downloading ? 'downloading...' : downloaded ? `download ${level.name} again` : `download ${level.name} (.zip)`}
+                    </button>
                   </div>
+                  {failed && <div className="step-fail">download failed. is the backend running on localhost:5080?</div>}
                 </div>
               </li>
               <li><div className="step-body">Unzip it to its own folder.</div></li>
@@ -217,8 +237,8 @@ export default function App() {
         <span>my own targets only</span>
       </div>
       <p className="tagline">
-        Pick a level, install the runtime once, and take the target apart. Every one is generated just
-        for you, and legal to break.
+        Pick a level, install the runtime once, and download the target to take apart in your own tools.
+        Every one is generated just for you, and legal to break.
       </p>
 
       <main className="content">

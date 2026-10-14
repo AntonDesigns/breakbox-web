@@ -30,3 +30,19 @@ export async function fetchLevels(): Promise<Level[]> {
 export function generateUrl(level: number): string {
   return `${API_BASE}/generate/${level}`;
 }
+
+// Downloads the target zip. I fetch the bytes and save them with a blob link so a failed request
+// (backend down) surfaces as an error the guide can show, rather than a browser error page.
+export async function downloadTarget(level: number): Promise<void> {
+  const res = await fetch(generateUrl(level));
+  if (!res.ok) throw new Error(`download failed: ${res.status}`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `challenge_${level}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}

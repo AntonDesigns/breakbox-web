@@ -84,7 +84,7 @@ code {
   border: 1px solid var(--edge);
   border-radius: 4px;
   padding: 1px 5px;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* ---------- header (title block) ---------- */
@@ -149,16 +149,24 @@ code {
 .targets-adv { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 @media (max-width: 560px) { .targets-core { grid-template-columns: 1fr; } }
 
+/* the card is a native <button> inside a plain <li>, so it stretches to fill its grid cell */
+.target-item { display: flex; }
 .target {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
   padding: 16px;
   border: 1px solid var(--edge);
   border-radius: var(--radius);
   background: var(--sheet);
   cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .target:hover { border-color: var(--edge-2); background: var(--sheet-2); }

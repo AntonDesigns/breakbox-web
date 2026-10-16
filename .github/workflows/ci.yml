@@ -45,10 +45,11 @@ jobs:
   # repos. This gives the frontend the same maintainability / reliability / security-hotspot analysis
   # the backend gets, so every repo is scanned the same way.
   #
-  # IMPORTANT: the launcher has no tests yet, so coverage is 0%. SonarCloud's default "Sonar way" gate
-  # requires coverage on new code, which would be a permanent false red here. So on THIS project's gate
-  # (SonarCloud > the project > Quality Gate) use a gate WITHOUT the coverage condition, or add vitest
-  # tests later and report lcov. Until then this is a quality + security SCAN, not a coverage gate.
+  # The launcher has no tests yet, so coverage is 0%. The default gate requires coverage on new code,
+  # which would be a permanent false red for a thin presentational launcher. sonar.coverage.exclusions
+  # below tells Sonar the launcher is not coverage-tracked, so the gate judges it on quality, reliability
+  # and security instead of coverage. Add vitest tests and drop that exclusion if you want a real
+  # coverage gate here later.
   #
   # Gated until configured, same as the other repos. To turn it on, in repo Settings:
   #   Variables: SONAR_ENABLED=true, SONAR_ORG=<sonarcloud org key>, SONAR_PROJECT_KEY=<this repo's key>
@@ -76,4 +77,5 @@ jobs:
             -Dsonar.organization=${{ vars.SONAR_ORG }}
             -Dsonar.sources=src
             -Dsonar.exclusions=dist/**,node_modules/**,public/**,**/*.config.*
+            -Dsonar.coverage.exclusions=src/**
 

@@ -25,8 +25,8 @@ export function Monitor({ onClose }: Readonly<{ onClose: () => void }>) {
   }, []);
 
   useEffect(() => {
-    load();
-    const timer = setInterval(load, 4000);   // live-ish without a websocket
+    void load();
+    const timer = setInterval(() => { void load(); }, 4000);   // live-ish without a websocket
     return () => clearInterval(timer);
   }, [load]);
 

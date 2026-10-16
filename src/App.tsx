@@ -3,6 +3,9 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { downloadTarget, fetchLevels, type Level } from './api';
+import { getMe, logout, type Me } from './auth';
+import { AuthPanel } from './AuthPanel';
+import { Monitor } from './Monitor';
 
 // The .NET 9 Desktop Runtime, which the level apps need to run. Installed once, then every level runs.
 const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';
@@ -194,12 +197,26 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [prereqDone, setPrereqDone] = usePersistentBool('bb_prereq_done');
+  // me: undefined while the session check is in flight, null when signed out, the user when signed in.
+  const [me, setMe] = useState<Me | null | undefined>(undefined);
+  const [view, setView] = useState<'launcher' | 'auth' | 'monitor'>('launcher');
 
   useEffect(() => {
     fetchLevels()
       .then(setLevels)
       .catch((e: unknown) => setError(String(e)));
   }, []);
+
+  // Resolve the current session once on load (the server answers from the HttpOnly cookie).
+  useEffect(() => {
+    getMe().then(setMe).catch(() => setMe(null));
+  }, []);
+
+  const signOut = async () => {
+    await logout();
+    setMe(null);
+    setView('launcher');
+  };
 
   // Open on the first level you can actually download, so the guide is populated at rest.
   useEffect(() => {
@@ -232,6 +249,16 @@ export default function App() {
         </div>
         <div className="topbar-right">
           <span className={`status status-${status}`}><span className="dot" />{statusLabel}</span>
+          {me === null && (
+            <button type="button" className="authbtn" onClick={() => setView('auth')}>sign in</button>
+          )}
+          {me && (
+            <span className="whoami">
+              <button type="button" className="authbtn" onClick={() => setView('monitor')}>monitor</button>
+              <span className="user">{me.username} <span className="role">{me.role}</span></span>
+              <button type="button" className="authbtn ghost" onClick={signOut}>sign out</button>
+            </span>
+          )}
           <span className="sig" title="author signature (MAH6)">0x4D414836</span>
         </div>
       </header>
@@ -251,6 +278,12 @@ export default function App() {
       </p>
 
       <main className="content">
+        {view === 'auth' && (
+          <AuthPanel onAuthed={(m) => { setMe(m); setView('monitor'); }} onCancel={() => setView('launcher')} />
+        )}
+        {view === 'monitor' && <Monitor onClose={() => setView('launcher')} />}
+
+        {view === 'launcher' && (<>
         {error && (
           <div className="banner banner-error">
             api unreachable at http://localhost:5080. is the backend running? ({error})
@@ -283,6 +316,7 @@ export default function App() {
             </section>
           </>
         )}
+        </>)}
       </main>
 
       <footer className="statusbar">

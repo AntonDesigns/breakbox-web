@@ -2,7 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchEvents, type AuditEvent } from './auth';
+import { fetchEvents, runAttack, type AuditEvent } from './auth';
 
 // The window into the system: it reads the audit log so I can actually SEE what is happening, not
 // guess. It refreshes every few seconds, so a login, a sign-out, a wrong password (and later a
@@ -12,6 +12,7 @@ export function Monitor({ onClose }: Readonly<{ onClose: () => void }>) {
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [scope, setScope] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [attacking, setAttacking] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -30,12 +31,31 @@ export function Monitor({ onClose }: Readonly<{ onClose: () => void }>) {
     return () => clearInterval(timer);
   }, [load]);
 
+  // Fire the dev-only attack harness, then refresh so the blocked attempts appear in the feed.
+  const runDemo = async () => {
+    setAttacking(true);
+    try {
+      const res = await runAttack();
+      if (!res.ok) throw new Error(res.status === 404 ? 'the attack harness is dev-only' : `attack demo failed (${res.status})`);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'request failed');
+    } finally {
+      setAttacking(false);
+    }
+  };
+
   return (
     <section className="monitor">
       <div className="monitor-head">
         <h2 className="section">monitor <span className="dim">{scope === 'all' ? 'all events · admin' : 'your activity'}</span></h2>
         <div className="monitor-tools">
-          <button type="button" className="ghost" onClick={load}>refresh</button>
+          {scope === 'all' && (
+            <button type="button" className="attack-btn" onClick={() => { void runDemo(); }} disabled={attacking}>
+              {attacking ? 'running...' : 'run attack demo'}
+            </button>
+          )}
+          <button type="button" className="ghost" onClick={() => { void load(); }}>refresh</button>
           <button type="button" className="ghost" onClick={onClose}>back to launcher</button>
         </div>
       </div>

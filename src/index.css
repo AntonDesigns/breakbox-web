@@ -292,3 +292,13 @@ code {
 .ev-user { color: var(--cyan); }
 .ev-detail, .ev-ip { color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .event-empty { padding: 1.2rem; color: var(--ink-3); font-size: 0.85rem; }
+
+/* the collapsed "runtime installed" line, once the prereq is ticked */
+.prereq-done-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--mono); font-size: 0.74rem; color: var(--easy); border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 7px 11px; margin-bottom: 14px; }
+.prereq-reset { font-family: var(--mono); font-size: 0.66rem; color: var(--ink-3); background: transparent; border: 1px solid var(--edge); border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+.prereq-reset:hover { color: var(--ink); border-color: var(--edge-2); }
+
+/* the dev-only "run attack" trigger in the monitor (admin): red, so it reads as what it is */
+.attack-btn { font-family: var(--mono); font-size: 0.72rem; color: var(--expert); background: transparent; border: 1px solid rgba(200, 138, 138, 0.5); border-radius: var(--radius-sm); padding: 6px 11px; cursor: pointer; }
+.attack-btn:hover { border-color: var(--expert); }
+.attack-btn:disabled { opacity: 0.55; cursor: default; }

@@ -42,3 +42,7 @@ export const logout = (): Promise<Response> => post('/auth/logout');
 
 export const fetchEvents = (): Promise<MonitorFeed> =>
   fetch(`${API}/monitor/events`, { credentials: 'include' }).then(body<MonitorFeed>);
+
+// Fire the dev-only attack harness (admin only; the server returns 404 outside Development). The
+// blocked attempts it records then show up in the monitor on the next refresh.
+export const runAttack = (): Promise<Response> => post('/dev/attack');

@@ -40,6 +40,13 @@ const findStep: Record<number, ReactNode> = {
       run the keygen in breakbox-security.
     </>
   ),
+  3: (
+    <>
+      Open <code>Level3.dll</code> in dnSpy or my Studio. There is no key: the premium gate{' '}
+      <code>IsPremium()</code> just returns false. Patch it to return true, or run my <strong>Flip</strong>{' '}
+      tool, and save the patched assembly.
+    </>
+  ),
 };
 
 // Remember whether the runtime is installed, so the prompt calms down on later visits. Per-browser
@@ -125,23 +132,31 @@ function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
         <span>run guide</span>
       </div>
 
-      {/* Step 0: the one-time prerequisite. The apps are Windows programs and need the runtime. */}
-      <div className={`prereq${prereqDone ? ' is-done' : ''}`}>
-        <h4>Before you start</h4>
-        <p>
-          The level apps are Windows programs. Install the .NET&nbsp;9 Desktop Runtime once
-          (Windows x64) and every level will run.
-        </p>
-        <a className="link-btn" href={RUNTIME_URL} target="_blank" rel="noreferrer">get the runtime &#8599;</a>
-        <label className="prereq-done-row">
-          <input
-            type="checkbox"
-            checked={prereqDone}
-            onChange={(e) => setPrereqDone(e.target.checked)}
-          />
-          <span>I have installed it</span>
-        </label>
-      </div>
+      {/* Step 0: the one-time prerequisite. Once you tick "installed", it collapses to a one-liner
+          and stays that way (remembered per browser), so it is out of the way on every later visit. */}
+      {prereqDone ? (
+        <div className="prereq-done-line">
+          <span>&#10003; .NET&nbsp;9 Desktop Runtime installed</span>
+          <button type="button" className="prereq-reset" onClick={() => setPrereqDone(false)}>change</button>
+        </div>
+      ) : (
+        <div className="prereq">
+          <h4>Before you start</h4>
+          <p>
+            The level apps are Windows programs. Install the .NET&nbsp;9 Desktop Runtime once
+            (Windows x64) and every level will run.
+          </p>
+          <a className="link-btn" href={RUNTIME_URL} target="_blank" rel="noreferrer">get the runtime &#8599;</a>
+          <label className="prereq-done-row">
+            <input
+              type="checkbox"
+              checked={prereqDone}
+              onChange={(e) => setPrereqDone(e.target.checked)}
+            />
+            <span>I have installed it</span>
+          </label>
+        </div>
+      )}
 
       {!level && <p className="guide-obj">Pick a level on the left to download it and see how to run it.</p>}
 
@@ -176,7 +191,9 @@ function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
               <li><div className="step-body">{findStep[level.number]}</div></li>
               <li>
                 <div className="step-body">
-                  Enter it in the app. The feature unlocks and it shows the flag <code>{'BR{…}'}</code>.
+                  {level.number === 3
+                    ? <>Relaunch it and use a premium feature; it unlocks and shows the flag <code>{'BR{…}'}</code>.</>
+                    : <>Enter it in the app. The feature unlocks and it shows the flag <code>{'BR{…}'}</code>.</>}
                 </div>
               </li>
             </ol>

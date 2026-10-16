@@ -52,44 +52,44 @@ function usePersistentBool(key: string): [boolean, (v: boolean) => void] {
   return [value, set];
 }
 
-function LevelCard({ lvl, active, onSelect }: { lvl: Level; active: boolean; onSelect: (n: number) => void }) {
+function LevelCard({ lvl, active, onSelect }: Readonly<{ lvl: Level; active: boolean; onSelect: (n: number) => void }>) {
   const className = ['target', lvl.available ? '' : 'is-locked', active ? 'is-active' : '']
     .filter(Boolean)
     .join(' ');
+
+  // The pick label, as a plain statement rather than a nested ternary.
+  let pick = 'preview ›';
+  if (active) pick = 'selected';
+  else if (lvl.available) pick = 'open ›';
+
+  // A native button, so keyboard and screen-reader support are built in (no role/tabindex needed).
   return (
-    <li
-      className={className}
-      role="button"
-      tabIndex={0}
-      aria-pressed={active}
-      onClick={() => onSelect(lvl.number)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(lvl.number); }
-      }}
-    >
-      <div className="target-top">
-        <span className="addr">{addr(lvl.number)}</span>
-        <span className="target-name">{lvl.name}</span>
-        <span className={`tag tag-${lvl.difficulty.toLowerCase()}`}>{lvl.difficulty}</span>
-        {!lvl.available && <span className="tag tag-locked">LOCKED</span>}
-        <span className="spacer" />
-        <span className="pick">{active ? 'selected' : lvl.available ? 'open ›' : 'preview ›'}</span>
-      </div>
-      <p className="target-summary">{lvl.summary}</p>
-      <p className="target-learn"><span className="label">learn</span>{lvl.learn}</p>
-      <div className="target-tools">
-        <span className="label">tools</span>
-        {lvl.tools.map((t) => <span key={t} className="tool">{t}</span>)}
-      </div>
+    <li className="target-item">
+      <button type="button" className={className} aria-pressed={active} onClick={() => onSelect(lvl.number)}>
+        <div className="target-top">
+          <span className="addr">{addr(lvl.number)}</span>
+          <span className="target-name">{lvl.name}</span>
+          <span className={`tag tag-${lvl.difficulty.toLowerCase()}`}>{lvl.difficulty}</span>
+          {!lvl.available && <span className="tag tag-locked">LOCKED</span>}
+          <span className="spacer" />
+          <span className="pick">{pick}</span>
+        </div>
+        <p className="target-summary">{lvl.summary}</p>
+        <p className="target-learn"><span className="label">learn</span>{lvl.learn}</p>
+        <div className="target-tools">
+          <span className="label">tools</span>
+          {lvl.tools.map((t) => <span key={t} className="tool">{t}</span>)}
+        </div>
+      </button>
     </li>
   );
 }
 
-function Guide({ level, prereqDone, setPrereqDone }: {
+function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
   level: Level | null;
   prereqDone: boolean;
   setPrereqDone: (v: boolean) => void;
-}) {
+}>) {
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -108,6 +108,12 @@ function Guide({ level, prereqDone, setPrereqDone }: {
     } catch { setFailed(true); }
     finally { setDownloading(false); }
   };
+
+  // The download button label, as a plain statement rather than a nested ternary.
+  const name = level?.name ?? '';
+  let dlLabel = `download ${name} (.zip)`;
+  if (downloading) dlLabel = 'downloading...';
+  else if (downloaded) dlLabel = `download ${name} again`;
 
   return (
     <aside className="guide" aria-label="run guide">
@@ -130,7 +136,7 @@ function Guide({ level, prereqDone, setPrereqDone }: {
             checked={prereqDone}
             onChange={(e) => setPrereqDone(e.target.checked)}
           />
-          I have installed it
+          <span>I have installed it</span>
         </label>
       </div>
 
@@ -150,8 +156,8 @@ function Guide({ level, prereqDone, setPrereqDone }: {
                 <div className="step-body">
                   Download the target.
                   <div>
-                    <button className="btn btn-dl" onClick={download} disabled={downloading}>
-                      {downloading ? 'downloading...' : downloaded ? `download ${level.name} again` : `download ${level.name} (.zip)`}
+                    <button type="button" className="btn btn-dl" onClick={download} disabled={downloading}>
+                      {dlLabel}
                     </button>
                   </div>
                   {failed && <div className="step-fail">download failed. is the backend running on localhost:5080?</div>}
@@ -208,8 +214,11 @@ export default function App() {
   const selectedLevel = levels?.find((l) => l.number === selected) ?? null;
   const available = levels?.filter((l) => l.available).length ?? 0;
 
-  const status = error ? 'offline' : levels ? 'online' : 'connecting';
-  const statusLabel = error ? 'api offline' : levels ? 'api online' : 'connecting';
+  // The connection state, as plain statements rather than nested ternaries.
+  let status = 'connecting';
+  let statusLabel = 'connecting';
+  if (error) { status = 'offline'; statusLabel = 'api offline'; }
+  else if (levels) { status = 'online'; statusLabel = 'api online'; }
 
   return (
     <div className="app">

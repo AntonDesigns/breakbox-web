@@ -1196,9 +1196,9 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
         <text class="t-xs mut" x="1048" y="154" text-anchor="middle">GHCR</text>
         <text class="t-xs mut" x="1048" y="172" text-anchor="middle">on main</text>
 
-        <rect class="box pick" x="1158" y="96" width="190" height="96" rx="4" style="stroke-dasharray:6 4;" data-t="Deploy to dev (planned)" data-research="I could deploy by hand, or have the pipeline deploy to a dev environment." data-why="A deploy-dev step is the next thing I add: the pipeline pulls the published image and runs it on a dev host, so every merge to main is live to test. It is planned because I still need to set up the host, which is on my Sprint 1 to-do list." data-links="Environments::https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment"/>
+        <rect class="box pick" x="1158" y="96" width="190" height="96" rx="4" data-t="Deploy to dev (Render)" data-research="I could deploy by hand, to a VPS over SSH, or to a free container platform." data-why="Built: every green merge to main fires a deploy to a free Render service via a deploy hook, so the API runs live at a public URL (/health) for testing. I first wired an SSH-to-a-VPS version, then switched to Render when the free host fell through. The pipeline, not me, decides when a deploy happens." data-links="Environments::https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment"/>
         <text class="t-sm" x="1253" y="134" text-anchor="middle">Deploy to dev</text>
-        <text class="t-xs mut" x="1253" y="154" text-anchor="middle">pull image, run</text>
+        <text class="t-xs mut" x="1253" y="154" text-anchor="middle">Render &middot; on main</text>
         <text class="t-xs threat" x="1253" y="172" text-anchor="middle">planned (S1 to-do)</text>
 
         <line class="edge" x1="130" y1="144" x2="168" y2="144" marker-end="url(#cd)"/>
@@ -1986,10 +1986,10 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
       <p>A real multi-user production deployment, creating actual malware (analysis and detection only, never creation), and fully polishing Levels 6-9. Out of scope on purpose, so I finish and can defend what I do build.</p></div>
 
     <h2 data-n="06">A should-have: attack monitoring</h2>
-    <div class="sub">a defensive stretch for the end, not one of the nine levels. (Level 9 is Keysmith, a crack.)</div>
-    <p>The nine levels are reverse-engineering challenges. This is different: because I am the security engineer, I want a defensive should-have at the end, a view where I watch my own system being attacked and learn to spot it. It reads the security tables from the database, applies simple rules, and surfaces what looks wrong on a board I watch. It is a should-have, so it only happens if the core ladder is on track.</p>
+    <div class="sub">a defensive should-have, now built in its core, not one of the nine levels. (Level 9 is Keysmith, a crack.)</div>
+    <p>The nine levels are reverse-engineering challenges. This is different: because I am the security engineer, I want a defensive should-have at the end, a view where I watch my own system being attacked and learn to spot it. It reads the security tables from the database, applies simple rules, and surfaces what looks wrong on a board I watch. I built the core of it in Sprint 2: the monitor view reads the audit log and shows each blocked attack, SQLi, IDOR and brute force, live; the fuller rule-based scoring board is the remaining stretch.</p>
 
-    <figure data-status="idea" data-sprint="4">
+    <figure data-status="built" data-sprint="4">
       <div class="fig-media"><svg class="dg" viewBox="0 0 1200 400" role="img" aria-label="The attack-monitoring should-have, left to right. Three security tables from the database (audit_log, login_attempt, submission) feed a Monitor component that collects, applies rules and scores. It raises three kinds of detection: brute force, IDOR probing, and injection attempts. Those feed a monitoring view, the board I watch. A defensive should-have, not a level.">
         <defs><marker id="mon" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><polygon points="0,0 9,5 0,10" class="arr"/></marker></defs>
 

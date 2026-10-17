@@ -72,7 +72,7 @@ export function Monitor({ onClose }: Readonly<{ onClose: () => void }>) {
         {events.map((ev) => (
           <div key={ev.id} className="event-row">
             <span className="ev-time">{new Date(ev.at).toLocaleTimeString()}</span>
-            <span className={`ev-action sev-${severity(ev.action)}`}>{ev.action}</span>
+            <span className={`ev-action sev-${severity(ev.action)}`} title={ev.action}>{prettyAction(ev.action)}</span>
             <span className="ev-user">{ev.username ?? '—'}</span>
             <span className="ev-detail">{ev.detail ?? ''}</span>
             <span className="ev-ip">{ev.ip ?? ''}</span>
@@ -81,6 +81,24 @@ export function Monitor({ onClose }: Readonly<{ onClose: () => void }>) {
       </div>
     </section>
   );
+}
+
+// Turn the raw audit key into a readable label for the table, while keeping the raw key in a hover
+// title (and for the colour). e.g. attack_bruteforce_blocked -> "brute force · blocked", so the feed
+// reads like a security dashboard instead of a log dump.
+const ACTION_LABELS: Record<string, string> = {
+  login: 'login',
+  logout: 'logout',
+  register: 'register',
+  login_failed: 'login · failed',
+  login_blocked: 'login · blocked (rate limit)',
+  attack_sqli_blocked: 'SQLi · blocked',
+  attack_idor_blocked: 'IDOR · blocked',
+  attack_bruteforce_blocked: 'brute force · blocked',
+};
+
+function prettyAction(action: string): string {
+  return ACTION_LABELS[action] ?? action.replace(/_/g, ' · ');
 }
 
 // Colour the action by what it means: a failure/block reads as a warning, a sign-in/register as ok.

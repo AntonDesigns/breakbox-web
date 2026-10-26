@@ -1,7 +1,7 @@
 /* BreakBox launcher. Written by Max-Anton Horvat. Complex Software Systems (S6). 0x4D414836.
    Same visual family as my design sheet: a blueprint-blue drafting ground with a faint grid,
    JetBrains Mono for the chrome and Hanken Grotesk for reading, one cyan accent, muted slate for the
-   rest. Flat on purpose, no glow. */
+   rest. A glassy skin: frosted translucent surfaces over an ambient-lit ground, same layout. */
 
 :root {
   color-scheme: dark;
@@ -35,6 +35,15 @@
 
   --radius: 6px;
   --radius-sm: 5px;
+
+  /* glass: the glossy skin over the same layout. Frosted translucent surfaces with a soft top
+     highlight and a drop shadow, sitting over ambient light on the ground. */
+  --glass: rgba(22, 42, 68, 0.55);
+  --glass-2: rgba(28, 52, 82, 0.66);
+  --glass-brd: rgba(140, 180, 220, 0.18);
+  --glass-hi: rgba(255, 255, 255, 0.07);
+  --glass-shadow: 0 16px 40px -18px rgba(0, 0, 0, 0.72);
+  --glass-blur: blur(16px) saturate(1.15);
 }
 
 * { box-sizing: border-box; }
@@ -42,7 +51,13 @@ html, body, #root { height: 100%; }
 
 body {
   margin: 0;
-  background: var(--ground);
+  background-color: var(--ground);
+  /* ambient light pools, so the frosted panels have something to sit over */
+  background-image:
+    radial-gradient(820px 520px at 8% -8%, rgba(119, 184, 209, 0.16), transparent 60%),
+    radial-gradient(900px 620px at 100% -5%, rgba(96, 122, 192, 0.13), transparent 55%),
+    radial-gradient(760px 760px at 62% 118%, rgba(72, 150, 170, 0.11), transparent 60%);
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--sans);
   font-size: 14px;
@@ -133,7 +148,7 @@ code {
 .ladder-adv { margin-top: 24px; }
 
 /* ---------- banners ---------- */
-.banner { border: 1px solid var(--edge); background: var(--sheet); padding: 13px 15px; border-radius: var(--radius-sm); color: var(--ink-2); margin-bottom: 16px; font-size: 0.9rem; }
+.banner { border: 1px solid var(--glass-brd); background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi); padding: 13px 15px; border-radius: var(--radius-sm); color: var(--ink-2); margin-bottom: 16px; font-size: 0.9rem; }
 .banner-error { border-color: rgba(200, 138, 138, 0.45); color: var(--expert); }
 
 /* ---------- layout: core + guide up top (matched height), advanced full width below ---------- */
@@ -158,18 +173,21 @@ code {
   gap: 10px;
   width: 100%;
   padding: 16px;
-  border: 1px solid var(--edge);
+  border: 1px solid var(--glass-brd);
   border-radius: var(--radius);
-  background: var(--sheet);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi);
   cursor: pointer;
   font: inherit;
   color: inherit;
   text-align: left;
   appearance: none;
   -webkit-appearance: none;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
-.target:hover { border-color: var(--edge-2); background: var(--sheet-2); }
+.target:hover { border-color: rgba(119, 184, 209, 0.4); background: var(--glass-2); transform: translateY(-2px); box-shadow: 0 22px 46px -18px rgba(0, 0, 0, 0.75), inset 0 1px 0 var(--glass-hi); }
 .target:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .target.is-locked { opacity: 0.55; }
 .target.is-locked:hover { opacity: 0.72; }
@@ -200,16 +218,16 @@ code {
 .tag-locked { color: var(--ink-3); border-color: var(--edge); letter-spacing: 0.11em; }
 
 /* ---------- buttons ---------- */
-.btn { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--ground); background: var(--cyan); border: 1px solid var(--cyan); border-radius: 5px; padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: background 0.14s ease; }
-.btn:hover { background: var(--cyan-2); }
+.btn { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--ground); background: linear-gradient(180deg, #8fcce3, var(--cyan)); border: 1px solid transparent; border-radius: 5px; padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 8px 18px -8px rgba(119, 184, 209, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25); transition: filter 0.14s ease, transform 0.14s ease; }
+.btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
 .btn-dl { margin-top: 8px; }
 
 /* ---------- guide ---------- */
-.guide { display: flex; flex-direction: column; gap: 15px; border: 1px solid var(--edge); border-radius: var(--radius); background: var(--sheet); padding: 17px; }
+.guide { display: flex; flex-direction: column; gap: 15px; border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi); padding: 17px; }
 .guide-title { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--ink-3); font-weight: 600; }
 .guide-title .addr { color: var(--cyan); font-size: 0.78rem; }
 
-.prereq { border: 1px solid var(--edge-2); border-left: 2px solid var(--slate); border-radius: var(--radius-sm); background: var(--ground-2); padding: 13px; }
+.prereq { border: 1px solid var(--glass-brd); border-left: 2px solid var(--slate); border-radius: var(--radius-sm); background: rgba(10, 22, 40, 0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: 13px; }
 .prereq h4 { font-family: var(--mono); margin: 0 0 6px; font-size: 0.85rem; color: var(--ink); font-weight: 700; }
 .prereq p { margin: 0 0 11px; color: var(--ink-2); font-size: 0.82rem; }
 .prereq.is-done { border-left-color: var(--cyan); }
@@ -259,12 +277,12 @@ code {
 
 .ghost { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-2); background: transparent; border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 6px 11px; cursor: pointer; }
 .ghost:hover { color: var(--ink); border-color: var(--edge-2); }
-.primary { font-family: var(--mono); font-size: 0.78rem; color: var(--ground); background: var(--cyan); border: 1px solid var(--cyan); border-radius: var(--radius-sm); padding: 7px 15px; cursor: pointer; font-weight: 600; }
-.primary:hover { background: var(--cyan-2); }
+.primary { font-family: var(--mono); font-size: 0.78rem; color: var(--ground); background: linear-gradient(180deg, #8fcce3, var(--cyan)); border: 1px solid transparent; border-radius: var(--radius-sm); padding: 7px 15px; cursor: pointer; font-weight: 600; box-shadow: 0 8px 18px -8px rgba(119, 184, 209, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25); transition: filter 0.14s ease, transform 0.14s ease; }
+.primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
 .primary:disabled { opacity: 0.55; cursor: default; }
 
 .authpanel { display: flex; justify-content: center; padding: 2.5rem 0; }
-.auth-card { width: 100%; max-width: 380px; border: 1px solid var(--edge); border-radius: var(--radius); background: var(--sheet); padding: 1.4rem; }
+.auth-card { width: 100%; max-width: 380px; border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass-2); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi); padding: 1.4rem; }
 .auth-tabs { display: flex; gap: 4px; margin-bottom: 1.1rem; }
 .auth-tabs button { flex: 1; font-family: var(--mono); font-size: 0.8rem; color: var(--ink-3); background: transparent; border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 8px; cursor: pointer; }
 .auth-tabs button.on { color: var(--ground); background: var(--cyan); border-color: var(--cyan); }
@@ -280,12 +298,12 @@ code {
 .monitor-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
 .monitor-head .dim { color: var(--ink-3); font-weight: 400; font-size: 0.8rem; }
 .monitor-tools { display: flex; gap: 8px; }
-.eventlist { margin-top: 1rem; border: 1px solid var(--edge); border-radius: var(--radius); overflow-x: auto; }
+.eventlist { margin-top: 1rem; border: 1px solid var(--glass-brd); border-radius: var(--radius); overflow: hidden; background: var(--glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi); }
 .event-row { display: grid; grid-template-columns: 84px 196px 92px minmax(150px, 1fr) 104px; gap: 10px; padding: 8px 12px; font-family: var(--mono); font-size: 0.76rem; border-bottom: 1px solid rgba(39, 66, 97, 0.5); align-items: center; }
 /* every cell can shrink to its track and clips instead of spilling over the next column */
 .event-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .event-row:last-child { border-bottom: 0; }
-.event-head { color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.62rem; background: var(--sheet); }
+.event-head { color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.62rem; background: rgba(8, 17, 32, 0.35); }
 .ev-time { color: var(--ink-3); }
 .ev-action { font-weight: 600; }
 .sev-good { color: var(--easy); }

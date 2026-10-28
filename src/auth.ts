@@ -78,6 +78,25 @@ export const fetchConsoleDdl = (): Promise<TableDdl[]> =>
 // A page of one table's rows for the table browser.
 export interface TablePage { name: string; columns: string[]; rows: (string | null)[][]; page: number; size: number; total: number; }
 
+// A level in the levels manager (the one editable content table), and the body sent to add/edit one.
+export interface Level { id: number; number: number; name: string; difficulty: string; tier: string; available: boolean; summary: string; learn: string; }
+export type LevelInput = Omit<Level, 'id'>;
+
+// The levels manager. All admin-only on the server; every write is audited and shows in the Threats feed.
+export const fetchConsoleLevels = (): Promise<Level[]> =>
+  fetch(`${API}/console/levels`, { credentials: 'include' }).then(body<Level[]>);
+
+export const addConsoleLevel = (lvl: LevelInput): Promise<{ id: number }> =>
+  post('/console/levels', lvl).then(body<{ id: number }>);
+
+export const updateConsoleLevel = (id: number, lvl: LevelInput): Promise<{ id: number }> =>
+  fetch(`${API}/console/levels/${id}`, {
+    method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lvl),
+  }).then(body<{ id: number }>);
+
+export const deleteConsoleLevel = (id: number): Promise<{ deleted: number }> =>
+  fetch(`${API}/console/levels/${id}`, { method: 'DELETE', credentials: 'include' }).then(body<{ deleted: number }>);
+
 // Browse a table's rows, paged. Admin only on the server; read only (only a real table name is accepted).
 export const fetchConsoleTable = (name: string, page = 1, size = 25): Promise<TablePage> =>
   fetch(`${API}/console/tables/${encodeURIComponent(name)}?page=${page}&size=${size}`, { credentials: 'include' }).then(body<TablePage>);

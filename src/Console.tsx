@@ -2,7 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchConsoleDdl, fetchConsoleSchema, fetchConsoleStatus, fetchEvents, runConsoleQuery, type AuditEvent, type ConsoleSchema, type ConsoleStatus, type QueryResult, type TableDdl } from './auth';
+import { fetchConsoleDdl, fetchConsoleSchema, fetchConsoleStatus, fetchConsoleUsers, fetchEvents, runConsoleQuery, updateUserRole, type AuditEvent, type ConsoleSchema, type ConsoleStatus, type QueryResult, type TableDdl, type UserRow } from './auth';
 
 // The BreakBox Console: the defensive half of the project made live. It is one admin surface that
 // watches the system, operates the database, and ships changes, the blue team against the red team I
@@ -167,9 +167,80 @@ function QueryEditor() {
   );
 }
 
-// The Data tab: a live database IDE over the real database. The read-only query editor is the tool; the
-// schema tree is the reference (read from the EF Core model, the migration-governed shape); and the DDL
-// section shows how each table was made. All three stay in step with the real database.
+// The user manager, the first slice of the Data tab's CRUD. It lists the users and lets an admin change a
+// role; the write is admin-only and audited on the server (and so shows in the Threats feed), and the
+// server refuses demoting the last admin. The UI stays thin: it posts the change and reloads the list.
+function UserManager() {
+  const [users, setUsers] = useState<UserRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setUsers(await fetchConsoleUsers());
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'request failed');
+    }
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const changeRole = useCallback(async (id: number, role: string) => {
+    setBusyId(id);
+    try {
+      await updateUserRole(id, role);
+      await load();   // reload so the change (and anything the server adjusted) is what we show
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'request failed');
+    } finally {
+      setBusyId(null);
+    }
+  }, [load]);
+
+  return (
+    <div className="con-users">
+      {error && <div className="banner banner-error">{error}</div>}
+      {!users && !error && <div className="event-empty">Loading users...</div>}
+      {users && (
+        <div className="qresult-scroll">
+          <table className="qtable">
+            <thead>
+              <tr><th>id</th><th>username</th><th>email</th><th>role</th><th>last login</th></tr>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id}>
+                  <td>{u.id}</td>
+                  <td>{u.username}</td>
+                  <td>{u.email}</td>
+                  <td>
+                    <select
+                      className="role-select"
+                      value={u.role}
+                      disabled={busyId === u.id}
+                      onChange={(e) => { void changeRole(u.id, e.target.value); }}
+                      aria-label={`role for ${u.username}`}
+                    >
+                      <option value="user">user</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </td>
+                  <td>{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="con-note">Changing a role is audited and shows up in the Threats feed. The last admin cannot be demoted.</p>
+    </div>
+  );
+}
+
+// The Data tab: a live database IDE over the real database. The read-only query editor and the user
+// manager are the tools; the schema tree is the reference (read from the EF Core model, the
+// migration-governed shape); and the DDL section shows how each table was made.
 function DataPanel() {
   const [schema, setSchema] = useState<ConsoleSchema | null>(null);
   const [ddl, setDdl] = useState<TableDdl[] | null>(null);
@@ -188,6 +259,9 @@ function DataPanel() {
   return (
     <div className="con-data">
       <QueryEditor />
+
+      <h3 className="con-subhead">users</h3>
+      <UserManager />
 
       <h3 className="con-subhead">schema</h3>
       <p className="con-note">

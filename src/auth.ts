@@ -75,6 +75,22 @@ export interface TableDdl { name: string; sql: string; }
 export const fetchConsoleDdl = (): Promise<TableDdl[]> =>
   fetch(`${API}/console/ddl`, { credentials: 'include' }).then(body<TableDdl[]>);
 
+// One row in the user manager: who they are and what role they hold (never the password hash).
+export interface UserRow { id: number; username: string; email: string; role: string; createdAt: string; lastLoginAt: string | null; }
+
+// The user manager's read side. Admin only on the server; read only.
+export const fetchConsoleUsers = (): Promise<UserRow[]> =>
+  fetch(`${API}/console/users`, { credentials: 'include' }).then(body<UserRow[]>);
+
+// Change a user's role. Admin only and audited on the server, which also refuses demoting the last admin.
+export const updateUserRole = (id: number, role: string): Promise<{ id: number; username: string; role: string }> =>
+  fetch(`${API}/console/users/${id}/role`, {
+    method: 'PUT',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role }),
+  }).then(body<{ id: number; username: string; role: string }>);
+
 // Fire the dev-only attack harness (admin only; the server returns 404 outside Development). The
 // blocked attempts it records then show up in the monitor on the next refresh.
 export const runAttack = (): Promise<Response> => post('/dev/attack');

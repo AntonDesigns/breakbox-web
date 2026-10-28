@@ -2,7 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useCallback, useEffect, useState } from 'react';
-import { addUser, deleteUser, fetchConsoleDdl, fetchConsoleSchema, fetchConsoleStatus, fetchConsoleUsers, fetchEvents, runConsoleQuery, updateUserRole, type AuditEvent, type ConsoleSchema, type ConsoleStatus, type QueryResult, type TableDdl, type UserRow } from './auth';
+import { addUser, deleteUser, fetchConsoleDdl, fetchConsoleSchema, fetchConsoleStatus, fetchConsoleTable, fetchConsoleUsers, fetchEvents, runConsoleQuery, updateUserRole, type AuditEvent, type ConsoleSchema, type ConsoleStatus, type QueryResult, type TableDdl, type TablePage, type UserRow } from './auth';
 
 // The BreakBox Console: the defensive half of the project made live. It is one admin surface that
 // watches the system, operates the database, and ships changes, the blue team against the red team I
@@ -300,14 +300,68 @@ function UserManager({ meId }: Readonly<{ meId: number }>) {
   );
 }
 
+// The table browser: a page of one table's rows, read from the server (read only, admin only). It is keyed
+// by table name in the parent, so picking a different table remounts it and the page resets to one.
+function TableBrowser({ name, onClose }: Readonly<{ name: string; onClose: () => void }>) {
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState<TablePage | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    fetchConsoleTable(name, page, 25)
+      .then((d) => { if (live) { setData(d); setError(null); } })
+      .catch((e) => { if (live) setError(e instanceof Error ? e.message : 'request failed'); });
+    return () => { live = false; };
+  }, [name, page]);
+
+  const pages = data ? Math.max(1, Math.ceil(data.total / data.size)) : 1;
+
+  return (
+    <div className="tbrowse">
+      <div className="tbrowse-head">
+        <span className="tbrowse-name">{name}</span>
+        <span className="tbrowse-count">{data ? `${data.total} row${data.total === 1 ? '' : 's'}` : ''}</span>
+        <button type="button" className="ghost" onClick={onClose}>close</button>
+      </div>
+      {error && <div className="banner banner-error">{error}</div>}
+      {data && (
+        <>
+          <div className="qresult-scroll">
+            <table className="qtable">
+              <thead><tr>{data.columns.map((c) => <th key={c}>{c}</th>)}</tr></thead>
+              <tbody>
+                {data.rows.map((row, ri) => (
+                  <tr key={ri}>
+                    {row.map((cell, ci) => (
+                      <td key={data.columns[ci] ?? ci} className={cell === null ? 'qnull' : undefined}>{cell === null ? 'null' : cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="tbrowse-pager">
+            <button type="button" className="ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>prev</button>
+            <span className="tbrowse-page">page {data.page} / {pages}</span>
+            <button type="button" className="ghost" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>next</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // The Data tab: a live database IDE over the real database. The read-only query editor and the user
 // manager are the tools; the schema tree is the reference (read from the EF Core model, the
-// migration-governed shape); and the DDL section shows how each table was made.
+// migration-governed shape), and clicking a table browses its rows; the DDL section shows how each table
+// was made.
 function DataPanel({ meId }: Readonly<{ meId: number }>) {
   const [schema, setSchema] = useState<ConsoleSchema | null>(null);
   const [ddl, setDdl] = useState<TableDdl[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ddlError, setDdlError] = useState<string | null>(null);
+  const [browse, setBrowse] = useState<string | null>(null);   // the table whose rows are being browsed
 
   useEffect(() => {
     fetchConsoleSchema()
@@ -327,18 +381,20 @@ function DataPanel({ meId }: Readonly<{ meId: number }>) {
 
       <h3 className="con-subhead">schema</h3>
       <p className="con-note">
-        The live schema, read from the EF Core model (the migration-governed shape of the database).
+        The live schema, read from the EF Core model (the migration-governed shape of the database). Click a
+        table to browse its rows.
       </p>
       {error && <div className="banner banner-error">{error}</div>}
       {!schema && !error && <div className="event-empty">Loading the schema...</div>}
+      {browse && <TableBrowser key={browse} name={browse} onClose={() => setBrowse(null)} />}
       {schema && (
         <div className="schema-grid">
           {schema.tables.map((t) => (
             <div key={t.name} className="schema-table">
-              <div className="schema-th">
+              <button type="button" className="schema-th schema-th-btn" onClick={() => setBrowse(t.name)}>
                 <span className="schema-tname">{t.name}</span>
                 <span className="schema-ccount">{t.columns.length} cols</span>
-              </div>
+              </button>
               <ul className="schema-cols">
                 {t.columns.map((c) => (
                   <li key={c.name}>

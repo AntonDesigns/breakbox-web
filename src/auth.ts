@@ -75,6 +75,13 @@ export interface TableDdl { name: string; sql: string; }
 export const fetchConsoleDdl = (): Promise<TableDdl[]> =>
   fetch(`${API}/console/ddl`, { credentials: 'include' }).then(body<TableDdl[]>);
 
+// A page of one table's rows for the table browser.
+export interface TablePage { name: string; columns: string[]; rows: (string | null)[][]; page: number; size: number; total: number; }
+
+// Browse a table's rows, paged. Admin only on the server; read only (only a real table name is accepted).
+export const fetchConsoleTable = (name: string, page = 1, size = 25): Promise<TablePage> =>
+  fetch(`${API}/console/tables/${encodeURIComponent(name)}?page=${page}&size=${size}`, { credentials: 'include' }).then(body<TablePage>);
+
 // One row in the user manager: who they are and what role they hold (never the password hash).
 export interface UserRow { id: number; username: string; email: string; role: string; createdAt: string; lastLoginAt: string | null; }
 

@@ -10,6 +10,10 @@ export interface AuditEvent { id: number; action: string; detail: string | null;
 export interface MonitorFeed { scope: string; events: AuditEvent[]; }
 // The shape the Console header reads: which database is live, and how much is in it.
 export interface ConsoleStatus { provider: string; users: number; levels: number; events: number; generatedAt: string; }
+// The schema tree the Data tab reads: tables, each with its columns (read from the EF Core model).
+export interface SchemaColumn { name: string; type: string; }
+export interface SchemaTable { name: string; columns: SchemaColumn[]; }
+export interface ConsoleSchema { tables: SchemaTable[]; }
 
 // Read the JSON body, or throw the server's error message so the UI can show something specific.
 async function body<T>(res: Response): Promise<T> {
@@ -49,6 +53,10 @@ export const fetchEvents = (): Promise<MonitorFeed> =>
 // the error rather than pretending the page works, so the admin boundary is never hidden.
 export const fetchConsoleStatus = (): Promise<ConsoleStatus> =>
   fetch(`${API}/console/status`, { credentials: 'include' }).then(body<ConsoleStatus>);
+
+// The Data tab's schema tree. Admin only on the server; read only (it reads the EF model, not data).
+export const fetchConsoleSchema = (): Promise<ConsoleSchema> =>
+  fetch(`${API}/console/schema`, { credentials: 'include' }).then(body<ConsoleSchema>);
 
 // Fire the dev-only attack harness (admin only; the server returns 404 outside Development). The
 // blocked attempts it records then show up in the monitor on the next refresh.

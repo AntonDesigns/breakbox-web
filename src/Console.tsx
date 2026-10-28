@@ -2,7 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchConsoleStatus, fetchEvents, type AuditEvent, type ConsoleStatus } from './auth';
+import { fetchConsoleSchema, fetchConsoleStatus, fetchEvents, type AuditEvent, type ConsoleSchema, type ConsoleStatus } from './auth';
 
 // The BreakBox Console: the defensive half of the project made live. It is one admin surface that
 // watches the system, operates the database, and ships changes, the blue team against the red team I
@@ -86,6 +86,50 @@ function ThreatsFeed() {
   );
 }
 
+// The Data tab, first slice: the live schema tree. It reads the schema from the API (which reads the
+// EF Core model, the migration-governed shape), so it is always in step with the real database. Read
+// only for now; the query editor and add-table are the next slices.
+function DataPanel() {
+  const [schema, setSchema] = useState<ConsoleSchema | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchConsoleSchema()
+      .then(setSchema)
+      .catch((e) => setError(e instanceof Error ? e.message : 'request failed'));
+  }, []);
+
+  if (error) return <div className="banner banner-error">{error}</div>;
+  if (!schema) return <div className="event-empty">Loading the schema...</div>;
+
+  return (
+    <div className="con-data">
+      <p className="con-note">
+        The live schema, read from the EF Core model (the migration-governed shape of the database).
+        Read only; the query editor and add-table land next.
+      </p>
+      <div className="schema-grid">
+        {schema.tables.map((t) => (
+          <div key={t.name} className="schema-table">
+            <div className="schema-th">
+              <span className="schema-tname">{t.name}</span>
+              <span className="schema-ccount">{t.columns.length} cols</span>
+            </div>
+            <ul className="schema-cols">
+              {t.columns.map((c) => (
+                <li key={c.name}>
+                  <span className="col-name">{c.name}</span>
+                  <span className="col-type">{c.type}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // An honest placeholder for a tab that is designed but not built yet. It states what the tab will be
 // and the sprint it lands in, rather than faking a working feature.
 function DesignedPanel({ tab }: Readonly<{ tab: TabDef }>) {
@@ -115,6 +159,15 @@ export function Console({ onClose }: Readonly<{ onClose: () => void }>) {
   useEffect(() => { void loadStatus(); }, [loadStatus]);
 
   const activeTab = TABS.find((t) => t.id === active)!;
+
+  // The panel subtitle and body, as plain statements rather than nested ternaries.
+  let panelSub = STAGE_LABEL[activeTab.stage];
+  if (active === 'threats') panelSub = 'live feed · admin';
+  else if (active === 'data') panelSub = 'schema · admin';
+
+  let panelBody = <DesignedPanel tab={activeTab} />;
+  if (active === 'threats') panelBody = <ThreatsFeed />;
+  else if (active === 'data') panelBody = <DataPanel />;
 
   return (
     <section className="console">
@@ -157,9 +210,9 @@ export function Console({ onClose }: Readonly<{ onClose: () => void }>) {
       <div className="con-panel" role="tabpanel">
         <h2 className="section">
           {activeTab.label}
-          <span className="dim">{activeTab.id === 'threats' ? 'live feed · admin' : STAGE_LABEL[activeTab.stage]}</span>
+          <span className="dim">{panelSub}</span>
         </h2>
-        {active === 'threats' ? <ThreatsFeed /> : <DesignedPanel tab={activeTab} />}
+        {panelBody}
       </div>
     </section>
   );

@@ -6,6 +6,7 @@ import { downloadTarget, fetchLevels, type Level } from './api';
 import { getMe, logout, type Me } from './auth';
 import { AuthPanel } from './AuthPanel';
 import { Monitor } from './Monitor';
+import { Console } from './Console';
 
 // The .NET 9 Desktop Runtime, which the level apps need to run. Installed once, then every level runs.
 const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';
@@ -216,7 +217,7 @@ export default function App() {
   const [prereqDone, setPrereqDone] = usePersistentBool('bb_prereq_done');
   // me: undefined while the session check is in flight, null when signed out, the user when signed in.
   const [me, setMe] = useState<Me | null | undefined>(undefined);
-  const [view, setView] = useState<'launcher' | 'auth' | 'monitor'>('launcher');
+  const [view, setView] = useState<'launcher' | 'auth' | 'monitor' | 'console'>('launcher');
 
   useEffect(() => {
     fetchLevels()
@@ -271,6 +272,9 @@ export default function App() {
           )}
           {me && (
             <span className="whoami">
+              {me.role === 'admin' && (
+                <button type="button" className="authbtn" onClick={() => setView('console')}>console</button>
+              )}
               <button type="button" className="authbtn" onClick={() => setView('monitor')}>monitor</button>
               <span className="user">{me.username} <span className="role">{me.role}</span></span>
               <button type="button" className="authbtn ghost" onClick={signOut}>sign out</button>
@@ -299,6 +303,7 @@ export default function App() {
           <AuthPanel onAuthed={(m) => { setMe(m); setView('monitor'); }} onCancel={() => setView('launcher')} />
         )}
         {view === 'monitor' && <Monitor onClose={() => setView('launcher')} />}
+        {view === 'console' && <Console onClose={() => setView('launcher')} meId={me?.id ?? 0} />}
 
         {view === 'launcher' && (<>
         {error && (

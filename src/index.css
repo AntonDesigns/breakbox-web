@@ -322,3 +322,122 @@ code {
 .attack-btn { font-family: var(--mono); font-size: 0.72rem; color: var(--expert); background: transparent; border: 1px solid rgba(200, 138, 138, 0.5); border-radius: var(--radius-sm); padding: 6px 11px; cursor: pointer; }
 .attack-btn:hover { border-color: var(--expert); }
 .attack-btn:disabled { opacity: 0.55; cursor: default; }
+
+/* -------- the Console: the admin-only defensive cockpit (Sprint 2/3). Same glass + blueprint look -------- */
+.console { padding: 0.4rem 0 2rem; }
+
+/* the header: a product mark on the left, the live system status on the right */
+.con-head { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 16px; border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass-2); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi); }
+.con-title { display: flex; flex-direction: column; gap: 2px; }
+.con-mark { font-family: var(--mono); font-size: 1rem; font-weight: 700; letter-spacing: 0.04em; color: var(--ink); }
+.con-sub { font-family: var(--mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-3); }
+.con-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.con-stat { display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--mono); font-size: 0.72rem; color: var(--ink); border: 1px solid var(--edge); border-radius: 999px; padding: 4px 11px; }
+.con-stat .k { color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.6rem; }
+.con-stat.err { color: var(--expert); border-color: rgba(200, 138, 138, 0.45); }
+
+/* the tab bar: a row of sections. A small dot marks a tab that is designed but not built yet */
+.con-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 14px; border-bottom: 1px solid var(--edge); }
+.con-tab { position: relative; font-family: var(--mono); font-size: 0.76rem; color: var(--ink-3); background: transparent; border: 1px solid transparent; border-bottom: none; border-radius: var(--radius-sm) var(--radius-sm) 0 0; padding: 8px 14px; cursor: pointer; }
+.con-tab:hover { color: var(--ink-2); }
+.con-tab.on { color: var(--ink); background: var(--glass); border-color: var(--glass-brd); }
+.con-tab-dot { display: inline-block; width: 5px; height: 5px; margin-left: 7px; border-radius: 50%; background: var(--hard); vertical-align: middle; }
+
+/* the active panel */
+.con-panel { margin-top: 1.1rem; }
+
+/* an honest "designed, not built yet" panel for the Sprint 2/3 tabs */
+.con-designed { border: 1px dashed var(--glass-brd); border-radius: var(--radius); background: var(--cyan-soft); padding: 1.6rem 1.5rem; }
+.con-stage { display: inline-block; font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--edge-2); color: var(--ink-2); }
+.con-stage.stage-sprint2 { color: var(--medium); border-color: rgba(123, 166, 204, 0.5); }
+.con-stage.stage-sprint3 { color: var(--hard); border-color: rgba(200, 168, 106, 0.5); }
+.con-blurb { margin: 0.9rem 0 0; font-size: 0.95rem; line-height: 1.55; color: var(--ink); max-width: 62ch; }
+.con-note { margin: 0.7rem 0 0; font-size: 0.82rem; line-height: 1.5; color: var(--ink-3); max-width: 62ch; }
+
+/* Data tab: the live schema tree (tables + columns), read from the EF model */
+.schema-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 1.1rem; }
+.schema-table { border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: var(--glass); overflow: hidden; }
+.schema-th { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 8px 11px; background: rgba(8, 17, 32, 0.35); border-bottom: 1px solid var(--edge); }
+.schema-th-btn { width: 100%; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.schema-th-btn:hover { background: var(--cyan-soft); }
+.schema-th-btn:hover .schema-tname { color: var(--cyan); }
+.schema-tname { font-family: var(--mono); font-size: 0.8rem; font-weight: 600; color: var(--ink); }
+.schema-ccount { font-family: var(--mono); font-size: 0.6rem; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.schema-cols { list-style: none; margin: 0; padding: 5px 0; }
+.schema-cols li { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 3px 11px; font-family: var(--mono); font-size: 0.72rem; }
+.col-name { color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-type { color: var(--cyan); font-size: 0.64rem; flex-shrink: 0; }
+
+/* Data tab: the read-only query editor + its results table */
+.con-query { margin-bottom: 1.6rem; }
+.con-subhead { margin: 0 0 0; font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.16em; color: var(--ink-3); font-weight: 600; }
+.con-qlabel { display: block; font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 7px; }
+.con-sql { width: 100%; box-sizing: border-box; resize: vertical; font-family: var(--mono); font-size: 0.82rem; line-height: 1.5; color: var(--ink); background: rgba(8, 17, 32, 0.45); border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); padding: 11px 13px; }
+.con-sql:focus { outline: none; border-color: var(--cyan-line); box-shadow: 0 0 0 1px var(--cyan-soft); }
+.con-qbar { display: flex; align-items: center; gap: 13px; margin-top: 10px; }
+.con-qbar .run { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.02em; color: var(--ground); background: var(--cyan); border: 1px solid var(--cyan-2); border-radius: var(--radius-sm); padding: 7px 18px; cursor: pointer; }
+.con-qbar .run:hover { background: var(--cyan-2); }
+.con-qbar .run:disabled { opacity: 0.55; cursor: default; }
+.con-qhint { font-family: var(--mono); font-size: 0.66rem; color: var(--ink-3); }
+
+.qresult { margin-top: 15px; }
+.qresult-meta { font-family: var(--mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); margin-bottom: 8px; }
+.qresult-cap { color: var(--hard); }
+.qresult-scroll { overflow-x: auto; border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: var(--glass); }
+.qtable { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.74rem; }
+.qtable th { text-align: left; padding: 8px 13px; background: rgba(8, 17, 32, 0.45); border-bottom: 1px solid var(--edge); color: var(--cyan); font-weight: 600; white-space: nowrap; position: sticky; top: 0; }
+.qtable td { padding: 6px 13px; border-bottom: 1px solid var(--glass-hi); color: var(--ink-2); white-space: nowrap; }
+.qtable tbody tr:last-child td, .qtable tr:last-child td { border-bottom: none; }
+.qtable .qnull { color: var(--ink-3); font-style: italic; }
+
+/* Data tab: the table browser (paged rows of a clicked table) */
+.tbrowse { margin: 1.1rem 0 1.3rem; border: 1px solid var(--cyan-line); border-radius: var(--radius-sm); background: var(--glass); padding: 12px 13px; }
+.tbrowse-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.tbrowse-name { font-family: var(--mono); font-size: 0.82rem; font-weight: 600; color: var(--cyan); }
+.tbrowse-count { font-family: var(--mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); margin-right: auto; }
+.tbrowse-pager { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.tbrowse-page { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-3); }
+
+/* Data tab: the user manager (audited role changes + delete) */
+.con-users { margin-top: 1.1rem; }
+.role-select { font-family: var(--mono); font-size: 0.72rem; color: var(--ink); background: rgba(8, 17, 32, 0.6); border: 1px solid var(--glass-brd); border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+.role-select:hover { border-color: var(--cyan-line); }
+.role-select:disabled { opacity: 0.5; cursor: default; }
+.u-actions { white-space: nowrap; }
+.u-you { font-family: var(--mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+.u-del, .u-cancel { font-family: var(--mono); font-size: 0.68rem; background: transparent; border: 1px solid var(--glass-brd); border-radius: 4px; padding: 3px 9px; cursor: pointer; color: var(--ink-2); }
+.u-del:hover { border-color: var(--hard); color: var(--hard); }
+.u-del.confirm { border-color: var(--hard); color: var(--hard); }
+.u-cancel { margin-left: 5px; }
+.u-cancel:hover { border-color: var(--cyan-line); color: var(--ink); }
+.u-del:disabled { opacity: 0.5; cursor: default; }
+.user-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 13px; }
+.user-add input { font-family: var(--mono); font-size: 0.72rem; color: var(--ink); background: rgba(8, 17, 32, 0.6); border: 1px solid var(--glass-brd); border-radius: 4px; padding: 5px 9px; }
+.user-add input:focus { outline: none; border-color: var(--cyan-line); }
+.user-add .add-btn { font-family: var(--mono); font-size: 0.72rem; color: var(--ground); background: var(--cyan); border: 1px solid var(--cyan-2); border-radius: 4px; padding: 5px 15px; cursor: pointer; }
+.user-add .add-btn:hover { background: var(--cyan-2); }
+.user-add .add-btn:disabled { opacity: 0.55; cursor: default; }
+
+/* Data tab: the levels manager (audited record CRUD on the content table) */
+.con-levels { margin-top: 1.1rem; }
+.level-form { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding: 13px; border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: rgba(8, 17, 32, 0.3); }
+.level-form-title { font-family: var(--mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); }
+.level-form-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.level-form input, .level-form select { font-family: var(--mono); font-size: 0.72rem; color: var(--ink); background: rgba(8, 17, 32, 0.6); border: 1px solid var(--glass-brd); border-radius: 4px; padding: 5px 9px; }
+.level-form input:focus { outline: none; border-color: var(--cyan-line); }
+.lf-num { width: 56px; }
+.lf-name { flex: 1 1 160px; }
+.lf-text { width: 100%; box-sizing: border-box; }
+.lf-avail { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.72rem; color: var(--ink-2); cursor: pointer; }
+.level-form-bar { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+
+/* Data tab: "how each table was made" (per-table CREATE DDL, collapsible) */
+.con-subhead.ddl-head { margin-top: 1.9rem; }
+.ddl-list { display: flex; flex-direction: column; gap: 7px; margin-top: 1.1rem; }
+.ddl-item { border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: var(--glass); overflow: hidden; }
+.ddl-sum { cursor: pointer; padding: 9px 13px; font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--ink); list-style: none; user-select: none; }
+.ddl-sum::-webkit-details-marker { display: none; }
+.ddl-sum::before { content: "+ "; color: var(--cyan); }
+.ddl-item[open] .ddl-sum::before { content: "\2212  "; }
+.ddl-item[open] .ddl-sum { border-bottom: 1px solid var(--edge); }
+.ddl-sql { margin: 0; padding: 12px 15px; overflow-x: auto; font-family: var(--mono); font-size: 0.72rem; line-height: 1.6; color: var(--ink-2); background: rgba(8, 17, 32, 0.45); white-space: pre; }

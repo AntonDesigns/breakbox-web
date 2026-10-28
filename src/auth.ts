@@ -67,6 +67,14 @@ export interface QueryResult { columns: string[]; rows: (string | null)[][]; row
 export const runConsoleQuery = (sql: string): Promise<QueryResult> =>
   post('/console/query', { sql }).then(body<QueryResult>);
 
+// One table's DDL for the "how each table was made" view: the CREATE statement(s) that build it.
+export interface TableDdl { name: string; sql: string; }
+
+// The Data tab's "how each table was made". Admin only on the server; read only (generated from the EF
+// Core model, in the live provider's dialect).
+export const fetchConsoleDdl = (): Promise<TableDdl[]> =>
+  fetch(`${API}/console/ddl`, { credentials: 'include' }).then(body<TableDdl[]>);
+
 // Fire the dev-only attack harness (admin only; the server returns 404 outside Development). The
 // blocked attempts it records then show up in the monitor on the next refresh.
 export const runAttack = (): Promise<Response> => post('/dev/attack');

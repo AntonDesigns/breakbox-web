@@ -386,3 +386,14 @@ code {
 .qtable td { padding: 6px 13px; border-bottom: 1px solid var(--glass-hi); color: var(--ink-2); white-space: nowrap; }
 .qtable tbody tr:last-child td, .qtable tr:last-child td { border-bottom: none; }
 .qtable .qnull { color: var(--ink-3); font-style: italic; }
+
+/* Data tab: "how each table was made" (per-table CREATE DDL, collapsible) */
+.con-subhead.ddl-head { margin-top: 1.9rem; }
+.ddl-list { display: flex; flex-direction: column; gap: 7px; margin-top: 1.1rem; }
+.ddl-item { border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: var(--glass); overflow: hidden; }
+.ddl-sum { cursor: pointer; padding: 9px 13px; font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--ink); list-style: none; user-select: none; }
+.ddl-sum::-webkit-details-marker { display: none; }
+.ddl-sum::before { content: "+ "; color: var(--cyan); }
+.ddl-item[open] .ddl-sum::before { content: "\2212  "; }
+.ddl-item[open] .ddl-sum { border-bottom: 1px solid var(--edge); }
+.ddl-sql { margin: 0; padding: 12px 15px; overflow-x: auto; font-family: var(--mono); font-size: 0.72rem; line-height: 1.6; color: var(--ink-2); background: rgba(8, 17, 32, 0.45); white-space: pre; }

@@ -2,7 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchConsoleSchema, fetchConsoleStatus, fetchEvents, runConsoleQuery, type AuditEvent, type ConsoleSchema, type ConsoleStatus, type QueryResult } from './auth';
+import { fetchConsoleDdl, fetchConsoleSchema, fetchConsoleStatus, fetchEvents, runConsoleQuery, type AuditEvent, type ConsoleSchema, type ConsoleStatus, type QueryResult, type TableDdl } from './auth';
 
 // The BreakBox Console: the defensive half of the project made live. It is one admin surface that
 // watches the system, operates the database, and ships changes, the blue team against the red team I
@@ -26,7 +26,7 @@ const TABS: TabDef[] = [
   { id: 'purple',    label: 'Purple team', stage: 'sprint3', blurb: 'One event understood from both sides, with the exact code path that handled it and the OWASP category it maps to.' },
   { id: 'anticheat', label: 'Anti-cheat',  stage: 'sprint3', blurb: 'Shield a level. The defence is real and lands in the database and the feed, and is baked into the next dynamic build.' },
   { id: 'hack',      label: 'Hack',        stage: 'sprint3', blurb: 'Break one anti-cheat. Run attack opens its own live window; the hack counters exactly the defence it is paired with.' },
-  { id: 'data',      label: 'Data',        stage: 'sprint2', blurb: 'A live database IDE over my own MySQL: the schema as a tree, a read-only query editor, and how each table was made.' },
+  { id: 'data',      label: 'Data',        stage: 'built',   blurb: 'A live database IDE over my own MySQL: the schema as a tree, a read-only query editor, and how each table was made.' },
   { id: 'ship',      label: 'Ship',        stage: 'sprint3', blurb: 'The delivery pipeline shown the way GitHub shows it, gated so a merge to main only runs when every check is green.' },
 ];
 
@@ -168,16 +168,21 @@ function QueryEditor() {
 }
 
 // The Data tab: a live database IDE over the real database. The read-only query editor is the tool; the
-// schema tree below it is the reference, read from the EF Core model (the migration-governed shape), so
-// it is always in step with the database. Add-table is the next slice.
+// schema tree is the reference (read from the EF Core model, the migration-governed shape); and the DDL
+// section shows how each table was made. All three stay in step with the real database.
 function DataPanel() {
   const [schema, setSchema] = useState<ConsoleSchema | null>(null);
+  const [ddl, setDdl] = useState<TableDdl[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [ddlError, setDdlError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchConsoleSchema()
       .then(setSchema)
       .catch((e) => setError(e instanceof Error ? e.message : 'request failed'));
+    fetchConsoleDdl()
+      .then(setDdl)
+      .catch((e) => setDdlError(e instanceof Error ? e.message : 'request failed'));
   }, []);
 
   return (
@@ -207,6 +212,24 @@ function DataPanel() {
                 ))}
               </ul>
             </div>
+          ))}
+        </div>
+      )}
+
+      <h3 className="con-subhead ddl-head">how each table was made</h3>
+      <p className="con-note">
+        The CREATE statements, generated from the EF Core model in the live provider's dialect. Click a
+        table to see the DDL that builds it.
+      </p>
+      {ddlError && <div className="banner banner-error">{ddlError}</div>}
+      {!ddl && !ddlError && <div className="event-empty">Loading the DDL...</div>}
+      {ddl && (
+        <div className="ddl-list">
+          {ddl.map((t) => (
+            <details key={t.name} className="ddl-item">
+              <summary className="ddl-sum">{t.name}</summary>
+              <pre className="ddl-sql">{t.sql}</pre>
+            </details>
           ))}
         </div>
       )}
@@ -247,7 +270,7 @@ export function Console({ onClose }: Readonly<{ onClose: () => void }>) {
   // The panel subtitle and body, as plain statements rather than nested ternaries.
   let panelSub = STAGE_LABEL[activeTab.stage];
   if (active === 'threats') panelSub = 'live feed · admin';
-  else if (active === 'data') panelSub = 'schema · admin';
+  else if (active === 'data') panelSub = 'live db · admin';
 
   let panelBody = <DesignedPanel tab={activeTab} />;
   if (active === 'threats') panelBody = <ThreatsFeed />;

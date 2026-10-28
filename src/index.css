@@ -322,3 +322,34 @@ code {
 .attack-btn { font-family: var(--mono); font-size: 0.72rem; color: var(--expert); background: transparent; border: 1px solid rgba(200, 138, 138, 0.5); border-radius: var(--radius-sm); padding: 6px 11px; cursor: pointer; }
 .attack-btn:hover { border-color: var(--expert); }
 .attack-btn:disabled { opacity: 0.55; cursor: default; }
+
+/* -------- the Console: the admin-only defensive cockpit (Sprint 2/3). Same glass + blueprint look -------- */
+.console { padding: 0.4rem 0 2rem; }
+
+/* the header: a product mark on the left, the live system status on the right */
+.con-head { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 16px; border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass-2); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-hi); }
+.con-title { display: flex; flex-direction: column; gap: 2px; }
+.con-mark { font-family: var(--mono); font-size: 1rem; font-weight: 700; letter-spacing: 0.04em; color: var(--ink); }
+.con-sub { font-family: var(--mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-3); }
+.con-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.con-stat { display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--mono); font-size: 0.72rem; color: var(--ink); border: 1px solid var(--edge); border-radius: 999px; padding: 4px 11px; }
+.con-stat .k { color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.6rem; }
+.con-stat.err { color: var(--expert); border-color: rgba(200, 138, 138, 0.45); }
+
+/* the tab bar: a row of sections. A small dot marks a tab that is designed but not built yet */
+.con-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 14px; border-bottom: 1px solid var(--edge); }
+.con-tab { position: relative; font-family: var(--mono); font-size: 0.76rem; color: var(--ink-3); background: transparent; border: 1px solid transparent; border-bottom: none; border-radius: var(--radius-sm) var(--radius-sm) 0 0; padding: 8px 14px; cursor: pointer; }
+.con-tab:hover { color: var(--ink-2); }
+.con-tab.on { color: var(--ink); background: var(--glass); border-color: var(--glass-brd); }
+.con-tab-dot { display: inline-block; width: 5px; height: 5px; margin-left: 7px; border-radius: 50%; background: var(--hard); vertical-align: middle; }
+
+/* the active panel */
+.con-panel { margin-top: 1.1rem; }
+
+/* an honest "designed, not built yet" panel for the Sprint 2/3 tabs */
+.con-designed { border: 1px dashed var(--glass-brd); border-radius: var(--radius); background: var(--cyan-soft); padding: 1.6rem 1.5rem; }
+.con-stage { display: inline-block; font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--edge-2); color: var(--ink-2); }
+.con-stage.stage-sprint2 { color: var(--medium); border-color: rgba(123, 166, 204, 0.5); }
+.con-stage.stage-sprint3 { color: var(--hard); border-color: rgba(200, 168, 106, 0.5); }
+.con-blurb { margin: 0.9rem 0 0; font-size: 0.95rem; line-height: 1.55; color: var(--ink); max-width: 62ch; }
+.con-note { margin: 0.7rem 0 0; font-size: 0.82rem; line-height: 1.5; color: var(--ink-3); max-width: 62ch; }

@@ -402,3 +402,17 @@ body[data-sprint="4"] .dg .q-s1 { display: none; }
 body[data-sprint="4"] .dg .q-s4 { display: inline; }
 /* the reveal scan beam: a bright cyan line that sweeps each figure as it decodes itself in */
 .dg .scan-beam { fill: var(--cyan); opacity: 0; pointer-events: none; filter: drop-shadow(0 0 7px rgba(119,184,209,0.85)); }
+
+/* ---- The Console mockups wear the real app's glass skin: frosted translucent panels that float on a
+   soft glow, the same glassmorphism I put on the launcher and the Studio. Scoped to .glassy, so the rest
+   of the sheet stays flat blueprint. ---- */
+.glassdeck .figdeck-stage { background: radial-gradient(1100px 360px at 26% -8%, rgba(119,184,209,0.14), transparent 60%), radial-gradient(820px 480px at 96% 110%, rgba(119,184,209,0.10), transparent 60%); }
+.dg.glassy { filter: drop-shadow(0 20px 44px rgba(0,0,0,0.5)); }
+.dg.glassy .win { fill: rgba(26,48,78,0.56); stroke: rgba(176,205,232,0.5); stroke-width: 1.2; }
+.dg.glassy .box { fill: rgba(140,180,224,0.09); stroke: rgba(168,198,228,0.26); }
+.dg.glassy .scr { fill: rgba(140,180,224,0.06); stroke: rgba(168,198,228,0.20); }
+.dg.glassy .chip { fill: rgba(119,184,209,0.26); stroke: var(--ctrl); }
+.dg.glassy .btn { fill: rgba(119,184,209,0.28); stroke: var(--ctrl); }
+.dg.glassy .ctrlbox { fill: rgba(119,184,209,0.14); stroke: rgba(119,184,209,0.6); }
+.dg.glassy .threatbox { fill: rgba(150,170,196,0.14); stroke: rgba(150,170,196,0.55); }
+.dg.glassy .btnlock { fill: rgba(150,170,196,0.10); stroke: rgba(150,170,196,0.5); }

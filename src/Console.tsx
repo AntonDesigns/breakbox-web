@@ -2,7 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useCallback, useEffect, useState } from 'react';
-import { deleteUser, fetchConsoleDdl, fetchConsoleSchema, fetchConsoleStatus, fetchConsoleUsers, fetchEvents, runConsoleQuery, updateUserRole, type AuditEvent, type ConsoleSchema, type ConsoleStatus, type QueryResult, type TableDdl, type UserRow } from './auth';
+import { addUser, deleteUser, fetchConsoleDdl, fetchConsoleSchema, fetchConsoleStatus, fetchConsoleUsers, fetchEvents, runConsoleQuery, updateUserRole, type AuditEvent, type ConsoleSchema, type ConsoleStatus, type QueryResult, type TableDdl, type UserRow } from './auth';
 
 // The BreakBox Console: the defensive half of the project made live. It is one admin surface that
 // watches the system, operates the database, and ships changes, the blue team against the red team I
@@ -212,6 +212,27 @@ function UserManager({ meId }: Readonly<{ meId: number }>) {
     }
   }, [load]);
 
+  // The add-user form, kept as its own small piece of state so the table stays a pure render of the list.
+  const [nu, setNu] = useState('');
+  const [ne, setNe] = useState('');
+  const [np, setNp] = useState('');
+  const [nr, setNr] = useState('user');
+  const [adding, setAdding] = useState(false);
+
+  const add = useCallback(async () => {
+    setAdding(true);
+    try {
+      await addUser(nu.trim(), ne.trim(), np, nr);
+      setNu(''); setNe(''); setNp('');
+      await load();
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'request failed');
+    } finally {
+      setAdding(false);
+    }
+  }, [nu, ne, np, nr, load]);
+
   return (
     <div className="con-users">
       {error && <div className="banner banner-error">{error}</div>}
@@ -259,6 +280,18 @@ function UserManager({ meId }: Readonly<{ meId: number }>) {
           </table>
         </div>
       )}
+
+      <form className="user-add" onSubmit={(e) => { e.preventDefault(); void add(); }}>
+        <input value={nu} onChange={(e) => setNu(e.target.value)} placeholder="username" aria-label="new username" />
+        <input value={ne} onChange={(e) => setNe(e.target.value)} placeholder="email" aria-label="new email" />
+        <input value={np} onChange={(e) => setNp(e.target.value)} type="password" placeholder="password" aria-label="new password" />
+        <select className="role-select" value={nr} onChange={(e) => setNr(e.target.value)} aria-label="new user role">
+          <option value="user">user</option>
+          <option value="admin">admin</option>
+        </select>
+        <button type="submit" className="add-btn" disabled={adding}>{adding ? 'adding...' : 'add user'}</button>
+      </form>
+
       <p className="con-note">
         Changes are audited and show up in the Threats feed. The last admin cannot be demoted, you cannot
         delete your own account, and a user with activity history is never deleted.

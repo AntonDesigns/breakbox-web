@@ -96,6 +96,11 @@ export const updateUserRole = (id: number, role: string): Promise<{ id: number; 
 export const deleteUser = (id: number): Promise<{ deleted: number }> =>
   fetch(`${API}/console/users/${id}`, { method: 'DELETE', credentials: 'include' }).then(body<{ deleted: number }>);
 
+// Create a user. Admin only and audited on the server, which validates it like sign-up (and rejects a
+// duplicate username/email). The password is hashed server-side and never stored plaintext.
+export const addUser = (username: string, email: string, password: string, role: string): Promise<{ id: number; username: string; role: string }> =>
+  post('/console/users', { username, email, password, role }).then(body<{ id: number; username: string; role: string }>);
+
 // Fire the dev-only attack harness (admin only; the server returns 404 outside Development). The
 // blocked attempts it records then show up in the monitor on the next refresh.
 export const runAttack = (): Promise<Response> => post('/dev/attack');

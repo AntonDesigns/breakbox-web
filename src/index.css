@@ -400,6 +400,12 @@ code {
 .u-cancel { margin-left: 5px; }
 .u-cancel:hover { border-color: var(--cyan-line); color: var(--ink); }
 .u-del:disabled { opacity: 0.5; cursor: default; }
+.user-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 13px; }
+.user-add input { font-family: var(--mono); font-size: 0.72rem; color: var(--ink); background: rgba(8, 17, 32, 0.6); border: 1px solid var(--glass-brd); border-radius: 4px; padding: 5px 9px; }
+.user-add input:focus { outline: none; border-color: var(--cyan-line); }
+.user-add .add-btn { font-family: var(--mono); font-size: 0.72rem; color: var(--ground); background: var(--cyan); border: 1px solid var(--cyan-2); border-radius: 4px; padding: 5px 15px; cursor: pointer; }
+.user-add .add-btn:hover { background: var(--cyan-2); }
+.user-add .add-btn:disabled { opacity: 0.55; cursor: default; }
 
 /* Data tab: "how each table was made" (per-table CREATE DDL, collapsible) */
 .con-subhead.ddl-head { margin-top: 1.9rem; }

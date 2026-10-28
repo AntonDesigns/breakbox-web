@@ -2,7 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchConsoleSchema, fetchConsoleStatus, fetchEvents, type AuditEvent, type ConsoleSchema, type ConsoleStatus } from './auth';
+import { fetchConsoleSchema, fetchConsoleStatus, fetchEvents, runConsoleQuery, type AuditEvent, type ConsoleSchema, type ConsoleStatus, type QueryResult } from './auth';
 
 // The BreakBox Console: the defensive half of the project made live. It is one admin surface that
 // watches the system, operates the database, and ships changes, the blue team against the red team I
@@ -86,9 +86,90 @@ function ThreatsFeed() {
   );
 }
 
-// The Data tab, first slice: the live schema tree. It reads the schema from the API (which reads the
-// EF Core model, the migration-governed shape), so it is always in step with the real database. Read
-// only for now; the query editor and add-table are the next slices.
+// The results of one read-only query, as a table. The cells are already strings from the server (null
+// cells read as a dimmed "null"), so this only has to lay them out and say how many rows came back.
+function QueryResultTable({ result }: Readonly<{ result: QueryResult }>) {
+  if (result.columns.length === 0) return <div className="event-empty">The query returned no columns.</div>;
+
+  return (
+    <div className="qresult">
+      <div className="qresult-meta">
+        {result.rowCount} row{result.rowCount === 1 ? '' : 's'}
+        {result.truncated && <span className="qresult-cap"> · capped at 200</span>}
+      </div>
+      <div className="qresult-scroll">
+        <table className="qtable">
+          <thead>
+            <tr>{result.columns.map((c) => <th key={c}>{c}</th>)}</tr>
+          </thead>
+          <tbody>
+            {result.rows.map((row, ri) => (
+              // Query rows have no natural id, and the result is an immutable snapshot that never
+              // reorders, so the row index is a stable key here.
+              <tr key={ri}>
+                {row.map((cell, ci) => (
+                  <td key={result.columns[ci] ?? ci} className={cell === null ? 'qnull' : undefined}>
+                    {cell === null ? 'null' : cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {result.rowCount === 0 && <div className="event-empty">The query ran and returned no rows.</div>}
+    </div>
+  );
+}
+
+// The read-only query editor. The admin types SQL and runs it; the server is the one that guarantees it
+// is read only (single SELECT/WITH, run inside a rolled-back transaction), so this stays a thin editor
+// and never pretends to enforce anything itself.
+function QueryEditor() {
+  const [sql, setSql] = useState('SELECT Id, Username, Role FROM Users');
+  const [result, setResult] = useState<QueryResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+
+  const run = useCallback(async () => {
+    setRunning(true);
+    try {
+      setResult(await runConsoleQuery(sql));
+      setError(null);
+    } catch (e) {
+      setResult(null);
+      setError(e instanceof Error ? e.message : 'request failed');
+    } finally {
+      setRunning(false);
+    }
+  }, [sql]);
+
+  return (
+    <div className="con-query">
+      <label className="con-qlabel" htmlFor="con-sql">read-only query</label>
+      <textarea
+        id="con-sql"
+        className="con-sql"
+        spellCheck={false}
+        rows={3}
+        value={sql}
+        onChange={(e) => setSql(e.target.value)}
+      />
+      <div className="con-qbar">
+        <button type="button" className="run" disabled={running} onClick={() => { void run(); }}>
+          {running ? 'running...' : 'Run'}
+        </button>
+        <span className="con-qhint">SELECT only. The server refuses writes and rolls back every query.</span>
+      </div>
+      {error && <div className="banner banner-error">{error}</div>}
+      {result && <QueryResultTable result={result} />}
+    </div>
+  );
+}
+
+// The Data tab: a live database IDE over the real database. The read-only query editor is the tool; the
+// schema tree below it is the reference, read from the EF Core model (the migration-governed shape), so
+// it is always in step with the database. Add-table is the next slice.
 function DataPanel() {
   const [schema, setSchema] = useState<ConsoleSchema | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -99,33 +180,36 @@ function DataPanel() {
       .catch((e) => setError(e instanceof Error ? e.message : 'request failed'));
   }, []);
 
-  if (error) return <div className="banner banner-error">{error}</div>;
-  if (!schema) return <div className="event-empty">Loading the schema...</div>;
-
   return (
     <div className="con-data">
+      <QueryEditor />
+
+      <h3 className="con-subhead">schema</h3>
       <p className="con-note">
         The live schema, read from the EF Core model (the migration-governed shape of the database).
-        Read only; the query editor and add-table land next.
       </p>
-      <div className="schema-grid">
-        {schema.tables.map((t) => (
-          <div key={t.name} className="schema-table">
-            <div className="schema-th">
-              <span className="schema-tname">{t.name}</span>
-              <span className="schema-ccount">{t.columns.length} cols</span>
+      {error && <div className="banner banner-error">{error}</div>}
+      {!schema && !error && <div className="event-empty">Loading the schema...</div>}
+      {schema && (
+        <div className="schema-grid">
+          {schema.tables.map((t) => (
+            <div key={t.name} className="schema-table">
+              <div className="schema-th">
+                <span className="schema-tname">{t.name}</span>
+                <span className="schema-ccount">{t.columns.length} cols</span>
+              </div>
+              <ul className="schema-cols">
+                {t.columns.map((c) => (
+                  <li key={c.name}>
+                    <span className="col-name">{c.name}</span>
+                    <span className="col-type">{c.type}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="schema-cols">
-              {t.columns.map((c) => (
-                <li key={c.name}>
-                  <span className="col-name">{c.name}</span>
-                  <span className="col-type">{c.type}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

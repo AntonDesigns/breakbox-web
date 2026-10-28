@@ -58,6 +58,15 @@ export const fetchConsoleStatus = (): Promise<ConsoleStatus> =>
 export const fetchConsoleSchema = (): Promise<ConsoleSchema> =>
   fetch(`${API}/console/schema`, { credentials: 'include' }).then(body<ConsoleSchema>);
 
+// What the read-only query editor reads back: the columns, the rows (stringified cells, null for a null
+// cell), the row count, and whether the result hit the server's row cap.
+export interface QueryResult { columns: string[]; rows: (string | null)[][]; rowCount: number; truncated: boolean; }
+
+// Run a read-only query. Admin only on the server, which refuses anything that is not a single SELECT/WITH
+// and rolls back regardless, so this can read the database but never change it.
+export const runConsoleQuery = (sql: string): Promise<QueryResult> =>
+  post('/console/query', { sql }).then(body<QueryResult>);
+
 // Fire the dev-only attack harness (admin only; the server returns 404 outside Development). The
 // blocked attempts it records then show up in the monitor on the next refresh.
 export const runAttack = (): Promise<Response> => post('/dev/attack');

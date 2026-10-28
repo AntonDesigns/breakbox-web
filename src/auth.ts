@@ -91,6 +91,11 @@ export const updateUserRole = (id: number, role: string): Promise<{ id: number; 
     body: JSON.stringify({ role }),
   }).then(body<{ id: number; username: string; role: string }>);
 
+// Delete a user. Admin only and audited on the server, which refuses deleting yourself or a user with
+// activity history, and preserves the audit trail.
+export const deleteUser = (id: number): Promise<{ deleted: number }> =>
+  fetch(`${API}/console/users/${id}`, { method: 'DELETE', credentials: 'include' }).then(body<{ deleted: number }>);
+
 // Fire the dev-only attack harness (admin only; the server returns 404 outside Development). The
 // blocked attempts it records then show up in the monitor on the next refresh.
 export const runAttack = (): Promise<Response> => post('/dev/attack');

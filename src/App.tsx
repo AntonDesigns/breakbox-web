@@ -303,7 +303,7 @@ export default function App() {
           <AuthPanel onAuthed={(m) => { setMe(m); setView('monitor'); }} onCancel={() => setView('launcher')} />
         )}
         {view === 'monitor' && <Monitor onClose={() => setView('launcher')} />}
-        {view === 'console' && <Console onClose={() => setView('launcher')} />}
+        {view === 'console' && <Console onClose={() => setView('launcher')} meId={me?.id ?? 0} />}
 
         {view === 'launcher' && (<>
         {error && (

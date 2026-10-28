@@ -2,7 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchConsoleDdl, fetchConsoleSchema, fetchConsoleStatus, fetchConsoleUsers, fetchEvents, runConsoleQuery, updateUserRole, type AuditEvent, type ConsoleSchema, type ConsoleStatus, type QueryResult, type TableDdl, type UserRow } from './auth';
+import { deleteUser, fetchConsoleDdl, fetchConsoleSchema, fetchConsoleStatus, fetchConsoleUsers, fetchEvents, runConsoleQuery, updateUserRole, type AuditEvent, type ConsoleSchema, type ConsoleStatus, type QueryResult, type TableDdl, type UserRow } from './auth';
 
 // The BreakBox Console: the defensive half of the project made live. It is one admin surface that
 // watches the system, operates the database, and ships changes, the blue team against the red team I
@@ -170,10 +170,11 @@ function QueryEditor() {
 // The user manager, the first slice of the Data tab's CRUD. It lists the users and lets an admin change a
 // role; the write is admin-only and audited on the server (and so shows in the Threats feed), and the
 // server refuses demoting the last admin. The UI stays thin: it posts the change and reloads the list.
-function UserManager() {
+function UserManager({ meId }: Readonly<{ meId: number }>) {
   const [users, setUsers] = useState<UserRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [confirmId, setConfirmId] = useState<number | null>(null);   // the row whose delete is awaiting a confirm
 
   const load = useCallback(async () => {
     try {
@@ -198,6 +199,19 @@ function UserManager() {
     }
   }, [load]);
 
+  const remove = useCallback(async (id: number) => {
+    setBusyId(id);
+    setConfirmId(null);
+    try {
+      await deleteUser(id);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'request failed');
+    } finally {
+      setBusyId(null);
+    }
+  }, [load]);
+
   return (
     <div className="con-users">
       {error && <div className="banner banner-error">{error}</div>}
@@ -206,7 +220,7 @@ function UserManager() {
         <div className="qresult-scroll">
           <table className="qtable">
             <thead>
-              <tr><th>id</th><th>username</th><th>email</th><th>role</th><th>last login</th></tr>
+              <tr><th>id</th><th>username</th><th>email</th><th>role</th><th>last login</th><th>{''}</th></tr>
             </thead>
             <tbody>
               {users.map((u) => (
@@ -227,13 +241,28 @@ function UserManager() {
                     </select>
                   </td>
                   <td>{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : '—'}</td>
+                  <td className="u-actions">
+                    {u.id === meId ? (
+                      <span className="u-you">you</span>
+                    ) : confirmId === u.id ? (
+                      <>
+                        <button type="button" className="u-del confirm" disabled={busyId === u.id} onClick={() => { void remove(u.id); }}>delete</button>
+                        <button type="button" className="u-cancel" onClick={() => setConfirmId(null)}>cancel</button>
+                      </>
+                    ) : (
+                      <button type="button" className="u-del" disabled={busyId === u.id} onClick={() => setConfirmId(u.id)}>delete</button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
-      <p className="con-note">Changing a role is audited and shows up in the Threats feed. The last admin cannot be demoted.</p>
+      <p className="con-note">
+        Changes are audited and show up in the Threats feed. The last admin cannot be demoted, you cannot
+        delete your own account, and a user with activity history is never deleted.
+      </p>
     </div>
   );
 }
@@ -241,7 +270,7 @@ function UserManager() {
 // The Data tab: a live database IDE over the real database. The read-only query editor and the user
 // manager are the tools; the schema tree is the reference (read from the EF Core model, the
 // migration-governed shape); and the DDL section shows how each table was made.
-function DataPanel() {
+function DataPanel({ meId }: Readonly<{ meId: number }>) {
   const [schema, setSchema] = useState<ConsoleSchema | null>(null);
   const [ddl, setDdl] = useState<TableDdl[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -261,7 +290,7 @@ function DataPanel() {
       <QueryEditor />
 
       <h3 className="con-subhead">users</h3>
-      <UserManager />
+      <UserManager meId={meId} />
 
       <h3 className="con-subhead">schema</h3>
       <p className="con-note">
@@ -323,7 +352,7 @@ function DesignedPanel({ tab }: Readonly<{ tab: TabDef }>) {
   );
 }
 
-export function Console({ onClose }: Readonly<{ onClose: () => void }>) {
+export function Console({ onClose, meId }: Readonly<{ onClose: () => void; meId: number }>) {
   const [active, setActive] = useState<TabId>('threats');
   const [status, setStatus] = useState<ConsoleStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -348,7 +377,7 @@ export function Console({ onClose }: Readonly<{ onClose: () => void }>) {
 
   let panelBody = <DesignedPanel tab={activeTab} />;
   if (active === 'threats') panelBody = <ThreatsFeed />;
-  else if (active === 'data') panelBody = <DataPanel />;
+  else if (active === 'data') panelBody = <DataPanel meId={meId} />;
 
   return (
     <section className="console">

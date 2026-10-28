@@ -1,9 +1,11 @@
 // BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
-// Auth + monitoring talk to the same API as the launcher. Every call sends credentials: "include"
-// so the HttpOnly session cookie rides along; the frontend never sees or stores the token itself.
-const API = 'http://localhost:5080/api';
+import { API } from './config';
+
+// Auth + monitoring talk to the same API as the launcher, whose origin lives in config.ts. Every call
+// sends credentials: "include" so the HttpOnly session cookie rides along; the frontend never sees or
+// stores the token itself.
 
 export interface Me { id: number; username: string; email: string; role: string; }
 export interface AuditEvent { id: number; action: string; detail: string | null; ip: string | null; at: string; username: string | null; }
@@ -78,13 +80,15 @@ export const fetchConsoleDdl = (): Promise<TableDdl[]> =>
 // A page of one table's rows for the table browser.
 export interface TablePage { name: string; columns: string[]; rows: (string | null)[][]; page: number; size: number; total: number; }
 
-// A level in the levels manager (the one editable content table), and the body sent to add/edit one.
-export interface Level { id: number; number: number; name: string; difficulty: string; tier: string; available: boolean; summary: string; learn: string; }
-export type LevelInput = Omit<Level, 'id'>;
+// A level row in the levels manager (the one editable content table), and the body sent to add/edit one.
+// Named LevelRow, not Level, so it is clearly distinct from the launcher's Level type in api.ts (which
+// has the download tools, not the id) rather than two interfaces sharing one name.
+export interface LevelRow { id: number; number: number; name: string; difficulty: string; tier: string; available: boolean; summary: string; learn: string; }
+export type LevelInput = Omit<LevelRow, 'id'>;
 
 // The levels manager. All admin-only on the server; every write is audited and shows in the Threats feed.
-export const fetchConsoleLevels = (): Promise<Level[]> =>
-  fetch(`${API}/console/levels`, { credentials: 'include' }).then(body<Level[]>);
+export const fetchConsoleLevels = (): Promise<LevelRow[]> =>
+  fetch(`${API}/console/levels`, { credentials: 'include' }).then(body<LevelRow[]>);
 
 export const addConsoleLevel = (lvl: LevelInput): Promise<{ id: number }> =>
   post('/console/levels', lvl).then(body<{ id: number }>);

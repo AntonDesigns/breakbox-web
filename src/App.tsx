@@ -6,7 +6,7 @@ import { downloadTarget, fetchLevels, type Level } from './api';
 import { getMe, logout, type Me } from './auth';
 import { AuthPanel } from './AuthPanel';
 import { Monitor } from './Monitor';
-import { Console } from './Console';
+import { Console } from './console/Console';
 
 // The .NET 9 Desktop Runtime, which the level apps need to run. Installed once, then every level runs.
 const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';
@@ -104,11 +104,8 @@ function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [failed, setFailed] = useState(false);
-
-  // Reset the download state whenever the selected level changes.
-  useEffect(() => {
-    setDownloading(false); setDownloaded(false); setFailed(false);
-  }, [level?.number]);
+  // The download state resets when the selected level changes because App keys this component by the
+  // level number, so it remounts fresh. That is cleaner than an effect that writes state on prop change.
 
   const download = async () => {
     if (!level) return;
@@ -236,17 +233,13 @@ export default function App() {
     setView('launcher');
   };
 
-  // Open on the first level you can actually download, so the guide is populated at rest.
-  useEffect(() => {
-    if (levels && selected === null) {
-      const first = levels.find((l) => l.available) ?? levels[0];
-      if (first) setSelected(first.number);
-    }
-  }, [levels, selected]);
-
   const core = levels?.filter((l) => l.tier === 'core') ?? [];
   const advanced = levels?.filter((l) => l.tier === 'advanced') ?? [];
-  const selectedLevel = levels?.find((l) => l.number === selected) ?? null;
+  // Open on the first level you can actually download, so the guide is populated at rest. Derived from the
+  // click (if any) or the default, rather than an effect that writes selection state once levels arrive.
+  const firstAvailable = levels?.find((l) => l.available)?.number ?? levels?.[0]?.number ?? null;
+  const activeNumber = selected ?? firstAvailable;
+  const selectedLevel = levels?.find((l) => l.number === activeNumber) ?? null;
   const available = levels?.filter((l) => l.available).length ?? 0;
 
   // The connection state, as plain statements rather than nested ternaries.
@@ -320,19 +313,19 @@ export default function App() {
                 <h2 className="section">core</h2>
                 <ol className="targets targets-core">
                   {core.map((l) => (
-                    <LevelCard key={l.number} lvl={l} active={l.number === selected} onSelect={setSelected} />
+                    <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} onSelect={setSelected} />
                   ))}
                 </ol>
               </section>
 
-              <Guide level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} />
+              <Guide key={activeNumber ?? 'none'} level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} />
             </div>
 
             <section className="ladder-adv">
               <h2 className="section">advanced <span className="dim">later sprints</span></h2>
               <ol className="targets targets-adv">
                 {advanced.map((l) => (
-                  <LevelCard key={l.number} lvl={l} active={l.number === selected} onSelect={setSelected} />
+                  <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} onSelect={setSelected} />
                 ))}
               </ol>
             </section>

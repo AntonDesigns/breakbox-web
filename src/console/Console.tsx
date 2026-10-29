@@ -22,6 +22,9 @@ import { STAGE_LABEL, TABS, type TabId } from './types';
 // renders for the admin and shows the server's refusal otherwise, so opening the page proves nothing.
 export function Console({ onClose, meId }: Readonly<{ onClose: () => void; meId: number }>) {
   const [active, setActive] = useState<TabId>('threats');
+  // Which anti-cheats are armed, shared so the Hack tab stays in sync with the Anti-cheat tab. server-key
+  // is on by default because it is the live completion loop: verification already runs server-side.
+  const [armed, setArmed] = useState<Record<string, boolean>>({ 'server-key': true });
   const { data: status, error: statusError, reload: loadStatus } = useLoad(fetchConsoleStatus);
 
   const activeTab = TABS.find((t) => t.id === active)!;
@@ -38,8 +41,8 @@ export function Console({ onClose, meId }: Readonly<{ onClose: () => void; meId:
   if (active === 'threats') panelBody = <ThreatsFeed />;
   else if (active === 'data') panelBody = <DataPanel meId={meId} />;
   else if (active === 'purple') panelBody = <PurpleTeam />;
-  else if (active === 'anticheat') panelBody = <AntiCheat />;
-  else if (active === 'hack') panelBody = <HackTab />;
+  else if (active === 'anticheat') panelBody = <AntiCheat armed={armed} setArmed={setArmed} />;
+  else if (active === 'hack') panelBody = <HackTab armed={armed} />;
 
   return (
     <section className="console">

@@ -1,115 +1,101 @@
 // BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { fetchEvents, runAttack } from '../auth';
-import { useLoad } from '../useLoad';
-import { kindOf } from './threats';
-import { ARMS } from './armsRace';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { downloadTarget } from '../api';
+import { runAttack } from '../auth';
+import { HACKS } from './armsRace';
 
-// The Hack tab: the attacker's half of the arms race. "Run attack" fires the dev-only harness at the
-// running app (SQL injection, IDOR, a brute-force burst) and the live window below fills with the blocked
-// attempts straight from the feed, the defence working in real time. The ladder lists the paired hack for
-// each level and whether its shield is live yet. The harness is dev-only and admin-only on the server.
-interface AttackResult { attack: string; blocked: boolean; }
-
-export function HackTab() {
-  const { data, error, reload } = useLoad(fetchEvents);
-
-  useEffect(() => {
-    const timer = setInterval(reload, 4000);
-    return () => clearInterval(timer);
-  }, [reload]);
-
-  const events = useMemo(() => data?.events ?? [], [data]);
+// The Hack tab: the offensive mirror of Anti-cheat. The left list is the hacks, each paired to the
+// anti-cheat it counters and bound to its level (cross-level ones are locked). "Run attack" opens its own
+// live window on the right: a terminal types the run out, the key is never shown, and it ends by handing
+// you the dynamic build named for the anti-cheat (the bypass is silent, not in the name). The real run
+// also fires the dev attack harness, so the whole thing lands in the Threats feed.
+export function HackTab({ armed }: Readonly<{ armed: Record<string, boolean> }>) {
+  const [sel, setSel] = useState<string>('server-key');
+  const [lines, setLines] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
-  const [results, setResults] = useState<AttackResult[] | null>(null);
-  const [runErr, setRunErr] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [dl, setDl] = useState(false);
+  const timer = useRef<number | null>(null);
 
-  const fire = useCallback(async () => {
-    setRunning(true); setRunErr(null);
-    try {
-      const res = await runAttack();
-      if (!res.ok) {
-        setRunErr(res.status === 404 ? 'The attack harness is dev-only (the API returns 404 outside Development).' : `attack failed: ${res.status}`);
-        return;
-      }
-      const body = await res.json() as { results: AttackResult[] };
-      setResults(body.results);
-      reload();                  // the blocked attempts land in the feed
-      setTimeout(reload, 800);   // and once more as they settle
-    } catch {
-      setRunErr('Could not reach the API.');
-    } finally {
-      setRunning(false);
-    }
-  }, [reload]);
+  useEffect(() => () => { if (timer.current) window.clearInterval(timer.current); }, []);
 
-  const attackEvents = useMemo(
-    () => events.filter((e) => kindOf(e.action) === 'threat' || e.action.toLowerCase().startsWith('attack_')),
-    [events],
-  );
-  const fmt = (t: string) => new Date(t).toLocaleTimeString();
+  const hack = HACKS.find((h) => h.id === sel) ?? HACKS[0];
+  const appliedAc = HACKS.filter((h) => armed[h.id]).map((h) => h.id).join(', ') || 'none';
+
+  const run = useCallback(() => {
+    const h = HACKS.find((x) => x.id === sel) ?? HACKS[0];
+    if (h.state !== 'live') return;
+    if (timer.current) window.clearInterval(timer.current);
+    setRunning(true); setDone(false); setDl(false); setLines([]); setProgress(0);
+    void runAttack().catch(() => { /* logging the run to the feed is best-effort */ });
+    let i = 0;
+    timer.current = window.setInterval(() => {
+      i += 1;
+      setLines(h.terminal.slice(0, i));
+      setProgress(Math.min(100, Math.round((i / h.terminal.length) * 100)));
+      if (i >= h.terminal.length) { if (timer.current) window.clearInterval(timer.current); setRunning(false); setDone(true); }
+    }, 420);
+  }, [sel]);
+
+  const close = () => { setDone(false); setLines([]); setProgress(0); setDl(false); };
+  const download = () => { setDl(true); void downloadTarget(hack.level, hack.build); };
 
   return (
-    <div className="hack">
-      {error && <div className="banner banner-error">{error}</div>}
+    <div className="hk">
+      <p className="ace-lead">run the attack in its own live window</p>
+      <p className="ace-ver">latest dynamic version · Level {hack.level} · applied anti-cheat: {appliedAc}</p>
 
-      <section className="ac-card">
-        <div className="dx-head"><span className="dx-title">run attack</span><span className="dx-sub">fire the harness at the running app and watch it get blocked</span></div>
-        <div className="hk-bar">
-          <button type="button" className="run" disabled={running} onClick={() => { void fire(); }}>{running ? 'running...' : 'run attack'}</button>
-          <span className="con-qhint">SQL injection, IDOR and a brute-force burst, fired live. Every one should be blocked and land in the feed.</span>
-        </div>
-        {runErr && <div className="banner banner-error hk-err">{runErr}</div>}
-        {results && (
-          <div className="hk-results">
-            {results.map((r) => (
-              <div key={r.attack} className={`hk-res ${r.blocked ? 'blocked' : 'through'}`}>
-                <span className="hk-res-name">{r.attack}</span>
-                <span className="hk-res-v">{r.blocked ? 'blocked' : 'GOT THROUGH'}</span>
+      <div className="ace-grid">
+        <div className="ace-list">
+          <div className="ace-list-h">hacks (paired with the anti-cheat they counter)</div>
+          {HACKS.map((h) => {
+            const locked = h.state !== 'live';
+            return (
+              <div
+                key={h.id}
+                className={`ace-card ${h.id === sel ? 'on' : ''} ${locked ? 'locked' : ''}`}
+                role="button" tabIndex={0}
+                onClick={() => { if (!locked) setSel(h.id); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !locked) setSel(h.id); }}
+              >
+                <div className="ace-card-main">
+                  <div className="ace-card-name"><b>{h.id}</b> · {h.tagline}</div>
+                  <div className="ace-card-bound">counters: {h.id}{locked ? ' — locked' : ''}</div>
+                </div>
+                <span className="ace-lvl">L{h.level}</span>
               </div>
-            ))}
+            );
+          })}
+          <button type="button" className="hk-run-btn" disabled={running || hack.state !== 'live'} onClick={run}>{running ? 'running...' : 'Run attack'}</button>
+          <p className="hk-foot">opens its own live window (right), and logs to the Threats feed.</p>
+        </div>
+
+        <div className="hk-win">
+          <div className="hk-win-h"><span>hacking Level {hack.level} (dynamic)</span><span className="live-dot">live</span></div>
+          <div className="hk-term">
+            {lines.length === 0 && !running && <div className="hk-term-idle">Select a hack and hit Run attack. The run types out here; the key is never shown.</div>}
+            {lines.map((l, i) => <div key={i} className="hk-line">{l}</div>)}
           </div>
-        )}
-      </section>
-
-      <section className="ac-card">
-        <div className="dx-head"><span className="dx-title">the hacks</span><span className="dx-sub">each attack, and whether its shield is live yet</span></div>
-        <div className="ac-ladder">
-          {ARMS.map((a) => (
-            <div key={a.number} className={`ac-rung state-${a.state}`}>
-              <div className="ac-rung-h">
-                <span className="ac-lvl">L{a.number}</span>
-                <span className="ac-lvl-name">{a.name}</span>
-                <span className={`hk-lands ${a.state === 'live' ? 'no' : 'yes'}`}>{a.state === 'live' ? 'shield is live' : 'lands until the shield ships'}</span>
+          {(running || done) && <div className="hk-bar"><div className="hk-bar-fill" style={{ width: `${progress}%` }} /></div>}
+          {done && (
+            <div className="hk-build">
+              <div className="hk-build-t">your dynamic build is ready</div>
+              <div className="hk-build-name">{hack.build}</div>
+              <div className="hk-build-sub">same name as the anti-cheat version; the hack is hidden inside</div>
+              <div className="hk-build-bar">
+                <button type="button" className="hk-dl" onClick={download}>{dl ? 'downloaded' : 'Download (instant)'}</button>
+                <button type="button" className="hk-close" onClick={close}>Close</button>
               </div>
-              <p className="ac-weak"><span className="ac-lbl">hack</span>{a.hack}</p>
             </div>
-          ))}
+          )}
+          {done && <p className="hk-note">{hack.note}</p>}
         </div>
-      </section>
-
-      <h3 className="con-subhead tl-head">live attack window</h3>
-      <div className="qresult-scroll tl-scroll">
-        <table className="qtable tl-table">
-          <thead><tr><th>time</th><th>source</th><th>event</th><th>detail</th></tr></thead>
-          <tbody>
-            {attackEvents.length === 0 && !error && (
-              <tr><td colSpan={4} className="tl-empty">No attacks yet. Hit "run attack" and watch them get blocked.</td></tr>
-            )}
-            {attackEvents.map((ev) => (
-              <tr key={ev.id} className="tl-row kind-threat">
-                <td className="tl-time">{fmt(ev.at)}</td>
-                <td className="tl-actor">{ev.username ?? ev.ip ?? '—'}</td>
-                <td className="tl-event"><span className="tl-dot kind-threat" />{ev.action}</td>
-                <td className="tl-detail">{ev.detail ?? ''}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
-      <p className="con-note">The harness is dev-only and admin-only on the server; it is the live demonstration of the defences holding. The paired hacks above break the per-level shields once those ship into the generated build.</p>
+
+      <p className="con-note">Run attack opens its own live window; the whole run streams to the Threats feed. The key is never shown.</p>
     </div>
   );
 }

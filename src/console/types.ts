@@ -13,8 +13,8 @@ export interface TabDef { id: TabId; label: string; stage: Stage; blurb: string;
 export const TABS: TabDef[] = [
   { id: 'threats',   label: 'Threats',     stage: 'built',   blurb: 'The live feed of everything: my own actions, attacks, and the database changes they cause, in one timeline.' },
   { id: 'purple',    label: 'Purple team', stage: 'built',   blurb: 'One event understood from both sides, with the exact code path that handled it and the OWASP category it maps to.' },
-  { id: 'anticheat', label: 'Anti-cheat',  stage: 'sprint3', blurb: 'Shield a level. The defence is real and lands in the database and the feed, and is baked into the next dynamic build.' },
-  { id: 'hack',      label: 'Hack',        stage: 'sprint3', blurb: 'Break one anti-cheat. Run attack opens its own live window; the hack counters exactly the defence it is paired with.' },
+  { id: 'anticheat', label: 'Anti-cheat',  stage: 'built', blurb: 'Shield a level. The defence is real and lands in the database and the feed, and is baked into the next dynamic build.' },
+  { id: 'hack',      label: 'Hack',        stage: 'built', blurb: 'Break one anti-cheat. Run attack opens its own live window; the hack counters exactly the defence it is paired with.' },
   { id: 'data',      label: 'Data',        stage: 'built',   blurb: 'A live database IDE over my own MySQL: the schema as a tree, a read-only query editor, and how each table was made.' },
 ];
 

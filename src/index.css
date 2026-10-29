@@ -564,6 +564,41 @@ code {
 .flag-input:focus { outline: none; border-color: var(--cyan-line); box-shadow: 0 0 0 1px var(--cyan-soft); }
 .step-ok { margin-top: 8px; font-family: var(--mono); font-size: 0.74rem; color: var(--easy); }
 
+/* Anti-cheat + Hack tabs: the arms-race surface */
+.ac, .hack { display: flex; flex-direction: column; gap: 14px; }
+.ac-card { border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: var(--glass); padding: 14px 16px; }
+.ac-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.ac-def { border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: rgba(8, 17, 32, 0.3); padding: 12px 13px; display: flex; flex-direction: column; gap: 7px; }
+.ac-def-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ac-def-name { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--ink); }
+.ac-attack, .ac-control, .ac-weak, .ac-shield { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--ink-2); }
+.ac-control { color: var(--ink-3); font-size: 0.78rem; }
+.ac-lbl { font-family: var(--mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); margin-right: 7px; }
+.ac-owasp { font-family: var(--mono); font-size: 0.58rem; color: var(--cyan); align-self: flex-start; }
+.ac-state { font-family: var(--mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--edge); color: var(--ink-3); white-space: nowrap; }
+.ac-state.live, .ac-state.firing { color: var(--easy); border-color: rgba(130, 183, 166, 0.5); }
+.ac-state.firing { background: rgba(130, 183, 166, 0.1); }
+.ac-state.designed { color: var(--hard); border-color: rgba(200, 168, 106, 0.45); }
+.ac-ladder { display: flex; flex-direction: column; gap: 9px; }
+.ac-rung { border: 1px solid var(--glass-brd); border-left: 2px solid var(--edge); border-radius: var(--radius-sm); background: rgba(8, 17, 32, 0.25); padding: 11px 13px; display: flex; flex-direction: column; gap: 6px; }
+.ac-rung.state-live { border-left-color: var(--easy); }
+.ac-rung.state-designed { border-left-color: var(--hard); }
+.ac-rung-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ac-lvl { font-family: var(--mono); font-size: 0.6rem; color: var(--ground); background: var(--stamp); border-radius: 4px; padding: 2px 7px; }
+.ac-lvl-name { font-family: var(--mono); font-size: 0.8rem; font-weight: 600; color: var(--ink); margin-right: auto; }
+.hk-bar { display: flex; align-items: center; gap: 13px; flex-wrap: wrap; }
+.hk-err { margin-top: 12px; }
+.hk-results { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+.hk-res { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 0.72rem; border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); padding: 6px 11px; }
+.hk-res-name { color: var(--ink-2); }
+.hk-res.blocked { border-color: rgba(130, 183, 166, 0.5); }
+.hk-res.blocked .hk-res-v { color: var(--easy); }
+.hk-res.through { border-color: rgba(200, 138, 138, 0.6); }
+.hk-res.through .hk-res-v { color: var(--expert); font-weight: 600; }
+.hk-lands { font-family: var(--mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--edge); white-space: nowrap; }
+.hk-lands.no { color: var(--easy); border-color: rgba(130, 183, 166, 0.5); }
+.hk-lands.yes { color: var(--hard); border-color: rgba(200, 168, 106, 0.45); }
+
 /* Purple team tab: an event read from both sides. A rail of events beside a dossier with the attack
    (stamp) and the defence (cyan), the code path and the OWASP category. */
 .purple { display: flex; flex-direction: column; gap: 14px; }

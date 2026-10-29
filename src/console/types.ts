@@ -3,7 +3,7 @@
 
 // The six Console tabs and their build stage, shared by the shell and the panels. Split out of the
 // Console component so each panel file can import just the tab shape it needs.
-export type TabId = 'threats' | 'purple' | 'anticheat' | 'hack' | 'data' | 'ship';
+export type TabId = 'threats' | 'purple' | 'anticheat' | 'hack' | 'data';
 export type Stage = 'built' | 'sprint2' | 'sprint3';
 
 export interface TabDef { id: TabId; label: string; stage: Stage; blurb: string; }
@@ -16,7 +16,6 @@ export const TABS: TabDef[] = [
   { id: 'anticheat', label: 'Anti-cheat',  stage: 'sprint3', blurb: 'Shield a level. The defence is real and lands in the database and the feed, and is baked into the next dynamic build.' },
   { id: 'hack',      label: 'Hack',        stage: 'sprint3', blurb: 'Break one anti-cheat. Run attack opens its own live window; the hack counters exactly the defence it is paired with.' },
   { id: 'data',      label: 'Data',        stage: 'built',   blurb: 'A live database IDE over my own MySQL: the schema as a tree, a read-only query editor, and how each table was made.' },
-  { id: 'ship',      label: 'Ship',        stage: 'sprint3', blurb: 'The delivery pipeline shown the way GitHub shows it, gated so a merge to main only runs when every check is green.' },
 ];
 
 export const STAGE_LABEL: Record<Stage, string> = { built: 'built', sprint2: 'Sprint 2', sprint3: 'Sprint 3' };

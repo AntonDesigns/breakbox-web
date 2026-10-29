@@ -1,9 +1,11 @@
 // BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
-// The one place the backend URL lives. Everything talks to the API through here, so if the
-// origin changes (or gets locked down later) I change it in a single spot.
-const API_BASE = 'http://localhost:5080/api/challenges';
+import { API } from './config';
+
+// The launcher talks to the challenges endpoints. The origin itself lives in config.ts, shared with the
+// auth/console layer, so there is a single place to change it.
+const API_BASE = `${API}/challenges`;
 
 export interface Level {
   number: number;

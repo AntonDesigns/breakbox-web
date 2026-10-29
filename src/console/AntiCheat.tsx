@@ -2,6 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { logAntiCheat } from '../auth';
 import { ANTICHEATS, LEVELS } from './armsRace';
 
 // The Anti-cheat tab: pick the dynamic-build level, then enable its anti-cheats and watch the fancy
@@ -42,6 +43,7 @@ export function AntiCheat({ armed, setArmed, level, setLevel }: Readonly<{
     const ac = ANTICHEATS.find((a) => a.id === id)!;
     const next = !armed[id];
     setArmed((a) => ({ ...a, [id]: next }));
+    void logAntiCheat(id, ac.level, next).catch(() => { /* best-effort: the toggle already updated locally */ });
     if (ac.level === level) {
       setWarn(null);
       if (next) build();

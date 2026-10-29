@@ -22,6 +22,7 @@
   --cyan-2: #5fa6c2;
   --cyan-soft: rgba(119, 184, 209, 0.10);
   --cyan-line: rgba(119, 184, 209, 0.35);
+  --stamp: #9aa8bf;   /* the muted "stamp" tone the blueprint uses to mark a threat (not a red alarm) */
   --slate: #93a7c0;
 
   /* difficulty, kept muted and inside the blueprint family */
@@ -441,3 +442,56 @@ code {
 .ddl-item[open] .ddl-sum::before { content: "\2212  "; }
 .ddl-item[open] .ddl-sum { border-bottom: 1px solid var(--edge); }
 .ddl-sql { margin: 0; padding: 12px 15px; overflow-x: auto; font-family: var(--mono); font-size: 0.72rem; line-height: 1.6; color: var(--ink-2); background: rgba(8, 17, 32, 0.45); white-space: pre; }
+
+/* Threats tab: the live firehose — a metric strip, graphs, and the timeline (monochrome blueprint) */
+.threats { display: flex; flex-direction: column; gap: 16px; }
+
+/* metric strip */
+.tstrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.tstat { border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: var(--glass); padding: 12px 14px; display: flex; flex-direction: column; gap: 7px; }
+.tstat-k { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); }
+.tstat-v { font-family: var(--mono); font-size: 1.5rem; font-weight: 600; color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
+.tstat-v.data { color: var(--cyan); }
+.tstat-u { font-size: 0.8rem; color: var(--ink-3); font-weight: 400; }
+
+/* graphs card */
+.tviz { border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: var(--glass); padding: 13px 15px; }
+.tviz-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+.tviz-title { font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--cyan); font-weight: 600; }
+.tviz-sub { font-family: var(--mono); font-size: 0.64rem; color: var(--ink-3); }
+.tgraph { width: 100%; height: auto; display: block; cursor: crosshair; }
+.tg-axis { stroke: var(--edge); stroke-width: 1; }
+.tg-line { stroke: var(--cyan); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.tg-peak { fill: var(--cyan); }
+.tg-peaklabel { fill: var(--cyan); font-family: var(--mono); font-size: 10px; }
+.tg-tick { fill: var(--ink-3); font-family: var(--mono); font-size: 10px; }
+.tg-cross { stroke: var(--cyan-line); stroke-width: 1; stroke-dasharray: 3 3; }
+.tg-dot { fill: var(--cyan); stroke: var(--ground); stroke-width: 1.5; }
+.tg-htext { fill: var(--ink); font-family: var(--mono); font-size: 11px; }
+
+/* event-mix bar */
+.tmix { margin-top: 12px; }
+.tmix-bar { display: flex; height: 10px; border-radius: 3px; overflow: hidden; gap: 2px; background: rgba(8, 17, 32, 0.4); }
+.tmix-seg { min-width: 4px; }
+.tmix-legend { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 9px; font-family: var(--mono); font-size: 0.66rem; color: var(--ink-2); }
+.tmix-item { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.tmix-key { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+.tmix-seg.kind-threat, .tmix-key.kind-threat { background: var(--stamp); }
+.tmix-seg.kind-write, .tmix-key.kind-write { background: var(--cyan); }
+.tmix-seg.kind-auth, .tmix-key.kind-auth { background: var(--cyan-2); opacity: 0.55; }
+.tmix-seg.kind-other, .tmix-key.kind-other { background: var(--ink-3); }
+
+/* live timeline */
+.tl-head { margin-top: 2px; }
+.tl-scroll { max-height: 340px; overflow-y: auto; }
+.tl-table td, .tl-table th { font-size: 0.72rem; }
+.tl-time { color: var(--ink-3); white-space: nowrap; }
+.tl-actor { color: var(--ink-2); white-space: nowrap; }
+.tl-event { font-weight: 600; color: var(--ink-2); }
+.tl-detail { color: var(--ink-3); }
+.tl-row.kind-threat .tl-event { color: var(--stamp); }
+.tl-row.kind-threat td { background: rgba(154, 168, 191, 0.06); }
+.tl-row.kind-write .tl-event { color: var(--cyan); }
+.tl-row.kind-auth .tl-event { color: var(--ink-2); font-weight: 400; }
+.tl-row.kind-other .tl-event { color: var(--ink-3); font-weight: 400; }
+.tl-empty { color: var(--ink-3); text-align: center; padding: 18px; }

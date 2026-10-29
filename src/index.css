@@ -556,3 +556,41 @@ code {
 .tl-row.kind-auth .tl-event { color: var(--ink-2); font-weight: 400; }
 .tl-row.kind-other .tl-event { color: var(--ink-3); font-weight: 400; }
 .tl-empty { color: var(--ink-3); text-align: center; padding: 18px; }
+
+/* Purple team tab: an event read from both sides. A rail of events beside a dossier with the attack
+   (stamp) and the defence (cyan), the code path and the OWASP category. */
+.purple { display: flex; flex-direction: column; gap: 14px; }
+.pp-grid { display: grid; grid-template-columns: 260px 1fr; gap: 14px; }
+.pp-rail { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; max-height: 440px; overflow-y: auto; }
+.pp-rail-item { width: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.72rem; color: var(--ink-2); background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 7px 9px; cursor: pointer; text-align: left; }
+.pp-rail-item:hover { border-color: var(--glass-brd); }
+.pp-rail-item.on { background: var(--cyan-soft); border-color: var(--cyan-line); }
+.pp-rail-action { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-rail-time { color: var(--ink-3); font-size: 0.62rem; white-space: nowrap; }
+.pp-dossier { border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: var(--glass); padding: 15px 16px; min-width: 0; }
+.pp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.pp-head-l { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pp-action { font-family: var(--mono); font-size: 0.95rem; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.pp-meta { font-family: var(--mono); font-size: 0.64rem; color: var(--ink-3); }
+.pp-verdict { font-family: var(--mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--edge); color: var(--ink-2); white-space: nowrap; flex-shrink: 0; }
+.pp-verdict.v-blocked { color: var(--stamp); border-color: rgba(154, 168, 191, 0.5); background: rgba(154, 168, 191, 0.08); }
+.pp-verdict.v-allowed { color: var(--cyan); border-color: var(--cyan-line); }
+.pp-verdict.v-benign { color: var(--ink-3); }
+.pp-detail { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-2); margin: 11px 0 0; padding: 8px 11px; border-left: 2px solid var(--edge); background: rgba(8, 17, 32, 0.3); overflow-wrap: anywhere; }
+.pp-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.pp-side { border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); padding: 11px 13px; background: rgba(8, 17, 32, 0.25); }
+.pp-side p { margin: 7px 0 0; font-size: 0.84rem; line-height: 1.5; color: var(--ink-2); }
+.pp-side-h { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+.pp-side.red { border-left: 2px solid var(--stamp); }
+.pp-side.red .pp-side-h { color: var(--stamp); }
+.pp-side.blue { border-left: 2px solid var(--cyan); }
+.pp-side.blue .pp-side-h { color: var(--cyan); }
+.pp-foot { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--glass-hi); }
+.pp-fact { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pp-fact-k { font-family: var(--mono); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); }
+.pp-fact-v { font-family: var(--mono); font-size: 0.72rem; color: var(--ink); overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .pp-grid { grid-template-columns: 1fr; }
+  .pp-sides { grid-template-columns: 1fr; }
+  .pp-rail { max-height: 200px; }
+}

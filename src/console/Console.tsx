@@ -6,6 +6,7 @@ import { fetchConsoleStatus } from '../auth';
 import { useLoad } from '../useLoad';
 import { DataPanel } from './DataPanel';
 import { DesignedPanel } from './DesignedPanel';
+import { PurpleTeam } from './PurpleTeam';
 import { ThreatsFeed } from './ThreatsFeed';
 import { STAGE_LABEL, TABS, type TabId } from './types';
 
@@ -27,10 +28,12 @@ export function Console({ onClose, meId }: Readonly<{ onClose: () => void; meId:
   let panelSub = STAGE_LABEL[activeTab.stage];
   if (active === 'threats') panelSub = 'live feed · admin';
   else if (active === 'data') panelSub = 'live db · admin';
+  else if (active === 'purple') panelSub = 'both sides · admin';
 
   let panelBody = <DesignedPanel tab={activeTab} />;
   if (active === 'threats') panelBody = <ThreatsFeed />;
   else if (active === 'data') panelBody = <DataPanel meId={meId} />;
+  else if (active === 'purple') panelBody = <PurpleTeam />;
 
   return (
     <section className="console">

@@ -355,19 +355,41 @@ code {
 .con-blurb { margin: 0.9rem 0 0; font-size: 0.95rem; line-height: 1.55; color: var(--ink); max-width: 62ch; }
 .con-note { margin: 0.7rem 0 0; font-size: 0.82rem; line-height: 1.5; color: var(--ink-3); max-width: 62ch; }
 
-/* Data tab: the live schema tree (tables + columns), read from the EF model */
-.schema-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 1.1rem; }
-.schema-table { border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: var(--glass); overflow: hidden; }
-.schema-th { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 8px 11px; background: rgba(8, 17, 32, 0.35); border-bottom: 1px solid var(--edge); }
-.schema-th-btn { width: 100%; font: inherit; color: inherit; cursor: pointer; text-align: left; }
-.schema-th-btn:hover { background: var(--cyan-soft); }
-.schema-th-btn:hover .schema-tname { color: var(--cyan); }
-.schema-tname { font-family: var(--mono); font-size: 0.8rem; font-weight: 600; color: var(--ink); }
-.schema-ccount { font-family: var(--mono); font-size: 0.6rem; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
-.schema-cols { list-style: none; margin: 0; padding: 5px 0; }
-.schema-cols li { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 3px 11px; font-family: var(--mono); font-size: 0.72rem; }
-.col-name { color: var(--ink-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.col-type { color: var(--cyan); font-size: 0.64rem; flex-shrink: 0; }
+/* Data tab: a database control room. A stat strip (reusing .tstrip/.tstat), then cards for the query
+   console, a schema explorer (table rail + row browser + DDL), and the managed records. */
+.datax { display: flex; flex-direction: column; gap: 14px; }
+.dx-card { border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); background: var(--glass); padding: 14px 16px; }
+.dx-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.dx-title { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--cyan); font-weight: 600; }
+.dx-sub { font-family: var(--mono); font-size: 0.62rem; color: var(--ink-3); }
+
+/* the sub-tools keep their own markup; reset their outer spacing inside a card */
+.dx-card .con-query, .dx-card .con-users, .dx-card .con-levels { margin: 0; }
+
+/* the users/levels segmented toggle */
+.dx-seg { display: inline-flex; gap: 2px; border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 2px; }
+.dx-seg button { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-3); background: transparent; border: none; border-radius: 3px; padding: 4px 13px; cursor: pointer; }
+.dx-seg button:hover { color: var(--ink-2); }
+.dx-seg button.on { color: var(--ink); background: var(--cyan-soft); }
+
+/* the schema explorer: a table rail beside the selected table's rows + DDL */
+.dx-explorer { display: grid; grid-template-columns: 190px 1fr; gap: 14px; }
+.dx-rail { list-style: none; margin: 0; padding: 0 8px 0 0; display: flex; flex-direction: column; gap: 3px; max-height: 360px; overflow-y: auto; border-right: 1px solid var(--edge); }
+.dx-rail-item { width: 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-family: var(--mono); font-size: 0.74rem; color: var(--ink-2); background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 6px 9px; cursor: pointer; text-align: left; }
+.dx-rail-item:hover { border-color: var(--glass-brd); color: var(--ink); }
+.dx-rail-item.on { background: var(--cyan-soft); border-color: var(--cyan-line); color: var(--cyan); }
+.dx-rail-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dx-rail-cols { font-size: 0.6rem; color: var(--ink-3); flex-shrink: 0; }
+.dx-main { min-width: 0; }
+.dx-main .tbrowse { border: none; background: transparent; padding: 0; margin: 0; }
+.dx-ddl { margin-top: 12px; }
+
+/* the explorer folds to one column on a narrow panel, the rail becoming a scrolling row of chips */
+@media (max-width: 640px) {
+  .dx-explorer { grid-template-columns: 1fr; }
+  .dx-rail { flex-direction: row; max-height: none; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--edge); padding: 0 0 8px; }
+  .dx-rail-item { white-space: nowrap; }
+}
 
 /* Data tab: the read-only query editor + its results table */
 .con-query { margin-bottom: 1.6rem; }

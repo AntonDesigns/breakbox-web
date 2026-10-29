@@ -31,7 +31,7 @@ export interface HackDef {
 
 export const ANTICHEATS: AntiCheatDef[] = [
   { id: 'server-key', tagline: 'hash the key into the DB', level: 1, state: 'live' },
-  { id: 'computed-key', tagline: 'compute the serial server-side', level: 2, state: 'designed' },
+  { id: 'computed-key', tagline: 'harden the serial algorithm', level: 2, state: 'live' },
   { id: 'licence', tagline: 'server-side licence check', level: 3, state: 'designed' },
   { id: 'integrity', tagline: 'tamper check', level: 3, state: 'designed' },
 ];
@@ -54,7 +54,21 @@ export const HACKS: HackDef[] = [
     build: 'Level1_serverkey.zip',
     note: 'A proper PBKDF2 + server-only compare defeats this recover.',
   },
-  { id: 'computed-key', tagline: 'reverse the algorithm', level: 2, state: 'locked', terminal: LOCKED, build: 'Level2_computedkey.zip', note: 'Computing the serial server-side and never shipping the formula defeats the reverse.' },
+  {
+    id: 'computed-key', tagline: 'reverse the algorithm', level: 2, state: 'live',
+    terminal: [
+      '> breakbox-hack --target Level2 --dynamic',
+      '> reading the dynamic build ... ok',
+      '> serial is computed, not stored',
+      '> reversing the hardened algorithm [##########] 100%',
+      '> keygen built',
+      'serial recovered (hidden) · ********',
+      'HACK COMPLETE',
+      'the dynamic build is now silently bypassed',
+    ],
+    build: 'Level2_computedkey.zip',
+    note: 'Computing the serial server-side and never shipping the formula defeats the reverse.',
+  },
   { id: 'licence', tagline: 'forge the response', level: 3, state: 'locked', terminal: LOCKED, build: 'Level3_licence.zip', note: 'A signed + nonce licence response defeats the forge.' },
   { id: 'integrity', tagline: 'patch the verifier', level: 3, state: 'locked', terminal: LOCKED, build: 'Level3_integrity.zip', note: 'Server-attested integrity defeats the patch.' },
 ];

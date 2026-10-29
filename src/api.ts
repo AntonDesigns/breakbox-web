@@ -35,11 +35,13 @@ export function generateUrl(level: number): string {
 
 // Downloads the target zip. I fetch the bytes and save them with a blob link so a failed request
 // (backend down) surfaces as an error the guide can show, rather than a browser error page.
-export async function downloadTarget(level: number, filename?: string): Promise<void> {
+export async function downloadTarget(level: number, filename?: string, features?: string[]): Promise<void> {
   // Credentialed, so the session cookie rides along and the server records the issued target against the
   // signed-in player (anonymous downloads still work, they are just not tracked). A caller can name the
-  // file (the Hack tab hands you the dynamic build named for the anti-cheat, e.g. Level1_serverkey.zip).
-  const res = await fetch(generateUrl(level), { credentials: 'include' });
+  // file and pass the armed anti-cheats to bake into the dynamic build (the Hack tab hands you e.g.
+  // Level2_computedkey.zip, with its features baked into the generated target).
+  const query = features && features.length ? `?features=${encodeURIComponent(features.join(','))}` : '';
+  const res = await fetch(generateUrl(level) + query, { credentials: 'include' });
   if (!res.ok) throw new Error(`download failed: ${res.status}`);
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);

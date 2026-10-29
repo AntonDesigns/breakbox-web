@@ -46,7 +46,12 @@ export function HackTab({ armed, level, setLevel }: Readonly<{
   }, [level]);
 
   const pickLevel = (n: number) => { reset(); setLevel(n); };
-  const download = () => { if (!runnable) return; setDl(true); void downloadTarget(runnable.level, runnable.build); };
+  const download = () => {
+    if (!runnable) return;
+    setDl(true);
+    const features = ANTICHEATS.filter((a) => a.level === level && armed[a.id]).map((a) => a.id);
+    void downloadTarget(runnable.level, runnable.build, features);
+  };
 
   return (
     <div className="hk">

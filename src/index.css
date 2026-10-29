@@ -557,6 +557,13 @@ code {
 .tl-row.kind-other .tl-event { color: var(--ink-3); font-weight: 400; }
 .tl-empty { color: var(--ink-3); text-align: center; padding: 18px; }
 
+/* launcher: flag submission in the run guide + the solved badge */
+.tag-solved { background: var(--cyan-soft); color: var(--cyan); border: 1px solid var(--cyan-line); }
+.flag-form { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.flag-input { flex: 1 1 160px; font-family: var(--mono); font-size: 0.8rem; color: var(--ink); background: var(--ground-2); border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 7px 10px; }
+.flag-input:focus { outline: none; border-color: var(--cyan-line); box-shadow: 0 0 0 1px var(--cyan-soft); }
+.step-ok { margin-top: 8px; font-family: var(--mono); font-size: 0.74rem; color: var(--easy); }
+
 /* Purple team tab: an event read from both sides. A rail of events beside a dossier with the attack
    (stamp) and the defence (cyan), the code path and the OWASP category. */
 .purple { display: flex; flex-direction: column; gap: 14px; }

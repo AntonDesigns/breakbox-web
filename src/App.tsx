@@ -1,8 +1,8 @@
 // BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
-import { useEffect, useState, type ReactNode } from 'react';
-import { downloadTarget, fetchLevels, type Level } from './api';
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { downloadTarget, fetchLevels, fetchProgress, submitFlag, type Level } from './api';
 import { getMe, logout, type Me } from './auth';
 import { AuthPanel } from './AuthPanel';
 import { Monitor } from './Monitor';
@@ -63,7 +63,7 @@ function usePersistentBool(key: string): [boolean, (v: boolean) => void] {
   return [value, set];
 }
 
-function LevelCard({ lvl, active, onSelect }: Readonly<{ lvl: Level; active: boolean; onSelect: (n: number) => void }>) {
+function LevelCard({ lvl, active, solved, onSelect }: Readonly<{ lvl: Level; active: boolean; solved: boolean; onSelect: (n: number) => void }>) {
   const className = ['target', lvl.available ? '' : 'is-locked', active ? 'is-active' : '']
     .filter(Boolean)
     .join(' ');
@@ -82,6 +82,7 @@ function LevelCard({ lvl, active, onSelect }: Readonly<{ lvl: Level; active: boo
           <span className="target-name">{lvl.name}</span>
           <span className={`tag tag-${lvl.difficulty.toLowerCase()}`}>{lvl.difficulty}</span>
           {!lvl.available && <span className="tag tag-locked">LOCKED</span>}
+          {solved && <span className="tag tag-solved">solved</span>}
           <span className="spacer" />
           <span className="pick">{pick}</span>
         </div>
@@ -96,14 +97,20 @@ function LevelCard({ lvl, active, onSelect }: Readonly<{ lvl: Level; active: boo
   );
 }
 
-function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
+function Guide({ level, prereqDone, setPrereqDone, signedIn, solved, onSolved }: Readonly<{
   level: Level | null;
   prereqDone: boolean;
   setPrereqDone: (v: boolean) => void;
+  signedIn: boolean;
+  solved: boolean;
+  onSolved: () => void;
 }>) {
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [flag, setFlag] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<'correct' | 'wrong' | 'error' | null>(null);
   // The download state resets when the selected level changes because App keys this component by the
   // level number, so it remounts fresh. That is cleaner than an effect that writes state on prop change.
 
@@ -115,6 +122,20 @@ function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
       setDownloaded(true);
     } catch { setFailed(true); }
     finally { setDownloading(false); }
+  };
+
+  // Submit the flag to the server, which verifies it against the exact target it issued and records the
+  // result. A correct flag tells App to refresh the solved badges.
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!level) return;
+    setSubmitting(true); setResult(null);
+    try {
+      const r = await submitFlag(level.number, flag.trim());
+      setResult(r.correct ? 'correct' : 'wrong');
+      if (r.correct) onSolved();
+    } catch { setResult('error'); }
+    finally { setSubmitting(false); }
   };
 
   // The download button label, as a plain statement rather than a nested ternary.
@@ -163,6 +184,7 @@ function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
           <div className="guide-level">
             <span className="name">{level.name}</span>
             <span className={`tag tag-${level.difficulty.toLowerCase()}`}>{level.difficulty}</span>
+            {(solved || result === 'correct') && <span className="tag tag-solved">solved</span>}
           </div>
           <p className="guide-obj">{level.summary}</p>
 
@@ -194,6 +216,22 @@ function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
                     : <>Enter it in the app. The feature unlocks and it shows the flag <code>{'BR{…}'}</code>.</>}
                 </div>
               </li>
+              <li>
+                <div className="step-body">
+                  Submit the flag to record your solve.
+                  {signedIn ? (
+                    <form className="flag-form" onSubmit={submit}>
+                      <input className="flag-input" value={flag} onChange={(e) => setFlag(e.target.value)} placeholder="BR{...}" aria-label="flag" spellCheck={false} />
+                      <button type="submit" className="btn btn-dl" disabled={submitting || flag.trim() === ''}>{submitting ? 'checking...' : 'submit'}</button>
+                    </form>
+                  ) : (
+                    <div className="step-note">Sign in to submit and track your progress.</div>
+                  )}
+                  {result === 'correct' && <div className="step-ok">Correct. Level solved and recorded.</div>}
+                  {result === 'wrong' && <div className="step-fail">Not the flag for this target. Try again.</div>}
+                  {result === 'error' && <div className="step-fail">Submit failed. Is the backend running?</div>}
+                </div>
+              </li>
             </ol>
           ) : (
             <p className="guide-obj">
@@ -215,6 +253,7 @@ export default function App() {
   // me: undefined while the session check is in flight, null when signed out, the user when signed in.
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const [view, setView] = useState<'launcher' | 'auth' | 'monitor' | 'console'>('launcher');
+  const [solved, setSolved] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchLevels()
@@ -226,6 +265,17 @@ export default function App() {
   useEffect(() => {
     getMe().then(setMe).catch(() => setMe(null));
   }, []);
+
+  // The signed-in player's solved levels, for the badges on the ladder and in the guide. Re-fetched
+  // after a solve so the badge appears straight away.
+  const reloadProgress = useCallback(() => {
+    fetchProgress()
+      .then((rows) => setSolved(new Set(rows.filter((r) => r.status === 'solved').map((r) => r.number))))
+      .catch(() => setSolved(new Set()));   // signed out or offline: clear the badges
+  }, []);
+  // Re-read progress whenever the signed-in user changes. The set is only updated from inside the async
+  // call, never synchronously here, so this stays a real synchronisation effect.
+  useEffect(() => { reloadProgress(); }, [me, reloadProgress]);
 
   const signOut = async () => {
     await logout();
@@ -313,19 +363,19 @@ export default function App() {
                 <h2 className="section">core</h2>
                 <ol className="targets targets-core">
                   {core.map((l) => (
-                    <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} onSelect={setSelected} />
+                    <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} solved={solved.has(l.number)} onSelect={setSelected} />
                   ))}
                 </ol>
               </section>
 
-              <Guide key={activeNumber ?? 'none'} level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} />
+              <Guide key={activeNumber ?? 'none'} level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} signedIn={!!me} solved={activeNumber !== null && solved.has(activeNumber)} onSolved={reloadProgress} />
             </div>
 
             <section className="ladder-adv">
               <h2 className="section">advanced <span className="dim">later sprints</span></h2>
               <ol className="targets targets-adv">
                 {advanced.map((l) => (
-                  <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} onSelect={setSelected} />
+                  <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} solved={solved.has(l.number)} onSelect={setSelected} />
                 ))}
               </ol>
             </section>

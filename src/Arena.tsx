@@ -2,23 +2,64 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useCallback, useEffect, useState } from 'react';
-import { arenaMove, arenaStart, type ArenaState } from './api';
+import { arenaMove, arenaStart, type ArenaProfile, type ArenaReasoning, type ArenaState } from './api';
 
-// Level-Experimental: a live Moving Target Defence duel. The defence sits on a ladder of rungs; pick the
-// technique that beats the current rung and it SHIFTS to one you have not shown yet, until it goes
-// server-side, where nothing on your machine wins. It opens past whatever your account has already cleared,
-// so the more you have solved, the closer you start to that wall. Everything is decided on the server.
+// Level-Experimental: a live duel against an adaptive adversary. It models how you attack, shifts the
+// defence to the technique you lean away from, escalates as you diversify, and ends server-side where
+// nothing on your machine wins. It opens past what your account has cleared, and shows its own MAPE-K
+// reasoning each round, so you can watch it reason about you. Everything is decided on the server.
 
-// The defence ladder, lowest to the wall. Server is the end: the same lesson as Level 3.
-const RUNGS = ['plaintext', 'computed', 'patchable', 'obfuscated', 'server'] as const;
-
-// The attacker's techniques, as the buttons label them.
 const MOVES: Record<string, string> = {
   read: 'read the key',
   reverse: 'reverse it',
   patch: 'patch the gate',
   deobfuscate: 'deobfuscate',
 };
+
+// The adversary's live reasoning, shown as the autonomic MAPE-K loop it runs each round.
+function Mind({ reasoning }: Readonly<{ reasoning: ArenaReasoning | null }>) {
+  const steps: ReadonlyArray<readonly [string, string | undefined]> = [
+    ['MONITOR', reasoning?.monitor],
+    ['ANALYSE', reasoning?.analyse],
+    ['PLAN', reasoning?.plan],
+    ['EXECUTE', reasoning?.execute],
+  ];
+  return (
+    <div className="arena-mind">
+      <div className="arena-mind-h"><span className="label">adversary · MAPE-K</span><span className="live-dot">live</span></div>
+      {steps.map(([k, v]) => (
+        <div key={k} className="arena-mind-step">
+          <span className="arena-mind-k">{k}</span>
+          <span className="arena-mind-v">{v ?? 'waiting for your move...'}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// The profile the adversary has built of you: how often you reach for each technique. The one it leans on
+// (your signature) and the one it avoids (its blind spot) are what the defence targets.
+function Profile({ profile }: Readonly<{ profile: ArenaProfile }>) {
+  const rows: ReadonlyArray<readonly [string, number]> = [
+    ['read', profile.read], ['reverse', profile.reverse], ['patch', profile.patch], ['deobfuscate', profile.deobfuscate],
+  ];
+  const total = rows.reduce((s, [, n]) => s + n, 0);
+  const max = Math.max(1, ...rows.map(([, n]) => n));
+  const sig = total > 0 ? rows.reduce((a, b) => (b[1] > a[1] ? b : a))[0] : null;
+  const blind = total > 0 ? rows.reduce((a, b) => (b[1] < a[1] ? b : a))[0] : null;
+  return (
+    <div className="arena-profile">
+      <div className="arena-mind-h"><span className="label">your attacker profile</span></div>
+      {rows.map(([name, n]) => (
+        <div key={name} className={`arena-prof-row ${name === sig ? 'sig' : ''} ${name === blind ? 'blind' : ''}`}>
+          <span className="arena-prof-name">{name}{name === sig ? ' · signature' : name === blind ? ' · blind spot' : ''}</span>
+          <span className="arena-prof-bar"><span className="arena-prof-fill" style={{ width: `${(n / max) * 100}%` }} /></span>
+          <span className="arena-prof-n">{n}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function Arena({ onClose }: Readonly<{ onClose: () => void }>) {
   const [state, setState] = useState<ArenaState | null>(null);
@@ -31,7 +72,7 @@ export function Arena({ onClose }: Readonly<{ onClose: () => void }>) {
     try {
       const s = await arenaStart();
       setState(s);
-      setLog([`> duel opens at the ${s.rung} rung${s.repertoire.length ? ` (you already bring: ${s.repertoire.join(', ')})` : ''}`]);
+      setLog([`> the adversary opens at the ${s.rung} rung`]);
     } catch { setFailed(true); } finally { setBusy(false); }
   }, []);
 
@@ -48,14 +89,12 @@ export function Arena({ onClose }: Readonly<{ onClose: () => void }>) {
     } catch { setFailed(true); } finally { setBusy(false); }
   };
 
-  const rungIndex = state ? RUNGS.indexOf(state.rung as (typeof RUNGS)[number]) : 0;
-
   return (
     <section className="arena" aria-label="Level-Experimental arena">
       <div className="arena-top">
         <div className="arena-title">
           <span className="arena-badge">Level-Experimental</span>
-          <span className="arena-sub">the adaptive arena · Moving Target Defence</span>
+          <span className="arena-sub">adaptive adversary · Moving Target Defence · MAPE-K</span>
         </div>
         <div className="arena-top-btns">
           <button type="button" className="authbtn" onClick={start} disabled={busy}>restart duel</button>
@@ -64,9 +103,10 @@ export function Arena({ onClose }: Readonly<{ onClose: () => void }>) {
       </div>
 
       <p className="arena-lead">
-        Pick the technique that beats the current defence. Beat it and the defence shifts to something you
-        have not shown yet, so the same move never works twice. Drive it all the way to server-side and you
-        hit the wall: nothing on your machine wins there. It opens past what you have already cleared.
+        This defence is not a script. It watches how you attack, builds a profile of you, and shifts to the
+        technique you lean away from, so your favourite move stops working. Diversify and it escalates; drive
+        it all the way to server-side and you hit the wall, where nothing on your machine wins. Watch its mind
+        on the right. It opens past what your account has already cleared.
       </p>
 
       {failed && <div className="banner banner-error">the arena is unreachable. is the backend running on localhost:5080?</div>}
@@ -74,16 +114,20 @@ export function Arena({ onClose }: Readonly<{ onClose: () => void }>) {
       {state && (
         <div className="arena-grid">
           <div className="arena-stage">
-            <div className="arena-ladder-h"><span className="label">defence</span>rung {rungIndex + 1} of {RUNGS.length}</div>
+            <div className="arena-ladder-h"><span className="label">defence</span>{state.beaten.length} of {state.ladder.length - 1} rungs broken</div>
             <ol className="arena-ladder">
-              {RUNGS.map((r, i) => {
-                const cls = r === state.rung ? 'now' : (i < rungIndex ? 'past' : 'ahead');
+              {state.ladder.map((r) => {
+                const isNow = r === state.rung;
+                const isBeaten = state.beaten.includes(r);
+                const isWall = r === 'server';
+                const cls = isNow ? 'now' : isBeaten ? 'past' : 'ahead';
                 return (
-                  <li key={r} className={`arena-rung ${cls} ${r === 'server' ? 'wall' : ''}`}>
+                  <li key={r} className={`arena-rung ${cls} ${isWall ? 'wall' : ''}`}>
                     <span className="arena-rung-dot" />
                     <span className="arena-rung-name">{r}</span>
-                    {r === state.rung && <span className="arena-rung-tag">defending now</span>}
-                    {r === 'server' && <span className="arena-rung-tag wall">the wall</span>}
+                    {isNow && <span className="arena-rung-tag">defending now</span>}
+                    {isWall && !isNow && <span className="arena-rung-tag wall">the wall</span>}
+                    {isBeaten && !isNow && <span className="arena-rung-tag past">broken</span>}
                   </li>
                 );
               })}
@@ -100,8 +144,9 @@ export function Arena({ onClose }: Readonly<{ onClose: () => void }>) {
               </div>
               {state.ended && (
                 <div className="arena-ended">
-                  THE DEFENCE IS SERVER-SIDE. You drove it to the wall: nothing you run locally beats it, so
-                  the flag stays the server&apos;s to give. That is the whole point, and the same place Level 3 ends.
+                  THE DEFENCE IS SERVER-SIDE. You showed every technique and drove it to the wall: nothing you
+                  run locally beats it, so the flag stays the server&apos;s to give. That is the whole point, and
+                  the same place Level 3 ends.
                 </div>
               )}
             </div>
@@ -112,9 +157,9 @@ export function Arena({ onClose }: Readonly<{ onClose: () => void }>) {
               <span>round <b>{state.round}</b></span>
               <span className="sep">/</span>
               <span>fails <b>{state.fails}</b></span>
-              <span className="sep">/</span>
-              <span>proven <b>{state.repertoire.length}</b>/4</span>
             </div>
+            <Mind reasoning={state.reasoning} />
+            <Profile profile={state.profile} />
             <div className="arena-log">
               {log.map((l, i) => <div key={i} className={`arena-log-line ${l.startsWith('✗') ? 'miss' : ''}`}>{l}</div>)}
             </div>

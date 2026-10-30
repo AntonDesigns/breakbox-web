@@ -1,7 +1,7 @@
 // BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
-import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { downloadTarget } from '../api';
 import { runAttack } from '../auth';
 import { ANTICHEATS, HACKS, LEVELS } from './armsRace';
@@ -29,28 +29,47 @@ export function HackTab({ armed, level, setLevel }: Readonly<{
   const reset = () => { stop(); setLines([]); setRunning(false); setDone(false); setProgress(0); setDl(false); };
 
   const runnable = HACKS.find((h) => h.level === level && h.state === 'live') ?? null;
-  const appliedAc = ANTICHEATS.filter((a) => a.level === level && armed[a.id]).map((a) => a.id).join(', ') || 'none';
+  const armedDefs = ANTICHEATS.filter((a) => a.level === level && armed[a.id]);
+  const appliedAc = armedDefs.map((a) => a.id).join(', ') || 'none';
+  // The build the run hands you is named for the whole armed stack, so the file says what it carries.
+  const buildName = armedDefs.length
+    ? `Level${level}_${armedDefs.map((a) => a.id.replace(/-/g, '')).join('_')}.zip`
+    : runnable?.build ?? `Level${level}.zip`;
+
+  // The run is composed from the anti-cheats ARMED on this level: the hack narrates, step by step, how it
+  // defeats each one, so the bypass is explained rather than a canned animation. Nothing armed = the plain
+  // build, nothing to bypass. The head/tail frame every run; the key itself is never shown.
+  const script = useMemo(() => {
+    const head = [`> breakbox-hack --target Level${level} --dynamic`, '> reading the dynamic build ... ok'];
+    const armedHere = ANTICHEATS.filter((a) => a.level === level && armed[a.id]);
+    const body = armedHere.length === 0
+      ? ['> no anti-cheat armed on this level', '> the plain build already reveals the key, nothing to bypass']
+      : armedHere.flatMap((a) => {
+          const h = HACKS.find((x) => x.id === a.id);
+          return [`> anti-cheat detected: ${a.id} (${a.tagline})`, ...(h && h.bypass.length ? h.bypass : ['  no live bypass yet'])];
+        });
+    const tail = ['> key recovered (hidden) · ********', 'HACK COMPLETE', 'the dynamic build is now silently bypassed'];
+    return [...head, ...body, ...tail];
+  }, [level, armed]);
 
   const run = useCallback(() => {
-    const h = HACKS.find((x) => x.level === level && x.state === 'live');
-    if (!h) return;
+    if (!runnable) return;
     stop(); setRunning(true); setDone(false); setDl(false); setLines([]); setProgress(0);
     void runAttack().catch(() => { /* logging the run to the feed is best-effort */ });
     let i = 0;
     timer.current = window.setInterval(() => {
       i += 1;
-      setLines(h.terminal.slice(0, i));
-      setProgress(Math.min(100, Math.round((i / h.terminal.length) * 100)));
-      if (i >= h.terminal.length) { stop(); setRunning(false); setDone(true); }
+      setLines(script.slice(0, i));
+      setProgress(Math.min(100, Math.round((i / script.length) * 100)));
+      if (i >= script.length) { stop(); setRunning(false); setDone(true); }
     }, 420);
-  }, [level]);
+  }, [script, runnable]);
 
   const pickLevel = (n: number) => { reset(); setLevel(n); };
   const download = () => {
     if (!runnable) return;
     setDl(true);
-    const features = ANTICHEATS.filter((a) => a.level === level && armed[a.id]).map((a) => a.id);
-    void downloadTarget(runnable.level, runnable.build, features);
+    void downloadTarget(level, buildName, armedDefs.map((a) => a.id));
   };
 
   return (
@@ -91,7 +110,7 @@ export function HackTab({ armed, level, setLevel }: Readonly<{
           <div className="hk-term">
             {lines.length === 0 && !running && (
               runnable
-                ? <div className="hk-term-idle">Hit Run attack. The run types out here; the key is never shown.</div>
+                ? <div className="hk-term-idle">Hit Run attack. It narrates how it defeats each armed anti-cheat; the key itself is never shown.</div>
                 : <div className="hk-term-idle">No live hack for Level {level} yet. server-key (Level 1) is the live one; the rest ship in Sprint 3.</div>
             )}
             {lines.map((l, i) => <div key={i} className="hk-line">{l}</div>)}
@@ -100,7 +119,7 @@ export function HackTab({ armed, level, setLevel }: Readonly<{
           {done && runnable && (
             <div className="hk-build">
               <div className="hk-build-t">your dynamic build is ready</div>
-              <div className="hk-build-name">{runnable.build}</div>
+              <div className="hk-build-name">{buildName}</div>
               <div className="hk-build-sub">same name as the anti-cheat version; the hack is hidden inside</div>
               <div className="hk-build-bar">
                 <button type="button" className="hk-dl" onClick={download}>{dl ? 'downloaded' : 'Download (instant)'}</button>

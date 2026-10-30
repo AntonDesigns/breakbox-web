@@ -24,7 +24,8 @@ export interface HackDef {
   tagline: string;
   level: number;
   state: 'live' | 'locked';   // locked = the paired anti-cheat is not live yet
-  terminal: string[];         // the lines the live window types out when the attack runs
+  bypass: string[];           // the steps this hack narrates to defeat its anti-cheat; the Hack tab
+                              // composes the whole run from the bypasses of every ARMED anti-cheat
   build: string;              // the dynamic file it hands you (named for the anti-cheat, not the hack)
   note: string;               // the escalation note under the window
 }
@@ -41,34 +42,26 @@ const LOCKED: string[] = [];
 export const HACKS: HackDef[] = [
   {
     id: 'server-key', tagline: 'recover the key', level: 1, state: 'live',
-    terminal: [
-      '> breakbox-hack --target Level1 --dynamic',
-      '> handshaking with the live DB ... ok',
-      '> server returns only key_hash',
-      '> recovering [##########] 100%',
-      '> ACCESS GRANTED',
-      'key recovered (hidden) · ********',
-      'HACK COMPLETE',
-      'the dynamic build is now silently bypassed',
+    bypass: [
+      '  the key is gone from the binary, only its SHA-256 ships',
+      '  handshaking with the live DB ... ok',
+      '  the server returns only key_hash, never the key',
+      '  recovering the key from the hash [##########] 100%',
     ],
     build: 'Level1_serverkey.zip',
     note: 'A proper PBKDF2 + server-only compare defeats this recover.',
   },
   {
     id: 'computed-key', tagline: 'reverse the algorithm', level: 2, state: 'live',
-    terminal: [
-      '> breakbox-hack --target Level2 --dynamic',
-      '> reading the dynamic build ... ok',
-      '> serial is computed, not stored',
-      '> reversing the hardened algorithm [##########] 100%',
-      '> keygen built',
-      'serial recovered (hidden) · ********',
-      'HACK COMPLETE',
-      'the dynamic build is now silently bypassed',
+    bypass: [
+      '  the serial is computed, not stored in the binary',
+      '  lifting the hardened formula out of IsValid',
+      '  reversing (((seed*31+1337)^0x5A5A)*2+7) [##########] 100%',
+      '  keygen rebuilt for the hardened algorithm',
     ],
     build: 'Level2_computedkey.zip',
     note: 'Computing the serial server-side and never shipping the formula defeats the reverse.',
   },
-  { id: 'licence', tagline: 'forge the response', level: 3, state: 'locked', terminal: LOCKED, build: 'Level3_licence.zip', note: 'A signed + nonce licence response defeats the forge.' },
-  { id: 'integrity', tagline: 'patch the verifier', level: 3, state: 'locked', terminal: LOCKED, build: 'Level3_integrity.zip', note: 'Server-attested integrity defeats the patch.' },
+  { id: 'licence', tagline: 'forge the response', level: 3, state: 'locked', bypass: LOCKED, build: 'Level3_licence.zip', note: 'A signed + nonce licence response defeats the forge.' },
+  { id: 'integrity', tagline: 'patch the verifier', level: 3, state: 'locked', bypass: LOCKED, build: 'Level3_integrity.zip', note: 'Server-attested integrity defeats the patch.' },
 ];

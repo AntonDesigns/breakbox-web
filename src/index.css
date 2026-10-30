@@ -697,6 +697,19 @@ code {
 .arena-prof-row.sig .arena-prof-fill { background: var(--cyan); }
 .arena-prof-row.blind { color: var(--hard); }
 .arena-prof-row.blind .arena-prof-fill { background: var(--hard); }
+
+/* ---- experimental mode: when the adaptive arena is live, the whole app shifts its accent ---- */
+.app.experimental {
+  --cyan: #b48cf2;
+  --cyan-2: #9d6ee8;
+  --cyan-soft: rgba(180, 140, 242, 0.10);
+  --cyan-line: rgba(180, 140, 242, 0.35);
+}
+.app.experimental .status-online { color: var(--cyan); border-color: var(--cyan-line); }
+.exp-ribbon { display: flex; align-items: center; gap: 11px; margin: 2px 0 22px; padding: 10px 15px; border: 1px solid var(--cyan-line); border-radius: var(--radius); background: var(--cyan-soft); font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cyan); }
+.exp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); animation: exp-pulse 1.8s ease-out infinite; flex: none; }
+@keyframes exp-pulse { 0% { box-shadow: 0 0 0 0 rgba(180, 140, 242, 0.5); } 70% { box-shadow: 0 0 0 7px rgba(180, 140, 242, 0); } 100% { box-shadow: 0 0 0 0 rgba(180, 140, 242, 0); } }
+@media (prefers-reduced-motion: reduce) { .exp-dot { animation: none; } }
 .lvl-pick { display: inline-flex; gap: 3px; margin: 0 6px; }
 .lvl-btn { font-family: var(--mono); font-size: 0.64rem; color: var(--ink-3); background: transparent; border: 1px solid var(--edge); border-radius: 4px; padding: 1px 7px; cursor: pointer; }
 .lvl-btn:hover { color: var(--ink-2); border-color: var(--cyan-line); }

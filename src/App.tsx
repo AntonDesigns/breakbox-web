@@ -350,7 +350,7 @@ export default function App() {
   else if (levels) { status = 'online'; statusLabel = 'api online'; }
 
   return (
-    <div className="app">
+    <div className={`app${view === 'arena' ? ' experimental' : ''}`}>
       <header className="topbar">
         <div className="brand">
           <Logo />
@@ -379,19 +379,28 @@ export default function App() {
         </div>
       </header>
 
-      <div className="meta">
-        <span><b>{levels ? levels.length : 9}</b> levels</span>
-        <span className="sep">/</span>
-        <span><b>{levels ? available : 2}</b> playable now</span>
-        <span className="sep">/</span>
-        <span>roslyn builds a fresh target each download</span>
-        <span className="sep">/</span>
-        <span>my own targets only</span>
-      </div>
-      <p className="tagline">
-        Pick a level, install the runtime once, and download the target to take apart in your own tools.
-        Every one is generated just for you, and legal to break.
-      </p>
+      {view === 'arena' ? (
+        <div className="exp-ribbon">
+          <span className="exp-dot" />
+          EXPERIMENTAL MODE &mdash; the adaptive arena is live, and the whole system is adapting to you
+        </div>
+      ) : (
+        <>
+          <div className="meta">
+            <span><b>{levels ? levels.length : 9}</b> levels</span>
+            <span className="sep">/</span>
+            <span><b>{levels ? available : 2}</b> playable now</span>
+            <span className="sep">/</span>
+            <span>roslyn builds a fresh target each download</span>
+            <span className="sep">/</span>
+            <span>my own targets only</span>
+          </div>
+          <p className="tagline">
+            Pick a level, install the runtime once, and download the target to take apart in your own tools.
+            Every one is generated just for you, and legal to break.
+          </p>
+        </>
+      )}
 
       <main className="content">
         {view === 'auth' && (

@@ -679,6 +679,37 @@ code {
 .arena-log { background: var(--ground-2); border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 12px; min-height: 200px; max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 7px; }
 .arena-log-line { font-family: var(--mono); font-size: 0.72rem; line-height: 1.5; color: var(--ink-2); }
 .arena-log-line.miss { color: var(--stamp); }
+/* the adversary's live MAPE-K reasoning, shown as it reasons about you */
+.arena-mind { background: var(--ground-2); border: 1px solid var(--cyan-line); border-radius: var(--radius-sm); padding: 12px; }
+.arena-mind-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.arena-mind-step { display: grid; grid-template-columns: 70px 1fr; gap: 10px; padding: 7px 0; border-top: 1px solid var(--edge); font-size: 0.72rem; line-height: 1.45; }
+.arena-mind-step:first-of-type { border-top: none; }
+.arena-mind-k { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.1em; color: var(--cyan); padding-top: 2px; }
+.arena-mind-v { color: var(--ink-2); font-family: var(--mono); }
+/* the profile the defence builds of you: signature (cyan) and blind spot (amber) are what it targets */
+.arena-profile { background: var(--ground-2); border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 12px; }
+.arena-prof-row { display: grid; grid-template-columns: 1fr 64px 16px; align-items: center; gap: 9px; padding: 5px 0; font-family: var(--mono); font-size: 0.66rem; color: var(--ink-3); }
+.arena-prof-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arena-prof-bar { height: 6px; background: rgba(150, 185, 220, 0.08); border-radius: 3px; overflow: hidden; }
+.arena-prof-fill { display: block; height: 100%; background: var(--edge-2); border-radius: 3px; transition: width 0.25s; }
+.arena-prof-n { text-align: right; color: var(--ink-2); }
+.arena-prof-row.sig { color: var(--cyan); }
+.arena-prof-row.sig .arena-prof-fill { background: var(--cyan); }
+.arena-prof-row.blind { color: var(--hard); }
+.arena-prof-row.blind .arena-prof-fill { background: var(--hard); }
+
+/* ---- experimental mode: when the adaptive arena is live, the whole app shifts its accent ---- */
+.app.experimental {
+  --cyan: #b48cf2;
+  --cyan-2: #9d6ee8;
+  --cyan-soft: rgba(180, 140, 242, 0.10);
+  --cyan-line: rgba(180, 140, 242, 0.35);
+}
+.app.experimental .status-online { color: var(--cyan); border-color: var(--cyan-line); }
+.exp-ribbon { display: flex; align-items: center; gap: 11px; margin: 2px 0 22px; padding: 10px 15px; border: 1px solid var(--cyan-line); border-radius: var(--radius); background: var(--cyan-soft); font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cyan); }
+.exp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); animation: exp-pulse 1.8s ease-out infinite; flex: none; }
+@keyframes exp-pulse { 0% { box-shadow: 0 0 0 0 rgba(180, 140, 242, 0.5); } 70% { box-shadow: 0 0 0 7px rgba(180, 140, 242, 0); } 100% { box-shadow: 0 0 0 0 rgba(180, 140, 242, 0); } }
+@media (prefers-reduced-motion: reduce) { .exp-dot { animation: none; } }
 .lvl-pick { display: inline-flex; gap: 3px; margin: 0 6px; }
 .lvl-btn { font-family: var(--mono); font-size: 0.64rem; color: var(--ink-3); background: transparent; border: 1px solid var(--edge); border-radius: 4px; padding: 1px 7px; cursor: pointer; }
 .lvl-btn:hover { color: var(--ink-2); border-color: var(--cyan-line); }

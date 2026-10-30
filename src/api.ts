@@ -81,16 +81,22 @@ export async function fetchProgress(): Promise<ProgressRow[]> {
   return res.json() as Promise<ProgressRow[]>;
 }
 
-// The Level-Experimental Arena: a live, server-decided Moving Target Defence duel. The server holds the
-// state and the engine; the client only picks a technique and renders what comes back.
+// The Level-Experimental Arena: a live, server-decided Moving Target Defence duel against an adaptive
+// adversary. The server holds the engine, the player model, and the state; the client picks a technique and
+// renders what comes back - including the defence's MAPE-K reasoning and the profile it has built of you.
+export interface ArenaReasoning { monitor: string; analyse: string; plan: string; execute: string; }
+export interface ArenaProfile { read: number; reverse: number; patch: number; deobfuscate: number; }
 export interface ArenaState {
   rung: string;
-  repertoire: string[];
+  ladder: string[];
+  beaten: string[];
+  profile: ArenaProfile;
   round: number;
   fails: number;
   beat: boolean | null;
   ended: boolean;
   narration: string | null;
+  reasoning: ArenaReasoning | null;
   moves: string[];
 }
 

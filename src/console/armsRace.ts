@@ -24,8 +24,9 @@ export interface HackDef {
   tagline: string;
   level: number;
   state: 'live' | 'locked';   // locked = the paired anti-cheat is not live yet
-  bypass: string[];           // the steps this hack narrates to defeat its anti-cheat; the Hack tab
-                              // composes the whole run from the bypasses of every ARMED anti-cheat
+  outcome: 'bypassed' | 'defeated';   // 'defeated' = the proper defence wins and the hack fails (the arc's end)
+  bypass: string[];           // the steps this hack narrates against its anti-cheat; the Hack tab composes
+                              // the whole run from the bypasses of every ARMED anti-cheat
   build: string;              // the dynamic file it hands you (named for the anti-cheat, not the hack)
   note: string;               // the escalation note under the window
 }
@@ -33,7 +34,7 @@ export interface HackDef {
 export const ANTICHEATS: AntiCheatDef[] = [
   { id: 'server-key', tagline: 'hash the key into the DB', level: 1, state: 'live' },
   { id: 'computed-key', tagline: 'harden the serial algorithm', level: 2, state: 'live' },
-  { id: 'licence', tagline: 'server-side licence check', level: 3, state: 'designed' },
+  { id: 'licence', tagline: 'server-side licence check', level: 3, state: 'live' },
   { id: 'integrity', tagline: 'tamper check', level: 3, state: 'designed' },
 ];
 
@@ -41,7 +42,7 @@ const LOCKED: string[] = [];
 
 export const HACKS: HackDef[] = [
   {
-    id: 'server-key', tagline: 'recover the key', level: 1, state: 'live',
+    id: 'server-key', tagline: 'recover the key', level: 1, state: 'live', outcome: 'bypassed',
     bypass: [
       '  the key is gone from the binary, only its SHA-256 ships',
       '  handshaking with the live DB ... ok',
@@ -52,7 +53,7 @@ export const HACKS: HackDef[] = [
     note: 'A proper PBKDF2 + server-only compare defeats this recover.',
   },
   {
-    id: 'computed-key', tagline: 'reverse the algorithm', level: 2, state: 'live',
+    id: 'computed-key', tagline: 'reverse the algorithm', level: 2, state: 'live', outcome: 'bypassed',
     bypass: [
       '  the serial is computed, not stored in the binary',
       '  lifting the hardened formula out of IsValid',
@@ -62,6 +63,16 @@ export const HACKS: HackDef[] = [
     build: 'Level2_computedkey.zip',
     note: 'Computing the serial server-side and never shipping the formula defeats the reverse.',
   },
-  { id: 'licence', tagline: 'forge the response', level: 3, state: 'locked', bypass: LOCKED, build: 'Level3_licence.zip', note: 'A signed + nonce licence response defeats the forge.' },
-  { id: 'integrity', tagline: 'patch the verifier', level: 3, state: 'locked', bypass: LOCKED, build: 'Level3_integrity.zip', note: 'Server-attested integrity defeats the patch.' },
+  {
+    id: 'licence', tagline: 'forge the response', level: 3, state: 'live', outcome: 'defeated',
+    bypass: [
+      '  premium is decided by the server now, not a local bool',
+      '  intercepting the licence response to forge a grant',
+      '  re-signing the grant ... no private key on this side',
+      '  the build verifies the ECDSA signature: FORGED GRANT REJECTED',
+    ],
+    build: 'Level3_licence.zip',
+    note: 'The signed + nonce grant cannot be forged offline: this is where the client-side crack ends.',
+  },
+  { id: 'integrity', tagline: 'patch the verifier', level: 3, state: 'locked', outcome: 'defeated', bypass: LOCKED, build: 'Level3_integrity.zip', note: 'Server-attested integrity defeats the patch.' },
 ];

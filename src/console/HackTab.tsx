@@ -31,24 +31,30 @@ export function HackTab({ armed, level, setLevel }: Readonly<{
   const runnable = HACKS.find((h) => h.level === level && h.state === 'live') ?? null;
   const armedDefs = ANTICHEATS.filter((a) => a.level === level && armed[a.id]);
   const appliedAc = armedDefs.map((a) => a.id).join(', ') || 'none';
-  // The build the run hands you is named for the whole armed stack, so the file says what it carries.
+  // Some anti-cheats cannot be hacked: a 'defeated' outcome means the proper server-side defence wins and
+  // the run ends in failure, with no bypassed build. That is the end of the client-side arms race (Level 3
+  // licence). The build the run hands you (only when it is bypassable) is named for the whole armed stack.
+  const defeated = armedDefs.some((a) => HACKS.find((x) => x.id === a.id)?.outcome === 'defeated');
   const buildName = armedDefs.length
     ? `Level${level}_${armedDefs.map((a) => a.id.replace(/-/g, '')).join('_')}.zip`
     : runnable?.build ?? `Level${level}.zip`;
 
   // The run is composed from the anti-cheats ARMED on this level: the hack narrates, step by step, how it
-  // defeats each one, so the bypass is explained rather than a canned animation. Nothing armed = the plain
-  // build, nothing to bypass. The head/tail frame every run; the key itself is never shown.
+  // handles each one. Nothing armed = the plain build, nothing to bypass. If any armed anti-cheat is a
+  // 'defeated' one (licence), the run ends in FORGE FAILED instead of a silent bypass.
   const script = useMemo(() => {
     const head = [`> breakbox-hack --target Level${level} --dynamic`, '> reading the dynamic build ... ok'];
     const armedHere = ANTICHEATS.filter((a) => a.level === level && armed[a.id]);
+    const beaten = armedHere.some((a) => HACKS.find((x) => x.id === a.id)?.outcome === 'defeated');
     const body = armedHere.length === 0
       ? ['> no anti-cheat armed on this level', '> the plain build already reveals the key, nothing to bypass']
       : armedHere.flatMap((a) => {
           const h = HACKS.find((x) => x.id === a.id);
           return [`> anti-cheat detected: ${a.id} (${a.tagline})`, ...(h && h.bypass.length ? h.bypass : ['  no live bypass yet'])];
         });
-    const tail = ['> key recovered (hidden) · ********', 'HACK COMPLETE', 'the dynamic build is now silently bypassed'];
+    const tail = beaten
+      ? ['> FORGE FAILED', '> the signed grant cannot be faked without the server key', 'the flag is the server’s to give; patching the client gets you nothing']
+      : ['> key recovered (hidden) · ********', 'HACK COMPLETE', 'the dynamic build is now silently bypassed'];
     return [...head, ...body, ...tail];
   }, [level, armed]);
 
@@ -111,18 +117,27 @@ export function HackTab({ armed, level, setLevel }: Readonly<{
             {lines.length === 0 && !running && (
               runnable
                 ? <div className="hk-term-idle">Hit Run attack. It narrates how it defeats each armed anti-cheat; the key itself is never shown.</div>
-                : <div className="hk-term-idle">No live hack for Level {level} yet. server-key (Level 1) is the live one; the rest ship in Sprint 3.</div>
+                : <div className="hk-term-idle">No live hack for Level {level} yet. Arm an anti-cheat on a made level (1-3) to see its bypass.</div>
             )}
             {lines.map((l, i) => <div key={i} className="hk-line">{l}</div>)}
           </div>
           {(running || done) && <div className="hk-bar"><div className="hk-bar-fill" style={{ width: `${progress}%` }} /></div>}
-          {done && runnable && (
+          {done && runnable && !defeated && (
             <div className="hk-build">
               <div className="hk-build-t">your dynamic build is ready</div>
               <div className="hk-build-name">{buildName}</div>
               <div className="hk-build-sub">same name as the anti-cheat version; the hack is hidden inside</div>
               <div className="hk-build-bar">
                 <button type="button" className="hk-dl" onClick={download}>{dl ? 'downloaded' : 'Download (instant)'}</button>
+                <button type="button" className="hk-close" onClick={reset}>Close</button>
+              </div>
+            </div>
+          )}
+          {done && defeated && (
+            <div className="hk-build hk-defeated">
+              <div className="hk-build-t">the defence held</div>
+              <div className="hk-build-sub">no bypassed build: the licence is signed by the server, so a forged grant is rejected and the flag stays the server&apos;s to give. This is where the client-side arms race ends.</div>
+              <div className="hk-build-bar">
                 <button type="button" className="hk-close" onClick={reset}>Close</button>
               </div>
             </div>

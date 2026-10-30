@@ -629,6 +629,9 @@ code {
 .hk-bar { height: 5px; border-radius: 999px; background: rgba(8, 17, 32, 0.6); overflow: hidden; margin: 11px 0; }
 .hk-bar-fill { height: 100%; background: var(--cyan); transition: width 0.3s ease; }
 .hk-build { border: 1px dashed var(--cyan-line); border-radius: var(--radius-sm); background: var(--cyan-soft); padding: 12px 14px; }
+/* The arc's endpoint: the forge is defeated, the defence holds. Amber + solid, not the cyan "bypassed" look. */
+.hk-defeated { border-style: solid; border-color: var(--hard); background: rgba(200, 168, 106, 0.08); }
+.hk-defeated .hk-build-t { color: var(--hard); }
 .hk-build-t { font-family: var(--mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
 .hk-build-name { font-family: var(--mono); font-size: 0.82rem; font-weight: 600; color: var(--cyan); margin-top: 5px; }
 .hk-build-sub { font-family: var(--mono); font-size: 0.6rem; color: var(--ink-3); margin-top: 4px; }

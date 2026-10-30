@@ -7,6 +7,7 @@ import { getMe, logout, type Me } from './auth';
 import { AuthPanel } from './AuthPanel';
 import { Monitor } from './Monitor';
 import { Console } from './console/Console';
+import { ANTICHEATS } from './console/armsRace';
 
 // The .NET 9 Desktop Runtime, which the level apps need to run. Installed once, then every level runs.
 const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';
@@ -114,11 +115,22 @@ function Guide({ level, prereqDone, setPrereqDone, signedIn, solved, onSolved }:
   // The download state resets when the selected level changes because App keys this component by the
   // level number, so it remounts fresh. That is cleaner than an effect that writes state on prop change.
 
+  // The anti-cheats the player bakes into THIS build. Empty = the original/plain target; any armed one
+  // makes it a dynamic build (named for its features) with the flag EARNED, not printed. Only live
+  // anti-cheats are armable; the rest show as coming later. Resets per level because Guide remounts.
+  const [armed, setArmed] = useState<Set<string>>(new Set());
+  const antis = level ? ANTICHEATS.filter((a) => a.level === level.number) : [];
+  const features = [...armed];
+  const dynamic = features.length > 0;
+  const toggle = (id: string) =>
+    setArmed((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+
   const download = async () => {
     if (!level) return;
     setDownloading(true); setFailed(false);
     try {
-      await downloadTarget(level.number);
+      const fname = dynamic ? `Level${level.number}_${features.join('_').replace(/-/g, '')}.zip` : undefined;
+      await downloadTarget(level.number, fname, features);
       setDownloaded(true);
     } catch { setFailed(true); }
     finally { setDownloading(false); }
@@ -143,6 +155,7 @@ function Guide({ level, prereqDone, setPrereqDone, signedIn, solved, onSolved }:
   let dlLabel = `download ${name} (.zip)`;
   if (downloading) dlLabel = 'downloading...';
   else if (downloaded) dlLabel = `download ${name} again`;
+  else if (dynamic) dlLabel = `download dynamic ${name} (.zip)`;
 
   return (
     <aside className="guide" aria-label="run guide">
@@ -188,6 +201,39 @@ function Guide({ level, prereqDone, setPrereqDone, signedIn, solved, onSolved }:
           </div>
           <p className="guide-obj">{level.summary}</p>
 
+          {level.available && antis.length > 0 && (
+            <div className="guide-anti">
+              <div className="guide-anti-h">
+                <span className="label">anti-cheat</span>
+                <span className={`guide-anti-mode ${dynamic ? 'on' : ''}`}>{dynamic ? 'dynamic build' : 'original build'}</span>
+              </div>
+              <div className="guide-anti-list">
+                {antis.map((a) => {
+                  const live = a.state === 'live';
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      className={`anti-chip ${armed.has(a.id) ? 'on' : ''} ${live ? '' : 'soon'}`}
+                      disabled={!live}
+                      aria-pressed={armed.has(a.id)}
+                      onClick={() => toggle(a.id)}
+                      title={live ? a.tagline : 'ships in a later sprint'}
+                    >
+                      {a.id}{live ? '' : ' · soon'}
+                    </button>
+                  );
+                })}
+              </div>
+              {dynamic && (
+                <p className="guide-anti-note">
+                  baked into this build: <b>{features.join(', ')}</b>. the flag is no longer printed, crack the
+                  hardened build and the app reveals it.
+                </p>
+              )}
+            </div>
+          )}
+
           {level.available ? (
             <ol className="steps">
               <li>
@@ -208,7 +254,11 @@ function Guide({ level, prereqDone, setPrereqDone, signedIn, solved, onSolved }:
                   <span className="step-note">(needs the runtime above)</span>
                 </div>
               </li>
-              <li><div className="step-body">{findStep[level.number]}</div></li>
+              <li><div className="step-body">
+                {dynamic
+                  ? <>This is a hardened build ({features.join(', ')}). The easy read is gone: defeat the anti-cheat to recover the key, then the app reveals the flag. The console&apos;s Hack tab walks each bypass.</>
+                  : findStep[level.number]}
+              </div></li>
               <li>
                 <div className="step-body">
                   {level.number === 3

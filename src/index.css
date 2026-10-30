@@ -241,6 +241,19 @@ code {
 .guide-level .name { font-family: var(--mono); font-weight: 700; font-size: 1rem; color: var(--ink); }
 .guide-obj { margin: 0; color: var(--ink-2); font-size: 0.85rem; }
 
+/* The launcher anti-cheat picker: arm a level's anti-cheats to turn the download into a dynamic build. */
+.guide-anti { margin: 2px 0 4px; padding: 12px; border: 1px solid var(--edge); border-radius: var(--radius); background: var(--cyan-soft); }
+.guide-anti-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.guide-anti-mode { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--ink-3); text-transform: uppercase; }
+.guide-anti-mode.on { color: var(--cyan); }
+.guide-anti-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.anti-chip { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-2); background: rgba(150, 185, 220, 0.06); border: 1px solid var(--edge); border-radius: 999px; padding: 4px 11px; cursor: pointer; transition: border-color 0.12s, color 0.12s, background 0.12s; }
+.anti-chip:hover:not(:disabled) { border-color: var(--cyan-line); color: var(--ink); }
+.anti-chip.on { color: var(--ground); background: var(--cyan); border-color: var(--cyan); font-weight: 600; }
+.anti-chip.soon, .anti-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+.guide-anti-note { margin: 10px 0 0; font-size: 0.78rem; color: var(--ink-2); line-height: 1.5; }
+.guide-anti-note b { color: var(--cyan); font-family: var(--mono); font-weight: 600; }
+
 .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
 .steps li { position: relative; display: grid; grid-template-columns: 25px 1fr; gap: 12px; padding-bottom: 15px; font-size: 0.85rem; line-height: 1.55; color: var(--ink-2); }
 .steps li:last-child { padding-bottom: 0; }

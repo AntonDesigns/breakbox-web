@@ -35,16 +35,80 @@ export function generateUrl(level: number): string {
 
 // Downloads the target zip. I fetch the bytes and save them with a blob link so a failed request
 // (backend down) surfaces as an error the guide can show, rather than a browser error page.
-export async function downloadTarget(level: number): Promise<void> {
-  const res = await fetch(generateUrl(level));
+export async function downloadTarget(level: number, filename?: string, features?: string[]): Promise<void> {
+  // Credentialed, so the session cookie rides along and the server records the issued target against the
+  // signed-in player (anonymous downloads still work, they are just not tracked). A caller can name the
+  // file and pass the armed anti-cheats to bake into the dynamic build (the Hack tab hands you e.g.
+  // Level2_computedkey.zip, with its features baked into the generated target).
+  const query = features && features.length ? `?features=${encodeURIComponent(features.join(','))}` : '';
+  const res = await fetch(generateUrl(level) + query, { credentials: 'include' });
   if (!res.ok) throw new Error(`download failed: ${res.status}`);
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `challenge_${level}.zip`;
+  a.download = filename ?? `challenge_${level}.zip`;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+// What the server returns for a flag submission: whether it was right, the level's new status, and how
+// many attempts the player has made. Decided server-side, so the UI cannot fake a solve.
+export interface SubmitResult { correct: boolean; status: string; attempts: number; }
+
+// Submit a flag for a level. Credentialed, so the server ties the attempt to the signed-in player; it
+// answers 401 when signed out. The server checks the flag against the exact target it issued.
+export async function submitFlag(level: number, flag: string): Promise<SubmitResult> {
+  const res = await fetch(`${API_BASE}/submit`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ level, flag }),
+  });
+  if (!res.ok) throw new Error(`submit failed: ${res.status}`);
+  return res.json() as Promise<SubmitResult>;
+}
+
+// One row of the signed-in player's progress: a level, its status and when it was solved.
+export interface ProgressRow { number: number; name: string; status: string; attempts: number; solvedAt: string | null; }
+
+// The signed-in player's own progress, for the solved badges. Credentialed; 401 when signed out.
+export async function fetchProgress(): Promise<ProgressRow[]> {
+  const res = await fetch(`${API_BASE}/progress`, { credentials: 'include' });
+  if (!res.ok) throw new Error(`progress request failed: ${res.status}`);
+  return res.json() as Promise<ProgressRow[]>;
+}
+
+// The Level-Experimental Arena: a live, server-decided Moving Target Defence duel. The server holds the
+// state and the engine; the client only picks a technique and renders what comes back.
+export interface ArenaState {
+  rung: string;
+  repertoire: string[];
+  round: number;
+  fails: number;
+  beat: boolean | null;
+  ended: boolean;
+  narration: string | null;
+  moves: string[];
+}
+
+// Start (or restart) a duel. Credentialed: the defence opens past the techniques this account has proven.
+export async function arenaStart(): Promise<ArenaState> {
+  const res = await fetch(`${API}/arena/start`, { method: 'POST', credentials: 'include' });
+  if (!res.ok) throw new Error(`arena start failed: ${res.status}`);
+  return res.json() as Promise<ArenaState>;
+}
+
+// Play one technique against the current rung. The engine runs server-side; the result is the new state.
+export async function arenaMove(move: string): Promise<ArenaState> {
+  const res = await fetch(`${API}/arena/move`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ move }),
+  });
+  if (!res.ok) throw new Error(`arena move failed: ${res.status}`);
+  return res.json() as Promise<ArenaState>;
 }

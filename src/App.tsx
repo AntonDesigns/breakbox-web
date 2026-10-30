@@ -1,12 +1,14 @@
 // BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
-import { useEffect, useState, type ReactNode } from 'react';
-import { downloadTarget, fetchLevels, type Level } from './api';
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { downloadTarget, fetchLevels, fetchProgress, submitFlag, type Level } from './api';
 import { getMe, logout, type Me } from './auth';
 import { AuthPanel } from './AuthPanel';
 import { Monitor } from './Monitor';
 import { Console } from './console/Console';
+import { ANTICHEATS } from './console/armsRace';
+import { Arena } from './Arena';
 
 // The .NET 9 Desktop Runtime, which the level apps need to run. Installed once, then every level runs.
 const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';
@@ -63,7 +65,7 @@ function usePersistentBool(key: string): [boolean, (v: boolean) => void] {
   return [value, set];
 }
 
-function LevelCard({ lvl, active, onSelect }: Readonly<{ lvl: Level; active: boolean; onSelect: (n: number) => void }>) {
+function LevelCard({ lvl, active, solved, onSelect }: Readonly<{ lvl: Level; active: boolean; solved: boolean; onSelect: (n: number) => void }>) {
   const className = ['target', lvl.available ? '' : 'is-locked', active ? 'is-active' : '']
     .filter(Boolean)
     .join(' ');
@@ -82,6 +84,7 @@ function LevelCard({ lvl, active, onSelect }: Readonly<{ lvl: Level; active: boo
           <span className="target-name">{lvl.name}</span>
           <span className={`tag tag-${lvl.difficulty.toLowerCase()}`}>{lvl.difficulty}</span>
           {!lvl.available && <span className="tag tag-locked">LOCKED</span>}
+          {solved && <span className="tag tag-solved">solved</span>}
           <span className="spacer" />
           <span className="pick">{pick}</span>
         </div>
@@ -96,25 +99,56 @@ function LevelCard({ lvl, active, onSelect }: Readonly<{ lvl: Level; active: boo
   );
 }
 
-function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
+function Guide({ level, prereqDone, setPrereqDone, signedIn, solved, onSolved }: Readonly<{
   level: Level | null;
   prereqDone: boolean;
   setPrereqDone: (v: boolean) => void;
+  signedIn: boolean;
+  solved: boolean;
+  onSolved: () => void;
 }>) {
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [flag, setFlag] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<'correct' | 'wrong' | 'error' | null>(null);
   // The download state resets when the selected level changes because App keys this component by the
   // level number, so it remounts fresh. That is cleaner than an effect that writes state on prop change.
+
+  // The anti-cheats the player bakes into THIS build. Empty = the original/plain target; any armed one
+  // makes it a dynamic build (named for its features) with the flag EARNED, not printed. Only live
+  // anti-cheats are armable; the rest show as coming later. Resets per level because Guide remounts.
+  const [armed, setArmed] = useState<Set<string>>(new Set());
+  const antis = level ? ANTICHEATS.filter((a) => a.level === level.number) : [];
+  const features = [...armed];
+  const dynamic = features.length > 0;
+  const toggle = (id: string) =>
+    setArmed((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
   const download = async () => {
     if (!level) return;
     setDownloading(true); setFailed(false);
     try {
-      await downloadTarget(level.number);
+      const fname = dynamic ? `Level${level.number}_${features.join('_').replace(/-/g, '')}.zip` : undefined;
+      await downloadTarget(level.number, fname, features);
       setDownloaded(true);
     } catch { setFailed(true); }
     finally { setDownloading(false); }
+  };
+
+  // Submit the flag to the server, which verifies it against the exact target it issued and records the
+  // result. A correct flag tells App to refresh the solved badges.
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!level) return;
+    setSubmitting(true); setResult(null);
+    try {
+      const r = await submitFlag(level.number, flag.trim());
+      setResult(r.correct ? 'correct' : 'wrong');
+      if (r.correct) onSolved();
+    } catch { setResult('error'); }
+    finally { setSubmitting(false); }
   };
 
   // The download button label, as a plain statement rather than a nested ternary.
@@ -122,6 +156,7 @@ function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
   let dlLabel = `download ${name} (.zip)`;
   if (downloading) dlLabel = 'downloading...';
   else if (downloaded) dlLabel = `download ${name} again`;
+  else if (dynamic) dlLabel = `download dynamic ${name} (.zip)`;
 
   return (
     <aside className="guide" aria-label="run guide">
@@ -163,8 +198,42 @@ function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
           <div className="guide-level">
             <span className="name">{level.name}</span>
             <span className={`tag tag-${level.difficulty.toLowerCase()}`}>{level.difficulty}</span>
+            {(solved || result === 'correct') && <span className="tag tag-solved">solved</span>}
           </div>
           <p className="guide-obj">{level.summary}</p>
+
+          {level.available && antis.length > 0 && (
+            <div className="guide-anti">
+              <div className="guide-anti-h">
+                <span className="label">anti-cheat</span>
+                <span className={`guide-anti-mode ${dynamic ? 'on' : ''}`}>{dynamic ? 'dynamic build' : 'original build'}</span>
+              </div>
+              <div className="guide-anti-list">
+                {antis.map((a) => {
+                  const live = a.state === 'live';
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      className={`anti-chip ${armed.has(a.id) ? 'on' : ''} ${live ? '' : 'soon'}`}
+                      disabled={!live}
+                      aria-pressed={armed.has(a.id)}
+                      onClick={() => toggle(a.id)}
+                      title={live ? a.tagline : 'ships in a later sprint'}
+                    >
+                      {a.id}{live ? '' : ' · soon'}
+                    </button>
+                  );
+                })}
+              </div>
+              {dynamic && (
+                <p className="guide-anti-note">
+                  baked into this build: <b>{features.join(', ')}</b>. the flag is no longer printed, crack the
+                  hardened build and the app reveals it.
+                </p>
+              )}
+            </div>
+          )}
 
           {level.available ? (
             <ol className="steps">
@@ -186,12 +255,32 @@ function Guide({ level, prereqDone, setPrereqDone }: Readonly<{
                   <span className="step-note">(needs the runtime above)</span>
                 </div>
               </li>
-              <li><div className="step-body">{findStep[level.number]}</div></li>
+              <li><div className="step-body">
+                {dynamic
+                  ? <>This is a hardened build ({features.join(', ')}). The easy read is gone: defeat the anti-cheat to recover the key, then the app reveals the flag. The console&apos;s Hack tab walks each bypass.</>
+                  : findStep[level.number]}
+              </div></li>
               <li>
                 <div className="step-body">
                   {level.number === 3
                     ? <>Relaunch it and use a premium feature; it unlocks and shows the flag <code>{'BR{…}'}</code>.</>
                     : <>Enter it in the app. The feature unlocks and it shows the flag <code>{'BR{…}'}</code>.</>}
+                </div>
+              </li>
+              <li>
+                <div className="step-body">
+                  Submit the flag to record your solve.
+                  {signedIn ? (
+                    <form className="flag-form" onSubmit={submit}>
+                      <input className="flag-input" value={flag} onChange={(e) => setFlag(e.target.value)} placeholder="BR{...}" aria-label="flag" spellCheck={false} />
+                      <button type="submit" className="btn btn-dl" disabled={submitting || flag.trim() === ''}>{submitting ? 'checking...' : 'submit'}</button>
+                    </form>
+                  ) : (
+                    <div className="step-note">Sign in to submit and track your progress.</div>
+                  )}
+                  {result === 'correct' && <div className="step-ok">Correct. Level solved and recorded.</div>}
+                  {result === 'wrong' && <div className="step-fail">Not the flag for this target. Try again.</div>}
+                  {result === 'error' && <div className="step-fail">Submit failed. Is the backend running?</div>}
                 </div>
               </li>
             </ol>
@@ -214,7 +303,8 @@ export default function App() {
   const [prereqDone, setPrereqDone] = usePersistentBool('bb_prereq_done');
   // me: undefined while the session check is in flight, null when signed out, the user when signed in.
   const [me, setMe] = useState<Me | null | undefined>(undefined);
-  const [view, setView] = useState<'launcher' | 'auth' | 'monitor' | 'console'>('launcher');
+  const [view, setView] = useState<'launcher' | 'auth' | 'monitor' | 'console' | 'arena'>('launcher');
+  const [solved, setSolved] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchLevels()
@@ -226,6 +316,17 @@ export default function App() {
   useEffect(() => {
     getMe().then(setMe).catch(() => setMe(null));
   }, []);
+
+  // The signed-in player's solved levels, for the badges on the ladder and in the guide. Re-fetched
+  // after a solve so the badge appears straight away.
+  const reloadProgress = useCallback(() => {
+    fetchProgress()
+      .then((rows) => setSolved(new Set(rows.filter((r) => r.status === 'solved').map((r) => r.number))))
+      .catch(() => setSolved(new Set()));   // signed out or offline: clear the badges
+  }, []);
+  // Re-read progress whenever the signed-in user changes. The set is only updated from inside the async
+  // call, never synchronously here, so this stays a real synchronisation effect.
+  useEffect(() => { reloadProgress(); }, [me, reloadProgress]);
 
   const signOut = async () => {
     await logout();
@@ -265,6 +366,7 @@ export default function App() {
           )}
           {me && (
             <span className="whoami">
+              <button type="button" className="authbtn arena-link" onClick={() => setView('arena')}>arena</button>
               {me.role === 'admin' && (
                 <button type="button" className="authbtn" onClick={() => setView('console')}>console</button>
               )}
@@ -297,6 +399,7 @@ export default function App() {
         )}
         {view === 'monitor' && <Monitor onClose={() => setView('launcher')} />}
         {view === 'console' && <Console onClose={() => setView('launcher')} meId={me?.id ?? 0} />}
+        {view === 'arena' && <Arena onClose={() => setView('launcher')} />}
 
         {view === 'launcher' && (<>
         {error && (
@@ -313,19 +416,19 @@ export default function App() {
                 <h2 className="section">core</h2>
                 <ol className="targets targets-core">
                   {core.map((l) => (
-                    <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} onSelect={setSelected} />
+                    <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} solved={solved.has(l.number)} onSelect={setSelected} />
                   ))}
                 </ol>
               </section>
 
-              <Guide key={activeNumber ?? 'none'} level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} />
+              <Guide key={activeNumber ?? 'none'} level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} signedIn={!!me} solved={activeNumber !== null && solved.has(activeNumber)} onSolved={reloadProgress} />
             </div>
 
             <section className="ladder-adv">
               <h2 className="section">advanced <span className="dim">later sprints</span></h2>
               <ol className="targets targets-adv">
                 {advanced.map((l) => (
-                  <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} onSelect={setSelected} />
+                  <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} solved={solved.has(l.number)} onSelect={setSelected} />
                 ))}
               </ol>
             </section>

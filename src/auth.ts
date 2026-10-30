@@ -134,3 +134,8 @@ export const addUser = (username: string, email: string, password: string, role:
 // Fire the dev-only attack harness (admin only; the server returns 404 outside Development). The
 // blocked attempts it records then show up in the monitor on the next refresh.
 export const runAttack = (): Promise<Response> => post('/dev/attack');
+
+// Log that an anti-cheat was armed or disarmed from the Console, so the action shows in the Threats feed.
+// Admin-only on the server; best-effort from the UI (the toggle has already updated locally).
+export const logAntiCheat = (id: string, level: number, on: boolean): Promise<Response> =>
+  post('/console/anticheat', { id, level, on });

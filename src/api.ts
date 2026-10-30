@@ -80,3 +80,35 @@ export async function fetchProgress(): Promise<ProgressRow[]> {
   if (!res.ok) throw new Error(`progress request failed: ${res.status}`);
   return res.json() as Promise<ProgressRow[]>;
 }
+
+// The Level-Experimental Arena: a live, server-decided Moving Target Defence duel. The server holds the
+// state and the engine; the client only picks a technique and renders what comes back.
+export interface ArenaState {
+  rung: string;
+  repertoire: string[];
+  round: number;
+  fails: number;
+  beat: boolean | null;
+  ended: boolean;
+  narration: string | null;
+  moves: string[];
+}
+
+// Start (or restart) a duel. Credentialed: the defence opens past the techniques this account has proven.
+export async function arenaStart(): Promise<ArenaState> {
+  const res = await fetch(`${API}/arena/start`, { method: 'POST', credentials: 'include' });
+  if (!res.ok) throw new Error(`arena start failed: ${res.status}`);
+  return res.json() as Promise<ArenaState>;
+}
+
+// Play one technique against the current rung. The engine runs server-side; the result is the new state.
+export async function arenaMove(move: string): Promise<ArenaState> {
+  const res = await fetch(`${API}/arena/move`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ move }),
+  });
+  if (!res.ok) throw new Error(`arena move failed: ${res.status}`);
+  return res.json() as Promise<ArenaState>;
+}

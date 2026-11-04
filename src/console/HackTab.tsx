@@ -9,7 +9,7 @@ import { ANTICHEATS, HACKS, LEVELS } from './armsRace';
 // The Hack tab: the offensive mirror. Pick the dynamic-build level; a hack can only run against its own
 // level's shield, so cross-level hacks are locked (a Level 1 hack cannot do a Level 3), per the handoff.
 // "Run attack" opens its own live terminal window (the key is never shown) and ends by handing over the
-// dynamic build named for the anti-cheat (the bypass is silent). The level + armed set are shared with the
+// dynamic build named for the anti-cheat (the generator bakes a real bypass, so it unlocks with any key). The level + armed set are shared with the
 // Anti-cheat tab. Only server-key (Level 1) is live today; the rest ship into the generator in Sprint 3.
 export function HackTab({ armed, level, setLevel }: Readonly<{
   armed: Record<string, boolean>;
@@ -54,7 +54,7 @@ export function HackTab({ armed, level, setLevel }: Readonly<{
         });
     const tail = beaten
       ? ['> FORGE FAILED', '> the signed grant cannot be faked without the server key', 'the flag is the server’s to give; patching the client gets you nothing']
-      : ['> key recovered (hidden) · ********', 'HACK COMPLETE', 'the dynamic build is now silently bypassed'];
+      : ['> patching the check to always pass · ********', 'HACK COMPLETE', 'the anti-cheat is bypassed: this build unlocks with any key'];
     return [...head, ...body, ...tail];
   }, [level, armed]);
 
@@ -75,7 +75,10 @@ export function HackTab({ armed, level, setLevel }: Readonly<{
   const download = () => {
     if (!runnable) return;
     setDl(true);
-    void downloadTarget(level, buildName, armedDefs.map((a) => a.id));
+    // Add the 'hacked' feature so the generator bakes a real bypass: the download keeps the same name but the
+    // anti-cheat is defeated (it unlocks with any key and reveals the real flag). This is the attack half made
+    // real; the web cannot patch a file on your disk, but it can ask the generator to compile a cracked build.
+    void downloadTarget(level, buildName, [...armedDefs.map((a) => a.id), 'hacked']);
   };
 
   return (
@@ -126,7 +129,7 @@ export function HackTab({ armed, level, setLevel }: Readonly<{
             <div className="hk-build">
               <div className="hk-build-t">your dynamic build is ready</div>
               <div className="hk-build-name">{buildName}</div>
-              <div className="hk-build-sub">same name as the anti-cheat version; the hack is hidden inside</div>
+              <div className="hk-build-sub">same name as the anti-cheat version, but the anti-cheat is defeated: it unlocks with any key</div>
               <div className="hk-build-bar">
                 <button type="button" className="hk-dl" onClick={download}>{dl ? 'downloaded' : 'Download (instant)'}</button>
                 <button type="button" className="hk-close" onClick={reset}>Close</button>

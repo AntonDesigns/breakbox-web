@@ -7,7 +7,7 @@ import { getMe, logout, type Me } from './auth';
 import { AuthPanel } from './AuthPanel';
 import { Monitor } from './Monitor';
 import { Console } from './console/Console';
-import { Arena } from './Arena';
+import { ArenaFocus } from './arena/ArenaFocus';
 
 // The .NET 9 Desktop Runtime, which the level apps need to run. Installed once, then every level runs.
 const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';
@@ -258,7 +258,10 @@ export default function App() {
   const [prereqDone, setPrereqDone] = usePersistentBool('bb_prereq_done');
   // me: undefined while the session check is in flight, null when signed out, the user when signed in.
   const [me, setMe] = useState<Me | null | undefined>(undefined);
-  const [view, setView] = useState<'launcher' | 'auth' | 'monitor' | 'console' | 'arena'>('launcher');
+  const [view, setView] = useState<'launcher' | 'auth' | 'monitor' | 'console'>('launcher');
+  // The arena is a MODE of the launcher, not a separate page: toggling it transforms the launcher in place
+  // (re-keyed to the warden, the chosen level focused). It only takes effect on the launcher view.
+  const [arena, setArena] = useState(false);
   const [solved, setSolved] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -289,6 +292,10 @@ export default function App() {
     setView('launcher');
   };
 
+  // Flip the launcher into the arena (or back). The chosen level stays chosen, so it is the focused one in
+  // the arena. Always resolves to the launcher view, since the arena is that view transformed in place.
+  const toggleArena = () => { setView('launcher'); setArena((a) => !a); };
+
   const core = levels?.filter((l) => l.tier === 'core') ?? [];
   const advanced = levels?.filter((l) => l.tier === 'advanced') ?? [];
   // Open on the first level you can actually download, so the guide is populated at rest. Derived from the
@@ -305,7 +312,7 @@ export default function App() {
   else if (levels) { status = 'online'; statusLabel = 'api online'; }
 
   return (
-    <div className={`app${view === 'arena' ? ' experimental' : ''}`}>
+    <div className={`app${view === 'launcher' && arena ? ' arena-on' : ''}`}>
       <header className="topbar">
         <div className="brand">
           <Logo />
@@ -321,7 +328,9 @@ export default function App() {
           )}
           {me && (
             <span className="whoami">
-              <button type="button" className="authbtn arena-link" onClick={() => setView('arena')}>arena</button>
+              <button type="button" className={`arena-toggle${arena ? ' on' : ''}`} onClick={toggleArena} aria-pressed={arena} aria-label="toggle arena mode">
+                <span className="at-lab">launcher</span><span className="at-sw"><span className="at-knob" /></span><span className="at-lab">arena</span>
+              </button>
               {me.role === 'admin' && (
                 <button type="button" className="authbtn" onClick={() => setView('console')}>console</button>
               )}
@@ -334,10 +343,16 @@ export default function App() {
         </div>
       </header>
 
-      {view === 'arena' ? (
-        <div className="exp-ribbon">
-          <span className="exp-dot" />
-          EXPERIMENTAL MODE &mdash; the adaptive arena is live, and the whole system is adapting to you
+      {view === 'launcher' && arena ? (
+        <div className="arena-head">
+          <div className="arena-head-t">
+            <span className="k">mode</span>
+            <h2>The Arena</h2>
+            <span className="k">&middot; the Hexwarden holds the ladder</span>
+          </div>
+          <div className="arena-head-st">
+            <span className="d" /> under watch{selectedLevel ? <> &middot; watching {selectedLevel.name}</> : null}
+          </div>
         </div>
       ) : (
         <>
@@ -363,7 +378,6 @@ export default function App() {
         )}
         {view === 'monitor' && <Monitor onClose={() => setView('launcher')} />}
         {view === 'console' && <Console onClose={() => setView('launcher')} meId={me?.id ?? 0} />}
-        {view === 'arena' && <Arena onClose={() => setView('launcher')} />}
 
         {view === 'launcher' && (<>
         {error && (
@@ -385,17 +399,23 @@ export default function App() {
                 </ol>
               </section>
 
-              <Guide key={activeNumber ?? 'none'} level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} signedIn={!!me} solved={activeNumber !== null && solved.has(activeNumber)} onSolved={reloadProgress} />
+              {arena
+                ? <ArenaFocus level={selectedLevel} />
+                : <Guide key={activeNumber ?? 'none'} level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} signedIn={!!me} solved={activeNumber !== null && solved.has(activeNumber)} onSolved={reloadProgress} />}
             </div>
 
-            <section className="ladder-adv">
-              <h2 className="section">advanced <span className="dim">later sprints</span></h2>
-              <ol className="targets targets-adv">
-                {advanced.map((l) => (
-                  <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} solved={solved.has(l.number)} onSelect={setSelected} />
-                ))}
-              </ol>
-            </section>
+            {/* The advanced "later sprints" preview is launcher-only: the arena is the boss fight over the
+                levels that actually exist, so the unbuilt-level preview is hidden there. */}
+            {!arena && (
+              <section className="ladder-adv">
+                <h2 className="section">advanced <span className="dim">later sprints</span></h2>
+                <ol className="targets targets-adv">
+                  {advanced.map((l) => (
+                    <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} solved={solved.has(l.number)} onSelect={setSelected} />
+                  ))}
+                </ol>
+              </section>
+            )}
           </>
         )}
         </>)}

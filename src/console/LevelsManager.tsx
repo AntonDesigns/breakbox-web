@@ -68,7 +68,7 @@ export function LevelsManager() {
     <div className="con-levels">
       {(error ?? loadError) && <div className="banner banner-error">{error ?? loadError}</div>}
       {!levels && !loadError && <div className="event-empty">Loading levels...</div>}
-      {levels && levels.length === 0 && <div className="event-empty">No levels yet. The catalog ships empty; add one below.</div>}
+      {levels?.length === 0 && <div className="event-empty">No levels yet. The catalog ships empty; add one below.</div>}
       {levels && levels.length > 0 && (
         <div className="qresult-scroll">
           <table className="qtable">

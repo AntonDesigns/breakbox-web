@@ -56,7 +56,7 @@ function Throughput({ a }: Readonly<{ a: Analysis }>) {
     let c = 0;
     for (const k of STACK_ORDER) { lower[k][i] = c; c += s[k]; upper[k][i] = c; }
   });
-  const botIdx = [...Array(n).keys()].reverse();
+  const botIdx = [...new Array(n).keys()].reverse();
   const bandArea = (k: Kind) => {
     const top = stacks.map((_, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(upper[k][i]).toFixed(1)}`).join(' ');
     const bot = botIdx.map((i) => `L${x(i).toFixed(1)} ${y(lower[k][i]).toFixed(1)}`).join(' ');
@@ -79,7 +79,7 @@ function Throughput({ a }: Readonly<{ a: Analysis }>) {
     <>
       <svg viewBox={`0 0 ${W} ${H}`} className="tgraph" role="img" aria-label="events over time, stacked by kind"
         onMouseLeave={() => setHover(null)} onMouseMove={onMove}>
-        {gridVals.map((v, gi) => <line key={gi} x1={padX} y1={y(v)} x2={W - padX} y2={y(v)} className="tg-grid" />)}
+        {gridVals.map((v) => <line key={v} x1={padX} y1={y(v)} x2={W - padX} y2={y(v)} className="tg-grid" />)}
         {STACK_ORDER.map((k) => <path key={`f-${k}`} d={bandArea(k)} className={`tb-fill kind-${k}`} />)}
         {STACK_ORDER.map((k) => <path key={`l-${k}`} d={bandLine(k)} className={`tb-line kind-${k}`} fill="none" />)}
         <line x1={padX} y1={H - padB} x2={W - padX} y2={H - padB} className="tg-axis" />

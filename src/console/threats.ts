@@ -68,106 +68,127 @@ const MAX_MINUTES = 90;  // cap the per-minute series so a long window does not 
 const RECENT = 300_000;  // "recent" = last 5 minutes, the window the posture reacts to
 const MINUTE = 60_000;
 
-// Everything the strip, the charts and the panels need, derived once from the events.
-export function analyse(events: readonly AuditEvent[]): Analysis {
-  const now = Date.now();
-  const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
-  const mix: Record<Kind, number> = { threat: 0, write: 0, auth: 0, other: 0 };
-  const times: number[] = [];
-  const typeCount = new Map<string, number>();
-  const srcTotal = new Map<string, number>();
-  const srcThreat = new Map<string, number>();
-  const actors = new Set<string>();
-  let attacks = 0, perMin = 0, dbToday = 0, recentThreats = 0, logins = 0, logouts = 0;
+// The running totals one pass over the stream produces, so the rest of analyse works off numbers.
+interface Counters {
+  mix: Record<Kind, number>;
+  times: number[];
+  typeCount: Map<string, number>;
+  srcTotal: Map<string, number>;
+  srcThreat: Map<string, number>;
+  actors: Set<string>;
+  attacks: number; perMin: number; dbToday: number; recentThreats: number; logins: number; logouts: number;
+}
 
+// First pass: fold every event into the totals. One loop, one place the per-event rules live.
+function accumulate(events: readonly AuditEvent[], now: number, midnight: number): Counters {
+  const c: Counters = {
+    mix: { threat: 0, write: 0, auth: 0, other: 0 },
+    times: [], typeCount: new Map(), srcTotal: new Map(), srcThreat: new Map(), actors: new Set(),
+    attacks: 0, perMin: 0, dbToday: 0, recentThreats: 0, logins: 0, logouts: 0,
+  };
   for (const e of events) {
     const k = kindOf(e.action);
     const t = new Date(e.at).getTime();
     const src = e.username ?? e.ip ?? '—';
-    mix[k]++;
-    times.push(t);
-    actors.add(src);
-    srcTotal.set(src, (srcTotal.get(src) ?? 0) + 1);
+    c.mix[k]++;
+    c.times.push(t);
+    c.actors.add(src);
+    c.srcTotal.set(src, (c.srcTotal.get(src) ?? 0) + 1);
     if (k === 'threat') {
-      attacks++;
-      if (now - t <= RECENT) recentThreats++;
+      c.attacks++;
+      if (now - t <= RECENT) c.recentThreats++;
       const label = threatType(e.action);
-      typeCount.set(label, (typeCount.get(label) ?? 0) + 1);
-      srcThreat.set(src, (srcThreat.get(src) ?? 0) + 1);
+      c.typeCount.set(label, (c.typeCount.get(label) ?? 0) + 1);
+      c.srcThreat.set(src, (c.srcThreat.get(src) ?? 0) + 1);
     }
-    if (now - t <= MINUTE) perMin++;
-    if (k === 'write' && t >= midnight.getTime()) dbToday++;
+    if (now - t <= MINUTE) c.perMin++;
+    if (k === 'write' && t >= midnight) c.dbToday++;
     const a = e.action.toLowerCase();
-    if (a === 'login') logins++;
-    else if (a === 'logout') logouts++;
+    if (a === 'login') c.logins++;
+    else if (a === 'logout') c.logouts++;
   }
+  return c;
+}
 
-  const windowStart = times.length ? Math.min(...times) : now;
-  const windowEnd = times.length ? Math.max(...times) : now;
-
-  // Events over time, split by kind, for the stacked throughput chart.
+// Events over time, split by kind, for the stacked throughput chart.
+function buildStacks(events: readonly AuditEvent[], windowStart: number, windowEnd: number): StackBucket[] {
+  if (events.length === 0) return [];
+  const span = Math.max(windowEnd - windowStart, MINUTE);
+  const step = span / BUCKETS;
   const stacks: StackBucket[] = [];
-  if (times.length) {
-    const span = Math.max(windowEnd - windowStart, MINUTE);
-    const step = span / BUCKETS;
-    for (let i = 0; i < BUCKETS; i++) {
-      stacks.push({ t: windowStart + (i + 0.5) * step, threat: 0, write: 0, auth: 0, other: 0 });
-    }
-    for (const e of events) {
-      const t = new Date(e.at).getTime();
-      const idx = Math.min(BUCKETS - 1, Math.max(0, Math.floor((t - windowStart) / step)));
-      stacks[idx][kindOf(e.action)]++;
-    }
+  for (let i = 0; i < BUCKETS; i++) {
+    stacks.push({ t: windowStart + (i + 0.5) * step, threat: 0, write: 0, auth: 0, other: 0 });
   }
+  for (const e of events) {
+    const t = new Date(e.at).getTime();
+    const idx = Math.min(BUCKETS - 1, Math.max(0, Math.floor((t - windowStart) / step)));
+    stacks[idx][kindOf(e.action)]++;
+  }
+  return stacks;
+}
 
-  // Per-minute rate across the window: the throughput and threat sparklines, and the busiest minute.
+// Per-minute throughput and threat series across the window (the two sparklines).
+function buildSeries(events: readonly AuditEvent[], windowStart: number, windowEnd: number): { perMinSeries: number[]; threatSeries: number[] } {
   const perMinSeries: number[] = [];
   const threatSeries: number[] = [];
-  if (times.length) {
-    const startMin = Math.floor(windowStart / MINUTE);
-    const endMin = Math.floor(windowEnd / MINUTE);
-    const mins = Math.min(MAX_MINUTES, Math.max(1, endMin - startMin + 1));
-    for (let i = 0; i < mins; i++) { perMinSeries.push(0); threatSeries.push(0); }
-    for (const e of events) {
-      const t = new Date(e.at).getTime();
-      const mi = Math.min(mins - 1, Math.max(0, Math.floor(t / MINUTE) - startMin));
-      perMinSeries[mi]++;
-      if (kindOf(e.action) === 'threat') threatSeries[mi]++;
-    }
+  if (events.length === 0) return { perMinSeries, threatSeries };
+  const startMin = Math.floor(windowStart / MINUTE);
+  const endMin = Math.floor(windowEnd / MINUTE);
+  const mins = Math.min(MAX_MINUTES, Math.max(1, endMin - startMin + 1));
+  for (let i = 0; i < mins; i++) { perMinSeries.push(0); threatSeries.push(0); }
+  for (const e of events) {
+    const t = new Date(e.at).getTime();
+    const mi = Math.min(mins - 1, Math.max(0, Math.floor(t / MINUTE) - startMin));
+    perMinSeries[mi]++;
+    if (kindOf(e.action) === 'threat') threatSeries[mi]++;
   }
+  return { perMinSeries, threatSeries };
+}
+
+// Everything the strip, the charts and the panels need, derived once from the events. The three passes
+// above do the looping; this one just composes their results, so it stays easy to read.
+export function analyse(events: readonly AuditEvent[]): Analysis {
+  const now = Date.now();
+  const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  const c = accumulate(events, now, midnight.getTime());
+
+  const windowStart = c.times.length ? Math.min(...c.times) : now;
+  const windowEnd = c.times.length ? Math.max(...c.times) : now;
+  const stacks = buildStacks(events, windowStart, windowEnd);
+  const { perMinSeries, threatSeries } = buildSeries(events, windowStart, windowEnd);
   const peakPerMin = perMinSeries.length ? Math.max(...perMinSeries) : 0;
 
-  const byType = [...typeCount.entries()]
+  const byType = [...c.typeCount.entries()]
     .map(([label, n]) => ({ label, n }))
     .sort((a, b) => b.n - a.n);
 
-  const sources = [...srcTotal.entries()]
-    .map(([key, total]) => ({ key, total, threats: srcThreat.get(key) ?? 0 }))
+  const sources = [...c.srcTotal.entries()]
+    .map(([key, total]) => ({ key, total, threats: c.srcThreat.get(key) ?? 0 }))
     .sort((a, b) => (b.threats - a.threats) || (b.total - a.total))
     .slice(0, 6);
 
   let postureState: PostureState = 'calm';
-  if (recentThreats >= 3) postureState = 'elevated';
-  else if (recentThreats >= 1) postureState = 'watch';
+  if (c.recentThreats >= 3) postureState = 'elevated';
+  else if (c.recentThreats >= 1) postureState = 'watch';
 
   return {
     total: events.length,
-    posture: Math.max(60, 100 - Math.min(recentThreats * 4, 35)),
+    posture: Math.max(60, 100 - Math.min(c.recentThreats * 4, 35)),
     postureState,
-    perMin,
+    perMin: c.perMin,
     peakPerMin,
     perMinSeries,
     threatSeries,
-    attacks,
-    blocked: attacks > 0 ? '100%' : '—',
-    dbToday,
-    activeActors: actors.size,
-    openSessions: Math.max(0, logins - logouts),
+    attacks: c.attacks,
+    blocked: c.attacks > 0 ? '100%' : '—',
+    dbToday: c.dbToday,
+    activeActors: c.actors.size,
+    openSessions: Math.max(0, c.logins - c.logouts),
     windowStart,
     windowEnd,
     stacks,
     byType,
     sources,
-    mix,
+    mix: c.mix,
   };
 }

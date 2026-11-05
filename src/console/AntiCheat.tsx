@@ -66,7 +66,7 @@ export function AntiCheat({ armed, setArmed, level, setLevel }: Readonly<{
   // The dynamic (hardened) build for this level, named for its armed anti-cheats, is downloaded from HERE
   // now, not the launcher: the launcher only hands out the plain original target. This mirrors the Hack
   // tab, where the bypassed build is downloaded. The generator bakes the armed features into the binary.
-  const buildName = `Level${level}_${native.map((a) => a.id.replace(/-/g, '')).join('_')}.zip`;
+  const buildName = `Level${level}_${native.map((a) => a.id.replaceAll('-', '')).join('_')}.zip`;
   const download = () => { setDl(true); void downloadTarget(level, buildName, native.map((a) => a.id)); };
 
   return (

@@ -11,7 +11,9 @@ import { Hexwarden, type HexState } from './Hexwarden';
 // level for now (contempt 1-3, enraged 4-6, wrath 7-9); in Phase 3 the server drives both from real actions.
 function bossFor(level: number): { state: HexState; rage: number } {
   const rage = Math.max(0, Math.min(9, level - 1));
-  const state: HexState = level <= 3 ? 'contempt' : level <= 6 ? 'enraged' : 'wrath';
+  let state: HexState = 'wrath';
+  if (level <= 3) state = 'contempt';
+  else if (level <= 6) state = 'enraged';
   return { state, rage };
 }
 

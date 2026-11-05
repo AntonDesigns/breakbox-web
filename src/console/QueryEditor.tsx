@@ -21,13 +21,13 @@ function QueryResultTable({ result }: Readonly<{ result: QueryResult }>) {
             <tr>{result.columns.map((c) => <th key={c}>{c}</th>)}</tr>
           </thead>
           <tbody>
-            {result.rows.map((row, ri) => (
-              // Query rows have no natural id, and the result is an immutable snapshot that never
-              // reorders, so the row index is a stable key here.
-              <tr key={ri}>
+            {result.rows.map((row) => (
+              // Query rows have no natural id and the snapshot never reorders, so a key built from the row's
+              // own cell values is stable, and it keeps the row index out of the key.
+              <tr key={row.join('\u0001')}>
                 {row.map((cell, ci) => (
                   <td key={result.columns[ci] ?? ci} className={cell === null ? 'qnull' : undefined}>
-                    {cell === null ? 'null' : cell}
+                    {cell ?? 'null'}
                   </td>
                 ))}
               </tr>

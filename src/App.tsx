@@ -1,7 +1,7 @@
 // BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { downloadTarget, fetchLevels, fetchProgress, submitFlag, type Level } from './api';
 import { getMe, logout, type Me } from './auth';
 import { AuthPanel } from './AuthPanel';
@@ -130,8 +130,7 @@ function Guide({ level, prereqDone, setPrereqDone, signedIn, solved, onSolved }:
 
   // Submit the flag to the server, which verifies it against the exact target it issued and records the
   // result. A correct flag tells App to refresh the solved badges.
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
+  const submit = async () => {
     if (!level) return;
     setSubmitting(true); setResult(null);
     try {
@@ -226,7 +225,7 @@ function Guide({ level, prereqDone, setPrereqDone, signedIn, solved, onSolved }:
                 <div className="step-body">
                   Submit the flag to record your solve.
                   {signedIn ? (
-                    <form className="flag-form" onSubmit={submit}>
+                    <form className="flag-form" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
                       <input className="flag-input" value={flag} onChange={(e) => setFlag(e.target.value)} placeholder="BR{...}" aria-label="flag" spellCheck={false} />
                       <button type="submit" className="btn btn-dl" disabled={submitting || flag.trim() === ''}>{submitting ? 'checking...' : 'submit'}</button>
                     </form>

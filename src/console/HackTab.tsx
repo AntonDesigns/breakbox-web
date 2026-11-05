@@ -41,7 +41,7 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
   const applied = !!hackOn[level] && !!runnable && !defeated;
   // The build the run hands you is named for the whole armed stack (same convention as the Anti-cheat tab).
   const buildName = armedDefs.length
-    ? `Level${level}_${armedDefs.map((a) => a.id.replace(/-/g, '')).join('_')}.zip`
+    ? `Level${level}_${armedDefs.map((a) => a.id.replaceAll('-', '')).join('_')}.zip`
     : runnable?.build ?? `Level${level}.zip`;
 
   // The run is composed from the anti-cheats ARMED on this level: the hack narrates, step by step, how it
@@ -55,7 +55,7 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
       ? ['> no anti-cheat armed on this level', '> the plain build already reveals the key, nothing to bypass']
       : armedHere.flatMap((a) => {
           const h = HACKS.find((x) => x.id === a.id);
-          return [`> anti-cheat detected: ${a.id} (${a.tagline})`, ...(h && h.bypass.length ? h.bypass : ['  no live bypass yet'])];
+          return [`> anti-cheat detected: ${a.id} (${a.tagline})`, ...(h?.bypass.length ? h.bypass : ['  no live bypass yet'])];
         });
     const tail = beaten
       ? ['> FORGE FAILED', '> the signed grant cannot be faked without the server key', 'the flag is the server’s to give; patching the client gets you nothing']
@@ -81,12 +81,15 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
 
   // The single toggle, mirroring the Anti-cheat tab: ON runs the attack then latches applied; OFF clears it.
   const toggle = () => {
-    if (!runnable || running) return;
+    if (!runnable || running) { return; }
     if (applied) { stop(); setHackOn((h) => ({ ...h, [level]: false })); setFailed(false); setLines([]); setProgress(0); setDl(false); return; }
     run();
   };
 
-  const pickLevel = (n: number) => { if (n === level) return; stop(); setRunning(false); setFailed(false); setLines([]); setProgress(0); setDl(false); setLevel(n); };
+  const pickLevel = (n: number) => {
+    if (n === level) { return; }
+    stop(); setRunning(false); setFailed(false); setLines([]); setProgress(0); setDl(false); setLevel(n);
+  };
 
   const download = () => {
     setDl(true);
@@ -99,8 +102,14 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
   // What the terminal shows: the live run while running; the completed run once applied or failed (so a
   // reopened tab shows the finished state, not a blank window); empty when the hack is simply off.
   const settled = applied || failed;
-  const termLines = running ? lines : (settled ? (lines.length ? lines : script) : []);
-  const termProgress = running ? progress : (settled ? 100 : 0);
+  // What the terminal shows, as plain statements rather than nested ternaries: the live run while running,
+  // the finished run once applied or failed (so a reopened tab shows it), and nothing while the hack is off.
+  let termLines: string[] = [];
+  if (running) termLines = lines;
+  else if (settled) termLines = lines.length ? lines : script;
+  let termProgress = 0;
+  if (running) termProgress = progress;
+  else if (settled) termProgress = 100;
 
   return (
     <div className="hk">
@@ -114,7 +123,9 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
           <div className="ace-list-h">hacks · click one to target its level</div>
           {HACKS.map((h) => {
             const live = h.level === level && h.state === 'live';
-            const reason = h.level !== level ? 'cross-level, locked' : (h.state !== 'live' ? 'shield not live yet' : '');
+            let reason = '';
+            if (h.level !== level) reason = 'cross-level, locked';
+            else if (h.state !== 'live') reason = 'shield not live yet';
             // Clicking a card that is not the current level targets that level: the cards are the level picker
             // now, so the old 1 2 3 buttons are gone. The handler sits on the text region, never wrapping the
             // toggle, so there is no interactive-inside-interactive and the keyboard path stays clean.
@@ -123,8 +134,10 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
               onClick: () => pickLevel(h.level),
               onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickLevel(h.level); } },
             };
+            let cardState = 'locked';
+            if (live) cardState = applied ? 'on' : 'native';
             return (
-              <div key={h.id} className={`ace-card ${live ? (applied ? 'on' : 'native') : 'locked'}`}>
+              <div key={h.id} className={`ace-card ${cardState}`}>
                 <div className="ace-card-main" {...navMain}>
                   <div className="ace-card-name"><b>{h.id}</b> · {h.tagline}</div>
                   <div className="ace-card-bound">counters: {h.id}{reason ? ` — ${reason}` : ''}</div>
@@ -151,10 +164,12 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
           <div className="hk-win-h"><span>hacking Level {level} (dynamic)</span><span className="live-dot">live</span></div>
           <div className="hk-term">
             {termLines.length === 0 ? (
-              runnable
-                ? <div className="hk-term-idle">Hack is off for Level {level}. Flip it on to run the bypass; the build it hands back unlocks with any key.</div>
-                : <div className="hk-term-idle">No live hack for Level {level} yet. Pick a made level (1-3) to run its bypass.</div>
-            ) : termLines.map((l, i) => <div key={i} className="hk-line">{l}</div>)}
+              <div className="hk-term-idle">
+                {runnable
+                  ? `Hack is off for Level ${level}. Flip it on to run the bypass; the build it hands back unlocks with any key.`
+                  : `No live hack for Level ${level} yet. Pick a made level (1-3) to run its bypass.`}
+              </div>
+            ) : termLines.map((l) => <div key={l} className="hk-line">{l}</div>)}
           </div>
           {(running || settled) && <div className="hk-bar"><div className="hk-bar-fill" style={{ width: `${termProgress}%` }} /></div>}
           {applied && (

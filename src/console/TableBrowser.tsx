@@ -13,12 +13,13 @@ export function TableBrowser({ name, onClose }: Readonly<{ name: string; onClose
   const { data, error } = useLoad(() => fetchConsoleTable(name, page, 25), [name, page]);
 
   const pages = data ? Math.max(1, Math.ceil(data.total / data.size)) : 1;
+  const countLabel = data ? `${data.total} row${data.total === 1 ? '' : 's'}` : '';
 
   return (
     <div className="tbrowse">
       <div className="tbrowse-head">
         <span className="tbrowse-name">{name}</span>
-        <span className="tbrowse-count">{data ? `${data.total} row${data.total === 1 ? '' : 's'}` : ''}</span>
+        <span className="tbrowse-count">{countLabel}</span>
         {onClose && <button type="button" className="ghost" onClick={onClose}>close</button>}
       </div>
       {error && <div className="banner banner-error">{error}</div>}
@@ -28,10 +29,10 @@ export function TableBrowser({ name, onClose }: Readonly<{ name: string; onClose
             <table className="qtable">
               <thead><tr>{data.columns.map((c) => <th key={c}>{c}</th>)}</tr></thead>
               <tbody>
-                {data.rows.map((row, ri) => (
-                  <tr key={ri}>
+                {data.rows.map((row) => (
+                  <tr key={row.join('\u0001')}>
                     {row.map((cell, ci) => (
-                      <td key={data.columns[ci] ?? ci} className={cell === null ? 'qnull' : undefined}>{cell === null ? 'null' : cell}</td>
+                      <td key={data.columns[ci] ?? ci} className={cell === null ? 'qnull' : undefined}>{cell ?? 'null'}</td>
                     ))}
                   </tr>
                 ))}

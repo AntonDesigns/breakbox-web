@@ -73,38 +73,41 @@ export function UserManager({ meId }: Readonly<{ meId: number }>) {
               <tr><th>id</th><th>username</th><th>email</th><th>role</th><th>last login</th><th>{''}</th></tr>
             </thead>
             <tbody>
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td>{u.id}</td>
-                  <td>{u.username}</td>
-                  <td>{u.email}</td>
-                  <td>
-                    <select
-                      className="role-select"
-                      value={u.role}
-                      disabled={busyId === u.id}
-                      onChange={(e) => { void changeRole(u.id, e.target.value); }}
-                      aria-label={`role for ${u.username}`}
-                    >
-                      <option value="user">user</option>
-                      <option value="admin">admin</option>
-                    </select>
-                  </td>
-                  <td>{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : '—'}</td>
-                  <td className="u-actions">
-                    {u.id === meId ? (
-                      <span className="u-you">you</span>
-                    ) : confirmId === u.id ? (
-                      <>
-                        <button type="button" className="u-del confirm" disabled={busyId === u.id} onClick={() => { void remove(u.id); }}>delete</button>
-                        <button type="button" className="u-cancel" onClick={() => setConfirmId(null)}>cancel</button>
-                      </>
-                    ) : (
-                      <button type="button" className="u-del" disabled={busyId === u.id} onClick={() => setConfirmId(u.id)}>delete</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {users.map((u) => {
+                // The row's actions depend on who it is: a plain delete by default, "you" for your own row, or
+                // the confirm pair mid-delete. Pulled out of the JSX so there is no nested ternary to read.
+                let actions = (
+                  <button type="button" className="u-del" disabled={busyId === u.id} onClick={() => setConfirmId(u.id)}>delete</button>
+                );
+                if (u.id === meId) actions = <span className="u-you">you</span>;
+                else if (confirmId === u.id) actions = (
+                  <>
+                    <button type="button" className="u-del confirm" disabled={busyId === u.id} onClick={() => { void remove(u.id); }}>delete</button>
+                    <button type="button" className="u-cancel" onClick={() => setConfirmId(null)}>cancel</button>
+                  </>
+                );
+                return (
+                  <tr key={u.id}>
+                    <td>{u.id}</td>
+                    <td>{u.username}</td>
+                    <td>{u.email}</td>
+                    <td>
+                      <select
+                        className="role-select"
+                        value={u.role}
+                        disabled={busyId === u.id}
+                        onChange={(e) => { void changeRole(u.id, e.target.value); }}
+                        aria-label={`role for ${u.username}`}
+                      >
+                        <option value="user">user</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    </td>
+                    <td>{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : '—'}</td>
+                    <td className="u-actions">{actions}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

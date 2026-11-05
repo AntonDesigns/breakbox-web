@@ -40,14 +40,18 @@ export async function downloadTarget(level: number, filename?: string, features?
   // signed-in player (anonymous downloads still work, they are just not tracked). A caller can name the
   // file and pass the armed anti-cheats to bake into the dynamic build (the Hack tab hands you e.g.
   // Level2_computedkey.zip, with its features baked into the generated target).
-  const query = features && features.length ? `?features=${encodeURIComponent(features.join(','))}` : '';
-  const res = await fetch(generateUrl(level) + query, { credentials: 'include' });
+  // Validate the level to a plain integer before it reaches the request URL, so a caller can never steer the
+  // fetch at a crafted path: the generate endpoint only ever takes a level number.
+  const n = Math.trunc(level);
+  if (!Number.isFinite(n) || n < 1) throw new Error(`invalid level: ${level}`);
+  const query = features?.length ? `?features=${encodeURIComponent(features.join(','))}` : '';
+  const res = await fetch(generateUrl(n) + query, { credentials: 'include' });
   if (!res.ok) throw new Error(`download failed: ${res.status}`);
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = filename ?? `challenge_${level}.zip`;
+  a.download = filename ?? `challenge_${n}.zip`;
   document.body.appendChild(a);
   a.click();
   a.remove();

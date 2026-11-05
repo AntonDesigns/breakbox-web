@@ -878,7 +878,7 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
   <text class="t-xs" x="496" y="334">04 &middot; Protected</text><text class="t-xs mut" x="906" y="334" text-anchor="end">guarded</text>
   <text class="t-xs mut" x="496" y="348">expert &middot; beat obfuscation</text>
   <text class="t-xs mut" x="480" y="384">switch the focus on the ladder and the warden re-keys to that level.</text>
-  <text class="t-xs mut" x="480" y="404">the advanced &ldquo;later sprints&rdquo; preview is hidden here: the arena is the fight over the levels that exist.</text>
+  <text class="t-xs mut" x="480" y="404">the advanced &ldquo;later sprints&rdquo; is hidden: the arena fights the built levels.</text>
 
   <rect class="ctrlbox" x="40" y="480" width="880" height="40" rx="5"/>
   <text class="t-xs ctrl" x="56" y="500">The arena is a MODE of the launcher, not a page. The foundation is built: transform, warden, focused level.</text>
@@ -1429,7 +1429,7 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
         <rect class="box pick" x="1158" y="96" width="190" height="96" rx="4" data-t="Deploy to dev (Render)" data-research="I could deploy by hand, to a VPS over SSH, or to a free container platform." data-why="Built: every green merge to main fires a deploy to a free Render service via a deploy hook, so the API runs live at a public URL (/health) for testing. I first wired an SSH-to-a-VPS version, then switched to Render when the free host fell through. The pipeline, not me, decides when a deploy happens." data-links="Environments::https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment"/>
         <text class="t-sm" x="1253" y="134" text-anchor="middle">Deploy to dev</text>
         <text class="t-xs mut" x="1253" y="154" text-anchor="middle">Render &middot; on main</text>
-        <text class="t-xs threat" x="1253" y="172" text-anchor="middle">planned (S1 to-do)</text>
+        <text class="t-xs ctrl" x="1253" y="172" text-anchor="middle">deployed (S2)</text>
 
         <line class="edge" x1="130" y1="144" x2="168" y2="144" marker-end="url(#cd)"/>
         <line class="edge" x1="320" y1="144" x2="358" y2="144" marker-end="url(#cd)"/>
@@ -1438,7 +1438,7 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
         <line class="edge" x1="938" y1="144" x2="976" y2="144" marker-end="url(#cd)"/>
         <line class="edge" x1="1118" y1="144" x2="1156" y2="144" marker-end="url(#cd)"/>
 
-        <text class="t-xs mut" x="18" y="238">A push builds, gates on the tests and three scans, passes the SonarQube quality gate, then builds and publishes the images. Deploy-to-dev is wired but waits on a host.</text>
+        <text class="t-xs mut" x="18" y="238">A push builds, gates on the tests and three scans, passes the SonarQube quality gate, then builds and publishes the images, and deploys to dev on Render.</text>
       </svg></div>
       <figcaption><b>The delivery pipeline, left to right.</b> Build, gate on tests and scans, pass the SonarQube quality gate, build the images, publish. The deploy-to-dev stage is the one piece still to wire up, and it is on my Sprint 1 to-do. Tap any box for why I chose it.</figcaption>
       <div class="pophint">Tap a box in the diagram for the research and why behind it.</div>

@@ -60,6 +60,12 @@ export function AuthPanel({ onAuthed, onCancel }: Readonly<{ onAuthed: (me: Me) 
           </div>
         </form>
         <p className="auth-note">The first account becomes the admin, which is the monitor's see-everything view.</p>
+        {/* Dev convenience only: this block is compiled out of the production bundle (import.meta.env.DEV is
+            false there), and the matching admin is only seeded when the API runs in Development. The values
+            must match DevAdminSeeder on the backend. */}
+        {import.meta.env.DEV && (
+          <p className="auth-dev">dev admin (this machine only) · <b>admin</b> / <b>breakbox</b></p>
+        )}
       </div>
     </section>
   );

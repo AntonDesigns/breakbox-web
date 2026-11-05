@@ -1,10 +1,10 @@
 // BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
-import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type HTMLAttributes, type SetStateAction } from 'react';
 import { downloadTarget } from '../api';
 import { runAttack } from '../auth';
-import { ANTICHEATS, HACKS, LEVELS } from './armsRace';
+import { ANTICHEATS, HACKS } from './armsRace';
 
 // The Hack tab: the offensive mirror of the Anti-cheat tab, and it now works the same way. Each level has
 // a single toggle: flip it ON and the attack runs in its live window (the key is never shown) and then
@@ -86,7 +86,7 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
     run();
   };
 
-  const pickLevel = (n: number) => { stop(); setRunning(false); setFailed(false); setLines([]); setProgress(0); setDl(false); setLevel(n); };
+  const pickLevel = (n: number) => { if (n === level) return; stop(); setRunning(false); setFailed(false); setLines([]); setProgress(0); setDl(false); setLevel(n); };
 
   const download = () => {
     setDl(true);
@@ -106,24 +106,26 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
     <div className="hk">
       <p className="ace-lead">flip the hack on; watch the attack run, then grab the cracked build</p>
       <p className="ace-ver">
-        latest dynamic version · Level{' '}
-        <span className="lvl-pick">
-          {LEVELS.map((n) => (
-            <button key={n} type="button" className={`lvl-btn ${n === level ? 'on' : ''}`} onClick={() => pickLevel(n)}>{n}</button>
-          ))}
-        </span>
-        · applied anti-cheat: {appliedAc}
+        latest dynamic version · Level {level} · applied anti-cheat: {appliedAc}
       </p>
 
       <div className="ace-grid">
         <div className="ace-list">
-          <div className="ace-list-h">hacks (paired with the anti-cheat they counter)</div>
+          <div className="ace-list-h">hacks · click one to target its level</div>
           {HACKS.map((h) => {
             const live = h.level === level && h.state === 'live';
             const reason = h.level !== level ? 'cross-level, locked' : (h.state !== 'live' ? 'shield not live yet' : '');
+            // Clicking a card that is not the current level targets that level: the cards are the level picker
+            // now, so the old 1 2 3 buttons are gone. The handler sits on the text region, never wrapping the
+            // toggle, so there is no interactive-inside-interactive and the keyboard path stays clean.
+            const navMain: HTMLAttributes<HTMLDivElement> = h.level === level ? {} : {
+              role: 'button', tabIndex: 0,
+              onClick: () => pickLevel(h.level),
+              onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickLevel(h.level); } },
+            };
             return (
               <div key={h.id} className={`ace-card ${live ? (applied ? 'on' : 'native') : 'locked'}`}>
-                <div className="ace-card-main">
+                <div className="ace-card-main" {...navMain}>
                   <div className="ace-card-name"><b>{h.id}</b> · {h.tagline}</div>
                   <div className="ace-card-bound">counters: {h.id}{reason ? ` — ${reason}` : ''}</div>
                 </div>

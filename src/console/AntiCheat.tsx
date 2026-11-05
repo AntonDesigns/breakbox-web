@@ -1,10 +1,10 @@
 // BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type HTMLAttributes, type SetStateAction } from 'react';
 import { downloadTarget } from '../api';
 import { logAntiCheat } from '../auth';
-import { ANTICHEATS, LEVELS } from './armsRace';
+import { ANTICHEATS } from './armsRace';
 
 // The Anti-cheat tab: pick the dynamic-build level, then enable its anti-cheats and watch the fancy
 // shielding visual build the defence. Features are bound to levels; applying one bound to a different level
@@ -36,6 +36,7 @@ export function AntiCheat({ armed, setArmed, level, setLevel }: Readonly<{
   };
 
   const pickLevel = (n: number) => {
+    if (n === level) return;
     stop(); setWarn(null); setDl(false); setLevel(n);
     const on = nativeArmedFor(n).length > 0;
     setPhase(on ? 'up' : 'idle'); setProgress(on ? 100 : 0);
@@ -72,37 +73,41 @@ export function AntiCheat({ armed, setArmed, level, setLevel }: Readonly<{
     <div className="ace">
       <p className="ace-lead">enable a feature; watch the level get shielded</p>
       <p className="ace-ver">
-        latest dynamic version · Level{' '}
-        <span className="lvl-pick">
-          {LEVELS.map((n) => (
-            <button key={n} type="button" className={`lvl-btn ${n === level ? 'on' : ''}`} onClick={() => pickLevel(n)}>{n}</button>
-          ))}
-        </span>
-        <span className="ace-sync">(in sync)</span>
+        latest dynamic version · Level {level} <span className="ace-sync">(in sync)</span>
       </p>
 
       {warn && <div className="xlevel-warn"><span className="xlevel-k">cross-level</span>{warn}</div>}
 
       <div className="ace-grid">
         <div className="ace-list">
-          <div className="ace-list-h">anti-cheats (paired with their hack)</div>
-          {ANTICHEATS.map((a) => (
-            <div key={a.id} className={`ace-card ${a.level === level ? 'native' : 'cross'}`}>
-              <div className="ace-card-main">
-                <div className="ace-card-name"><b>{a.id}</b> · {a.tagline}</div>
-                <div className="ace-card-bound">bound to Level {a.level}</div>
+          <div className="ace-list-h">anti-cheats · click one to target its level</div>
+          {ANTICHEATS.map((a) => {
+            // Clicking a card that is not the current level targets that level: the cards are the level picker
+            // now, so the old 1 2 3 buttons are gone. The handler sits on the text region, never wrapping the
+            // toggle, so there is no interactive-inside-interactive and the keyboard path stays clean.
+            const navMain: HTMLAttributes<HTMLDivElement> = a.level === level ? {} : {
+              role: 'button', tabIndex: 0,
+              onClick: () => pickLevel(a.level),
+              onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickLevel(a.level); } },
+            };
+            return (
+              <div key={a.id} className={`ace-card ${a.level === level ? 'native' : 'cross'}`}>
+                <div className="ace-card-main" {...navMain}>
+                  <div className="ace-card-name"><b>{a.id}</b> · {a.tagline}</div>
+                  <div className="ace-card-bound">bound to Level {a.level}</div>
+                </div>
+                <button
+                  type="button"
+                  className={`toggle ${armed[a.id] ? 'on' : ''}`}
+                  aria-label={`toggle ${a.id}`} aria-pressed={!!armed[a.id]}
+                  onClick={() => toggle(a.id)}
+                >
+                  <span className="knob" />
+                </button>
+                <span className="ace-lvl">L{a.level}</span>
               </div>
-              <button
-                type="button"
-                className={`toggle ${armed[a.id] ? 'on' : ''}`}
-                aria-label={`toggle ${a.id}`} aria-pressed={!!armed[a.id]}
-                onClick={() => toggle(a.id)}
-              >
-                <span className="knob" />
-              </button>
-              <span className="ace-lvl">L{a.level}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="ace-shield">

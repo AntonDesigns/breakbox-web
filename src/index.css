@@ -294,6 +294,8 @@ code {
 .auth-error { font-family: var(--mono); font-size: 0.74rem; color: var(--expert); border: 1px solid rgba(200, 138, 138, 0.3); border-radius: var(--radius-sm); padding: 7px 10px; }
 .auth-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 4px; }
 .auth-note { margin: 1rem 0 0; font-size: 0.8rem; color: var(--ink-3); line-height: 1.5; }
+.auth-dev { margin: 0.7rem 0 0; font-family: var(--mono); font-size: 0.68rem; color: var(--ink-2); border: 1px dashed var(--cyan-line); border-radius: var(--radius-sm); padding: 7px 10px; }
+.auth-dev b { color: var(--cyan); }
 
 .monitor { padding: 0.4rem 0 2rem; }
 .monitor-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
@@ -576,8 +578,10 @@ code {
 .ace-card:hover { border-color: var(--cyan-line); }
 .ace-card.on { border-color: var(--cyan-line); background: var(--cyan-soft); }
 .ace-card.locked { opacity: 0.5; cursor: default; }
-.ace-card.locked:hover { border-color: var(--glass-brd); }
+.ace-card.locked:hover { border-color: var(--cyan-line); }
 .ace-card-main { flex: 1; min-width: 0; }
+.ace-card-main[role="button"] { cursor: pointer; }
+.ace-card-main[role="button"]:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; border-radius: 4px; }
 .ace-card-name { font-family: var(--mono); font-size: 0.76rem; color: var(--ink-2); }
 .ace-card-name b { color: var(--ink); font-weight: 600; }
 .ace-card-bound { font-family: var(--mono); font-size: 0.62rem; color: var(--ink-3); margin-top: 3px; }
@@ -699,10 +703,6 @@ code {
 .exp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); animation: exp-pulse 1.8s ease-out infinite; flex: none; }
 @keyframes exp-pulse { 0% { box-shadow: 0 0 0 0 rgba(180, 140, 242, 0.5); } 70% { box-shadow: 0 0 0 7px rgba(180, 140, 242, 0); } 100% { box-shadow: 0 0 0 0 rgba(180, 140, 242, 0); } }
 @media (prefers-reduced-motion: reduce) { .exp-dot { animation: none; } }
-.lvl-pick { display: inline-flex; gap: 3px; margin: 0 6px; }
-.lvl-btn { font-family: var(--mono); font-size: 0.64rem; color: var(--ink-3); background: transparent; border: 1px solid var(--edge); border-radius: 4px; padding: 1px 7px; cursor: pointer; }
-.lvl-btn:hover { color: var(--ink-2); border-color: var(--cyan-line); }
-.lvl-btn.on { color: var(--cyan); border-color: var(--cyan); background: var(--cyan-soft); }
 .xlevel-warn { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-2); line-height: 1.45; border: 1px solid rgba(200, 168, 106, 0.5); background: rgba(200, 168, 106, 0.08); border-radius: var(--radius-sm); padding: 9px 12px; display: flex; gap: 9px; align-items: baseline; }
 .xlevel-k { font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--hard); border: 1px solid rgba(200, 168, 106, 0.5); border-radius: 999px; padding: 2px 8px; flex-shrink: 0; }
 .ace-card.cross { opacity: 0.8; }

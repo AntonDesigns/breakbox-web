@@ -27,7 +27,7 @@ BreakBox is split across three repositories, one owner per concern:
     npm run dev          # Vite dev server
 
 The launcher calls the API from **breakbox-api** (`docker compose up` there brings it up on
-`http://localhost:5080`).
+`http://localhost:38080`).
 
 ## The design sheet
 

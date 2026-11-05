@@ -109,7 +109,7 @@ export function Arena({ onClose }: Readonly<{ onClose: () => void }>) {
         on the right. It opens past what your account has already cleared.
       </p>
 
-      {failed && <div className="banner banner-error">the arena is unreachable. is the backend running on localhost:5080?</div>}
+      {failed && <div className="banner banner-error">the arena is unreachable. is the backend running on localhost:38080?</div>}
 
       {state && (
         <div className="arena-grid">

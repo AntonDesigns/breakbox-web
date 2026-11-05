@@ -5,4 +5,4 @@
 // auth.ts) builds its URLs from here. In dev we call a same-origin "/api" that Vite proxies to the API
 // (see vite.config.ts), so the app runs on any port without hitting the API's CORS lock; a production
 // build calls the real API origin directly.
-export const API = import.meta.env.DEV ? '/api' : 'http://localhost:5080/api';
+export const API = import.meta.env.DEV ? '/api' : 'http://localhost:38080/api';

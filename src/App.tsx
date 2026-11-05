@@ -245,7 +245,7 @@ function Guide({ level, prereqDone, setPrereqDone, signedIn, solved, onSolved }:
                       {dlLabel}
                     </button>
                   </div>
-                  {failed && <div className="step-fail">download failed. is the backend running on localhost:5080?</div>}
+                  {failed && <div className="step-fail">download failed. is the backend running on localhost:38080?</div>}
                 </div>
               </li>
               <li><div className="step-body">Unzip it to its own folder.</div></li>
@@ -413,7 +413,7 @@ export default function App() {
         {view === 'launcher' && (<>
         {error && (
           <div className="banner banner-error">
-            api unreachable at http://localhost:5080. is the backend running? ({error})
+            api unreachable at http://localhost:38080. is the backend running? ({error})
           </div>
         )}
         {!levels && !error && <div className="banner">loading levels...</div>}
@@ -447,7 +447,7 @@ export default function App() {
       </main>
 
       <footer className="statusbar">
-        <span>api: localhost:5080</span>
+        <span>api: localhost:38080</span>
         <span className="sep">/</span>
         <span>{core.length} core</span>
         <span className="sep">/</span>

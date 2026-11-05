@@ -635,72 +635,85 @@ code {
 .hk-close:hover { border-color: var(--cyan-line); color: var(--ink); }
 .hk-note { margin: 11px 0 0; font-family: var(--mono); font-size: 0.64rem; color: var(--ink-3); }
 
-/* ---- The Arena (Phase 1 foundation): the boss-fight shell. The Hexwarden on the left, the level rail and
-   the per-level stage on the right. The in-arena workbench (Phase 2) and the live warden (Phase 3) land in
-   the stage panes. The old abstract duel's styles were removed with its surface. ---- */
-.arena { display: flex; flex-direction: column; gap: 16px; }
-.arena-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.arena-title { display: flex; flex-direction: column; gap: 3px; }
-.arena-badge { font-family: var(--mono); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.01em; color: var(--cyan); }
-.arena-sub { font-family: var(--mono); font-size: 0.66rem; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.1em; }
-.arena-top-btns { display: flex; gap: 8px; flex-wrap: wrap; }
-.arena-link { color: var(--cyan); border-color: var(--cyan-line); }
-.arena-lead { margin: 0; color: var(--ink-2); font-size: 0.88rem; line-height: 1.6; max-width: 80ch; }
-.arena-grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; }
-@media (max-width: 900px) { .arena-grid { grid-template-columns: 1fr; } }
+/* ---- The Arena (Phase 1): a MODE of the launcher, not a separate page. The arena toggle re-keys the whole
+   launcher to the warden (one accent swap, cyan -> red) and swaps the run-guide for the warden watching the
+   chosen level. Same bones as the launcher; only the accent, the side panel and the header change. ---- */
+.app.arena-on {
+  --cyan: #cf6158;
+  --cyan-2: #b84e45;
+  --cyan-soft: rgba(207, 97, 88, 0.10);
+  --cyan-line: rgba(207, 97, 88, 0.35);
+}
+/* ease the re-key on the no-hover accent bits, so the colour shift reads as a transition, not a snap (the
+   level cards keep their own snappy hover). */
+.app .section, .app .addr, .app .status, .app .af-watch, .app .af-flag { transition: color .4s ease, border-color .4s ease; }
 
-/* the boss */
-.arena-boss { background: var(--glass); border: 1px solid var(--glass-brd); border-radius: var(--radius); padding: 14px; box-shadow: var(--glass-shadow); }
+/* arena header (replaces the meta + tagline line in arena mode) */
+.arena-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 2px 0 20px; padding-bottom: 14px; border-bottom: 1px solid var(--edge); }
+.arena-head-t { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.arena-head-t h2 { margin: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+.arena-head-t .k { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); }
+.arena-head-st { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cyan); }
+.arena-head-st .d { width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); flex: none; }
+
+/* the arena toggle in the topbar (the transform control) */
+.arena-toggle { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; cursor: pointer; font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); }
+.arena-toggle .at-sw { width: 38px; height: 20px; border-radius: 999px; border: 1px solid var(--edge-2); background: rgba(8, 17, 32, 0.6); position: relative; flex: none; transition: border-color .3s ease, background-color .3s ease; }
+.arena-toggle .at-knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink-3); transition: left .32s cubic-bezier(.2, .7, .2, 1), background-color .3s ease; }
+.arena-toggle.on .at-sw { border-color: var(--cyan-line); background: var(--cyan-soft); }
+.arena-toggle.on .at-knob { left: 20px; background: var(--cyan); }
+.arena-toggle .at-lab { transition: color .3s ease; }
+.arena-toggle.on .at-lab:last-child { color: var(--cyan); }
+.arena-toggle:not(.on) .at-lab:first-child { color: var(--ink-2); }
+
+/* arena worktop: the warden takes the big left column, the ladder moves right, the chosen level focused */
+.app.arena-on .worktop { grid-template-columns: 420px minmax(0, 1fr); align-items: start; }
+.app.arena-on .arena-focus { grid-column: 1; grid-row: 1; }
+.app.arena-on .ladder-core { grid-column: 2; grid-row: 1; }
+@media (max-width: 920px) {
+  .app.arena-on .worktop { grid-template-columns: 1fr; }
+  .app.arena-on .arena-focus, .app.arena-on .ladder-core { grid-column: auto; grid-row: auto; }
+}
+
+/* the warden side panel (what the run-guide becomes) */
+.arena-focus { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.af-warden { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); padding: 14px; }
+.af-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.af-h .label { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); }
+.af-watch { font-family: var(--mono); font-size: 0.62rem; color: var(--cyan); }
+.af-target { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); padding: 15px 16px; }
+.af-target-h { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.af-target-name { font-family: var(--mono); font-weight: 700; font-size: 1rem; color: var(--ink); }
+.af-flag { margin-left: auto; font-family: var(--mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--edge-2); }
+.af-flag.live { color: var(--cyan); border-color: var(--cyan-line); }
+.af-flag.soon { color: var(--ink-3); }
+.af-sum { margin: 11px 0 0; color: var(--ink-2); font-size: 0.85rem; line-height: 1.55; }
+.af-pane { margin-top: 14px; background: var(--ground-2); border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 12px; }
+.af-pane-h { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 8px; }
+.af-pane-b { font-family: var(--mono); font-size: 0.72rem; line-height: 1.55; color: var(--ink-3); border-left: 2px solid var(--cyan-line); padding-left: 10px; }
+.af-empty { font-family: var(--mono); font-size: 0.76rem; color: var(--ink-3); }
+
+/* the warden art, shown large in its panel so the detail reads (not the old boxed thumbnail) */
 .hx { display: flex; flex-direction: column; gap: 12px; }
-.hx-art { max-width: 300px; margin: 0 auto; }
-.hx-art svg { width: 100%; height: auto; display: block; border-radius: var(--radius-sm); }
+.hx-art { margin: 0; border: 1px solid var(--edge); border-radius: var(--radius-sm); background: var(--ground-2); overflow: hidden; }
+.hx-art svg { width: 100%; height: auto; display: block; }
 .hx-meta { display: flex; flex-direction: column; gap: 8px; }
 .hx-state { display: flex; align-items: baseline; justify-content: space-between; }
 .hx-state .label { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); }
-.hx-state-name { font-family: var(--mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--hard); }
+.hx-state-name { font-family: var(--mono); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cyan); }
 .hx-rage { height: 6px; background: rgba(150, 185, 220, 0.08); border-radius: 3px; overflow: hidden; }
-.hx-rage-fill { display: block; height: 100%; background: var(--hard); border-radius: 3px; transition: width 0.3s; }
-.hx-taunt { margin: 0; font-family: var(--mono); font-size: 0.78rem; font-style: italic; color: var(--ink-2); }
+.hx-rage-fill { display: block; height: 100%; background: var(--cyan); border-radius: 3px; transition: width 0.3s; }
+.hx-taunt { margin: 0; font-family: var(--mono); font-size: 0.82rem; font-style: italic; color: var(--ink); }
 
-/* the right column: level rail + the selected level's stage */
-.arena-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.arena-levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
-.arena-lvl { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; padding: 9px 11px; background: var(--sheet-2); border: 1px solid var(--edge-2); border-radius: var(--radius-sm); cursor: pointer; transition: border-color 0.12s, background 0.12s; }
-.arena-lvl:hover { border-color: var(--cyan-line); }
-.arena-lvl.on { border-color: var(--cyan); background: var(--cyan-soft); }
-.arena-lvl.locked { opacity: 0.5; }
-.arena-lvl-n { font-family: var(--mono); font-size: 0.6rem; color: var(--ink-3); letter-spacing: 0.08em; }
-.arena-lvl.on .arena-lvl-n { color: var(--cyan); }
-.arena-lvl-name { font-family: var(--mono); font-size: 0.76rem; color: var(--ink); }
-.arena-lvl-diff { font-family: var(--mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
-.arena-stage { background: var(--glass); border: 1px solid var(--glass-brd); border-radius: var(--radius); padding: 16px; box-shadow: var(--glass-shadow); }
-.arena-stage-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.arena-stage-id { display: flex; flex-direction: column; gap: 3px; }
-.arena-stage-name { font-family: var(--mono); font-size: 0.86rem; color: var(--ink); }
-.arena-stage-sub { font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
-.arena-stage-flag { font-family: var(--mono); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--edge-2); flex-shrink: 0; }
-.arena-stage-flag.live { color: var(--cyan); border-color: var(--cyan-line); }
-.arena-stage-flag.soon { color: var(--ink-3); }
-.arena-stage-lead { margin: 12px 0 0; color: var(--ink-2); font-size: 0.84rem; line-height: 1.55; }
-.arena-panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-@media (max-width: 680px) { .arena-panes { grid-template-columns: 1fr; } }
-.arena-pane { background: var(--ground-2); border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 12px; }
-.arena-pane-h { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 9px; }
-.arena-pane-body { font-size: 0.8rem; line-height: 1.5; color: var(--ink-2); }
-.arena-soon { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); border-left: 2px solid var(--cyan-line); padding-left: 10px; }
-
-/* ---- experimental mode: when the adaptive arena is live, the whole app shifts its accent ---- */
-.app.experimental {
-  --cyan: #b48cf2;
-  --cyan-2: #9d6ee8;
-  --cyan-soft: rgba(180, 140, 242, 0.10);
-  --cyan-line: rgba(180, 140, 242, 0.35);
+/* the transform: arena content rises in. transform + opacity only, so it is composited and cheap. */
+@keyframes af-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.app.arena-on .arena-head { animation: af-rise .4s cubic-bezier(.2, .72, .2, 1) both; }
+.app.arena-on .af-warden { animation: af-rise .46s cubic-bezier(.2, .72, .2, 1) .04s both; }
+.app.arena-on .af-target { animation: af-rise .46s cubic-bezier(.2, .72, .2, 1) .12s both; }
+@media (prefers-reduced-motion: reduce) {
+  .app.arena-on .arena-head, .app.arena-on .af-warden, .app.arena-on .af-target { animation: none; }
 }
-.app.experimental .status-online { color: var(--cyan); border-color: var(--cyan-line); }
-.exp-ribbon { display: flex; align-items: center; gap: 11px; margin: 2px 0 22px; padding: 10px 15px; border: 1px solid var(--cyan-line); border-radius: var(--radius); background: var(--cyan-soft); font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cyan); }
-.exp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); animation: exp-pulse 1.8s ease-out infinite; flex: none; }
-@keyframes exp-pulse { 0% { box-shadow: 0 0 0 0 rgba(180, 140, 242, 0.5); } 70% { box-shadow: 0 0 0 7px rgba(180, 140, 242, 0); } 100% { box-shadow: 0 0 0 0 rgba(180, 140, 242, 0); } }
-@media (prefers-reduced-motion: reduce) { .exp-dot { animation: none; } }
+
 .xlevel-warn { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-2); line-height: 1.45; border: 1px solid rgba(200, 168, 106, 0.5); background: rgba(200, 168, 106, 0.08); border-radius: var(--radius-sm); padding: 9px 12px; display: flex; gap: 9px; align-items: baseline; }
 .xlevel-k { font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--hard); border: 1px solid rgba(200, 168, 106, 0.5); border-radius: 999px; padding: 2px 8px; flex-shrink: 0; }
 .ace-card.cross { opacity: 0.8; }

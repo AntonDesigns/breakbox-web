@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { fetchConsoleStatus } from '../auth';
 import { useLoad } from '../useLoad';
+import { usePersistentState } from '../persist';
 import { DataPanel } from './DataPanel';
 import { DesignedPanel } from './DesignedPanel';
 import { AntiCheat } from './AntiCheat';
@@ -23,10 +24,13 @@ import { STAGE_LABEL, TABS, type TabId } from './types';
 export function Console({ onClose, meId }: Readonly<{ onClose: () => void; meId: number }>) {
   const [active, setActive] = useState<TabId>('threats');
   // Which anti-cheats are armed, shared so the Hack tab stays in sync with the Anti-cheat tab. server-key
-  // is on by default because it is the live completion loop: verification already runs server-side.
-  const [armed, setArmed] = useState<Record<string, boolean>>({ 'server-key': true });
+  // is on by default because it is the live completion loop: verification already runs server-side. These
+  // persist: arming an anti-cheat (or applying a hack, or picking a level) stays put across a reload.
+  const [armed, setArmed] = usePersistentState<Record<string, boolean>>('bb_armed', { 'server-key': true });
+  // Which levels have had the hack applied, keyed by level. Like 'armed' but for the attack side.
+  const [hackOn, setHackOn] = usePersistentState<Record<number, boolean>>('bb_hackon', {});
   // The dynamic-build level both arms-race tabs are working on, so Anti-cheat and Hack stay in sync.
-  const [level, setLevel] = useState(1);
+  const [level, setLevel] = usePersistentState<number>('bb_level', 1);
   const { data: status, error: statusError, reload: loadStatus } = useLoad(fetchConsoleStatus);
 
   const activeTab = TABS.find((t) => t.id === active)!;
@@ -44,7 +48,7 @@ export function Console({ onClose, meId }: Readonly<{ onClose: () => void; meId:
   else if (active === 'data') panelBody = <DataPanel meId={meId} />;
   else if (active === 'purple') panelBody = <PurpleTeam />;
   else if (active === 'anticheat') panelBody = <AntiCheat armed={armed} setArmed={setArmed} level={level} setLevel={setLevel} />;
-  else if (active === 'hack') panelBody = <HackTab armed={armed} level={level} setLevel={setLevel} />;
+  else if (active === 'hack') panelBody = <HackTab armed={armed} hackOn={hackOn} setHackOn={setHackOn} level={level} setLevel={setLevel} />;
 
   return (
     <section className="console">

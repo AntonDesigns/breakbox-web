@@ -6,35 +6,40 @@ import { downloadTarget } from '../api';
 import { runAttack } from '../auth';
 import { ANTICHEATS, HACKS, LEVELS } from './armsRace';
 
-// The Hack tab: the offensive mirror. Pick the dynamic-build level; a hack can only run against its own
-// level's shield, so cross-level hacks are locked (a Level 1 hack cannot do a Level 3), per the handoff.
-// "Run attack" opens its own live terminal window (the key is never shown) and ends by handing over the
-// dynamic build named for the anti-cheat (the generator bakes a real bypass, so it unlocks with any key). The level + armed set are shared with the
-// Anti-cheat tab. Only server-key (Level 1) is live today; the rest ship into the generator in Sprint 3.
-export function HackTab({ armed, level, setLevel }: Readonly<{
+// The Hack tab: the offensive mirror of the Anti-cheat tab, and it now works the same way. Each level has
+// a single toggle: flip it ON and the attack runs in its live window (the key is never shown) and then
+// LATCHES as applied; the state is shared + persisted, so an applied hack stays applied across a reload,
+// exactly like an armed anti-cheat stays armed. While it is applied the Download hands over the dynamic
+// build named for the anti-cheat (the generator bakes a real bypass, so it unlocks with any key). The one
+// level that cannot be applied is the Level 3 licence: the forge is rejected server-side, so its toggle
+// runs to FORGE FAILED and does not latch. Only server-key (Level 1) is a real bypass in the generator
+// today; the rest narrate the attack and ship their generator bypass in a later sprint.
+export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<{
   armed: Record<string, boolean>;
+  hackOn: Record<number, boolean>;
+  setHackOn: Dispatch<SetStateAction<Record<number, boolean>>>;
   level: number;
   setLevel: Dispatch<SetStateAction<number>>;
 }>) {
-  const [lines, setLines] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
-  const [done, setDone] = useState(false);
+  const [failed, setFailed] = useState(false);   // the run ended in FORGE FAILED (licence): nothing applied
+  const [lines, setLines] = useState<string[]>([]);
   const [progress, setProgress] = useState(0);
   const [dl, setDl] = useState(false);
   const timer = useRef<number | null>(null);
 
   useEffect(() => () => { if (timer.current) window.clearInterval(timer.current); }, []);
-
   const stop = () => { if (timer.current) { window.clearInterval(timer.current); timer.current = null; } };
-  const reset = () => { stop(); setLines([]); setRunning(false); setDone(false); setProgress(0); setDl(false); };
 
   const runnable = HACKS.find((h) => h.level === level && h.state === 'live') ?? null;
   const armedDefs = ANTICHEATS.filter((a) => a.level === level && armed[a.id]);
   const appliedAc = armedDefs.map((a) => a.id).join(', ') || 'none';
   // Some anti-cheats cannot be hacked: a 'defeated' outcome means the proper server-side defence wins and
-  // the run ends in failure, with no bypassed build. That is the end of the client-side arms race (Level 3
-  // licence). The build the run hands you (only when it is bypassable) is named for the whole armed stack.
+  // the run ends in failure with no bypassed build. That is the end of the client-side arms race (Level 3
+  // licence). 'applied' is the persisted ON state, and only a bypassable hack can latch there.
   const defeated = armedDefs.some((a) => HACKS.find((x) => x.id === a.id)?.outcome === 'defeated');
+  const applied = !!hackOn[level] && !!runnable && !defeated;
+  // The build the run hands you is named for the whole armed stack (same convention as the Anti-cheat tab).
   const buildName = armedDefs.length
     ? `Level${level}_${armedDefs.map((a) => a.id.replace(/-/g, '')).join('_')}.zip`
     : runnable?.build ?? `Level${level}.zip`;
@@ -59,31 +64,47 @@ export function HackTab({ armed, level, setLevel }: Readonly<{
   }, [level, armed]);
 
   const run = useCallback(() => {
-    if (!runnable) return;
-    stop(); setRunning(true); setDone(false); setDl(false); setLines([]); setProgress(0);
+    stop(); setRunning(true); setFailed(false); setDl(false); setLines([]); setProgress(0);
     void runAttack().catch(() => { /* logging the run to the feed is best-effort */ });
     let i = 0;
     timer.current = window.setInterval(() => {
       i += 1;
       setLines(script.slice(0, i));
       setProgress(Math.min(100, Math.round((i / script.length) * 100)));
-      if (i >= script.length) { stop(); setRunning(false); setDone(true); }
+      if (i >= script.length) {
+        stop(); setRunning(false);
+        if (defeated) setFailed(true);                               // forge rejected: does not latch
+        else setHackOn((h) => ({ ...h, [level]: true }));            // bypassed: persist that it is applied
+      }
     }, 420);
-  }, [script, runnable]);
+  }, [script, defeated, level, setHackOn]);
 
-  const pickLevel = (n: number) => { reset(); setLevel(n); };
+  // The single toggle, mirroring the Anti-cheat tab: ON runs the attack then latches applied; OFF clears it.
+  const toggle = () => {
+    if (!runnable || running) return;
+    if (applied) { stop(); setHackOn((h) => ({ ...h, [level]: false })); setFailed(false); setLines([]); setProgress(0); setDl(false); return; }
+    run();
+  };
+
+  const pickLevel = (n: number) => { stop(); setRunning(false); setFailed(false); setLines([]); setProgress(0); setDl(false); setLevel(n); };
+
   const download = () => {
-    if (!runnable) return;
     setDl(true);
     // Add the 'hacked' feature so the generator bakes a real bypass: the download keeps the same name but the
-    // anti-cheat is defeated (it unlocks with any key and reveals the real flag). This is the attack half made
-    // real; the web cannot patch a file on your disk, but it can ask the generator to compile a cracked build.
+    // anti-cheat is defeated (it unlocks with any key and reveals the real flag). The web cannot patch a file
+    // on your disk, but it can ask the generator to compile a cracked build.
     void downloadTarget(level, buildName, [...armedDefs.map((a) => a.id), 'hacked']);
   };
 
+  // What the terminal shows: the live run while running; the completed run once applied or failed (so a
+  // reopened tab shows the finished state, not a blank window); empty when the hack is simply off.
+  const settled = applied || failed;
+  const termLines = running ? lines : (settled ? (lines.length ? lines : script) : []);
+  const termProgress = running ? progress : (settled ? 100 : 0);
+
   return (
     <div className="hk">
-      <p className="ace-lead">run the attack in its own live window</p>
+      <p className="ace-lead">flip the hack on; watch the attack run, then grab the cracked build</p>
       <p className="ace-ver">
         latest dynamic version · Level{' '}
         <span className="lvl-pick">
@@ -101,55 +122,60 @@ export function HackTab({ armed, level, setLevel }: Readonly<{
             const live = h.level === level && h.state === 'live';
             const reason = h.level !== level ? 'cross-level, locked' : (h.state !== 'live' ? 'shield not live yet' : '');
             return (
-              <div key={h.id} className={`ace-card ${live ? 'on' : 'locked'}`}>
+              <div key={h.id} className={`ace-card ${live ? (applied ? 'on' : 'native') : 'locked'}`}>
                 <div className="ace-card-main">
                   <div className="ace-card-name"><b>{h.id}</b> · {h.tagline}</div>
                   <div className="ace-card-bound">counters: {h.id}{reason ? ` — ${reason}` : ''}</div>
                 </div>
+                {live && (
+                  <button
+                    type="button"
+                    className={`toggle ${applied ? 'on' : ''}`}
+                    aria-label={`toggle ${h.id} hack`} aria-pressed={applied}
+                    disabled={running}
+                    onClick={toggle}
+                  >
+                    <span className="knob" />
+                  </button>
+                )}
                 <span className="ace-lvl">L{h.level}</span>
               </div>
             );
           })}
-          <button type="button" className="hk-run-btn" disabled={running || !runnable} onClick={run}>{running ? 'running...' : 'Run attack'}</button>
-          <p className="hk-foot">opens its own live window (right), and logs to the Threats feed.</p>
+          <p className="hk-foot">enabling it runs the attack in its own live window (right), and logs to the Threats feed.</p>
         </div>
 
         <div className="hk-win">
           <div className="hk-win-h"><span>hacking Level {level} (dynamic)</span><span className="live-dot">live</span></div>
           <div className="hk-term">
-            {lines.length === 0 && !running && (
+            {termLines.length === 0 ? (
               runnable
-                ? <div className="hk-term-idle">Hit Run attack. It narrates how it defeats each armed anti-cheat; the key itself is never shown.</div>
-                : <div className="hk-term-idle">No live hack for Level {level} yet. Arm an anti-cheat on a made level (1-3) to see its bypass.</div>
-            )}
-            {lines.map((l, i) => <div key={i} className="hk-line">{l}</div>)}
+                ? <div className="hk-term-idle">Hack is off for Level {level}. Flip it on to run the bypass; the build it hands back unlocks with any key.</div>
+                : <div className="hk-term-idle">No live hack for Level {level} yet. Pick a made level (1-3) to run its bypass.</div>
+            ) : termLines.map((l, i) => <div key={i} className="hk-line">{l}</div>)}
           </div>
-          {(running || done) && <div className="hk-bar"><div className="hk-bar-fill" style={{ width: `${progress}%` }} /></div>}
-          {done && runnable && !defeated && (
+          {(running || settled) && <div className="hk-bar"><div className="hk-bar-fill" style={{ width: `${termProgress}%` }} /></div>}
+          {applied && (
             <div className="hk-build">
               <div className="hk-build-t">your dynamic build is ready</div>
               <div className="hk-build-name">{buildName}</div>
               <div className="hk-build-sub">same name as the anti-cheat version, but the anti-cheat is defeated: it unlocks with any key</div>
               <div className="hk-build-bar">
                 <button type="button" className="hk-dl" onClick={download}>{dl ? 'downloaded' : 'Download (instant)'}</button>
-                <button type="button" className="hk-close" onClick={reset}>Close</button>
               </div>
             </div>
           )}
-          {done && defeated && (
+          {failed && (
             <div className="hk-build hk-defeated">
               <div className="hk-build-t">the defence held</div>
               <div className="hk-build-sub">no bypassed build: the licence is signed by the server, so a forged grant is rejected and the flag stays the server&apos;s to give. This is where the client-side arms race ends.</div>
-              <div className="hk-build-bar">
-                <button type="button" className="hk-close" onClick={reset}>Close</button>
-              </div>
             </div>
           )}
-          {done && runnable && <p className="hk-note">{runnable.note}</p>}
+          {(applied || failed) && runnable && <p className="hk-note">{runnable.note}</p>}
         </div>
       </div>
 
-      <p className="con-note">Run attack opens its own live window; the whole run streams to the Threats feed. The key is never shown.</p>
+      <p className="con-note">Flipping a hack on opens its own live window; the whole run streams to the Threats feed. The key is never shown.</p>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { downloadTarget } from '../api';
 import { logAntiCheat } from '../auth';
 import { ANTICHEATS, LEVELS } from './armsRace';
 
@@ -19,6 +20,7 @@ export function AntiCheat({ armed, setArmed, level, setLevel }: Readonly<{
   const [phase, setPhase] = useState<'idle' | 'building' | 'up'>(nativeArmedFor(level).length ? 'up' : 'idle');
   const [progress, setProgress] = useState(nativeArmedFor(level).length ? 100 : 0);
   const [warn, setWarn] = useState<string | null>(null);
+  const [dl, setDl] = useState(false);
   const timer = useRef<number | null>(null);
 
   useEffect(() => () => { if (timer.current) window.clearInterval(timer.current); }, []);
@@ -34,7 +36,7 @@ export function AntiCheat({ armed, setArmed, level, setLevel }: Readonly<{
   };
 
   const pickLevel = (n: number) => {
-    stop(); setWarn(null); setLevel(n);
+    stop(); setWarn(null); setDl(false); setLevel(n);
     const on = nativeArmedFor(n).length > 0;
     setPhase(on ? 'up' : 'idle'); setProgress(on ? 100 : 0);
   };
@@ -42,6 +44,7 @@ export function AntiCheat({ armed, setArmed, level, setLevel }: Readonly<{
   const toggle = (id: string) => {
     const ac = ANTICHEATS.find((a) => a.id === id)!;
     const next = !armed[id];
+    setDl(false);
     setArmed((a) => ({ ...a, [id]: next }));
     void logAntiCheat(id, ac.level, next).catch(() => { /* best-effort: the toggle already updated locally */ });
     if (ac.level === level) {
@@ -59,6 +62,11 @@ export function AntiCheat({ armed, setArmed, level, setLevel }: Readonly<{
   const native = nativeArmedFor(level);
   const names = native.map((a) => a.id).join(' + ');
   const shielded = native.length > 0;
+  // The dynamic (hardened) build for this level, named for its armed anti-cheats, is downloaded from HERE
+  // now, not the launcher: the launcher only hands out the plain original target. This mirrors the Hack
+  // tab, where the bypassed build is downloaded. The generator bakes the armed features into the binary.
+  const buildName = `Level${level}_${native.map((a) => a.id.replace(/-/g, '')).join('_')}.zip`;
+  const download = () => { setDl(true); void downloadTarget(level, buildName, native.map((a) => a.id)); };
 
   return (
     <div className="ace">
@@ -115,6 +123,14 @@ export function AntiCheat({ armed, setArmed, level, setLevel }: Readonly<{
                     <div className="shield-status up">SHIELD UP</div>
                     <div className="shield-prot">LEVEL {level} PROTECTED · {names}</div>
                     <div className="shield-blocked">crack blocked</div>
+                    <div className="hk-build ace-build">
+                      <div className="hk-build-t">your dynamic build is ready</div>
+                      <div className="hk-build-name">{buildName}</div>
+                      <div className="hk-build-sub">the hardened target, named for its anti-cheat. the flag is not printed: crack it and the app reveals it.</div>
+                      <div className="hk-build-bar">
+                        <button type="button" className="hk-dl" onClick={download}>{dl ? 'downloaded' : 'Download (instant)'}</button>
+                      </div>
+                    </div>
                   </>
                 )}
             </div>
@@ -124,7 +140,7 @@ export function AntiCheat({ armed, setArmed, level, setLevel }: Readonly<{
         </div>
       </div>
 
-      <p className="con-note">paired with its hack · shown live in Data (key_hash) and the Threats feed.</p>
+      <p className="con-note">paired with its hack · shown live in Data (the Features column) and the Threats feed.</p>
     </div>
   );
 }

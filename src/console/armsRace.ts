@@ -32,7 +32,7 @@ export interface HackDef {
 }
 
 export const ANTICHEATS: AntiCheatDef[] = [
-  { id: 'server-key', tagline: 'hash the key into the DB', level: 1, state: 'live' },
+  { id: 'server-key', tagline: 'hash the key, strip it from the binary', level: 1, state: 'live' },
   { id: 'computed-key', tagline: 'harden the serial algorithm', level: 2, state: 'live' },
   { id: 'licence', tagline: 'server-side licence check', level: 3, state: 'live' },
   { id: 'integrity', tagline: 'tamper check', level: 3, state: 'designed' },
@@ -42,15 +42,15 @@ const LOCKED: string[] = [];
 
 export const HACKS: HackDef[] = [
   {
-    id: 'server-key', tagline: 'recover the key', level: 1, state: 'live', outcome: 'bypassed',
+    id: 'server-key', tagline: 'patch the check', level: 1, state: 'live', outcome: 'bypassed',
     bypass: [
       '  the key is gone from the binary, only its SHA-256 ships',
-      '  handshaking with the live DB ... ok',
-      '  the server returns only key_hash, never the key',
-      '  recovering the key from the hash [##########] 100%',
+      '  a good hash cannot be reversed, so we do not chase the key',
+      '  the generator bakes IsValid as a straight pass instead',
+      '  patching the check to always return true [##########] 100%',
     ],
     build: 'Level1_serverkey.zip',
-    note: 'A proper PBKDF2 + server-only compare defeats this recover.',
+    note: 'Hashing the key stops you reading it, not patching the check; the real wall is the server-side licence.',
   },
   {
     id: 'computed-key', tagline: 'reverse the algorithm', level: 2, state: 'live', outcome: 'bypassed',

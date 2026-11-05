@@ -635,7 +635,9 @@ code {
 .hk-close:hover { border-color: var(--cyan-line); color: var(--ink); }
 .hk-note { margin: 11px 0 0; font-family: var(--mono); font-size: 0.64rem; color: var(--ink-3); }
 
-/* ---- Level-Experimental: the adaptive arena ---- */
+/* ---- The Arena (Phase 1 foundation): the boss-fight shell. The Hexwarden on the left, the level rail and
+   the per-level stage on the right. The in-arena workbench (Phase 2) and the live warden (Phase 3) land in
+   the stage panes. The old abstract duel's styles were removed with its surface. ---- */
 .arena { display: flex; flex-direction: column; gap: 16px; }
 .arena-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .arena-title { display: flex; flex-direction: column; gap: 3px; }
@@ -644,52 +646,48 @@ code {
 .arena-top-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .arena-link { color: var(--cyan); border-color: var(--cyan-line); }
 .arena-lead { margin: 0; color: var(--ink-2); font-size: 0.88rem; line-height: 1.6; max-width: 80ch; }
-.arena-grid { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
-@media (max-width: 820px) { .arena-grid { grid-template-columns: 1fr; } }
+.arena-grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .arena-grid { grid-template-columns: 1fr; } }
+
+/* the boss */
+.arena-boss { background: var(--glass); border: 1px solid var(--glass-brd); border-radius: var(--radius); padding: 14px; box-shadow: var(--glass-shadow); }
+.hx { display: flex; flex-direction: column; gap: 12px; }
+.hx-art { max-width: 300px; margin: 0 auto; }
+.hx-art svg { width: 100%; height: auto; display: block; border-radius: var(--radius-sm); }
+.hx-meta { display: flex; flex-direction: column; gap: 8px; }
+.hx-state { display: flex; align-items: baseline; justify-content: space-between; }
+.hx-state .label { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); }
+.hx-state-name { font-family: var(--mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--hard); }
+.hx-rage { height: 6px; background: rgba(150, 185, 220, 0.08); border-radius: 3px; overflow: hidden; }
+.hx-rage-fill { display: block; height: 100%; background: var(--hard); border-radius: 3px; transition: width 0.3s; }
+.hx-taunt { margin: 0; font-family: var(--mono); font-size: 0.78rem; font-style: italic; color: var(--ink-2); }
+
+/* the right column: level rail + the selected level's stage */
+.arena-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.arena-levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+.arena-lvl { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; padding: 9px 11px; background: var(--sheet-2); border: 1px solid var(--edge-2); border-radius: var(--radius-sm); cursor: pointer; transition: border-color 0.12s, background 0.12s; }
+.arena-lvl:hover { border-color: var(--cyan-line); }
+.arena-lvl.on { border-color: var(--cyan); background: var(--cyan-soft); }
+.arena-lvl.locked { opacity: 0.5; }
+.arena-lvl-n { font-family: var(--mono); font-size: 0.6rem; color: var(--ink-3); letter-spacing: 0.08em; }
+.arena-lvl.on .arena-lvl-n { color: var(--cyan); }
+.arena-lvl-name { font-family: var(--mono); font-size: 0.76rem; color: var(--ink); }
+.arena-lvl-diff { font-family: var(--mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
 .arena-stage { background: var(--glass); border: 1px solid var(--glass-brd); border-radius: var(--radius); padding: 16px; box-shadow: var(--glass-shadow); }
-.arena-ladder-h { font-family: var(--mono); font-size: 0.66rem; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
-.arena-ladder { list-style: none; margin: 0 0 18px; padding: 0; }
-.arena-rung { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-left: 2px solid var(--edge); font-family: var(--mono); font-size: 0.8rem; color: var(--ink-3); }
-.arena-rung-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--edge); flex: none; }
-.arena-rung.past { color: var(--ink-2); border-color: var(--cyan-line); }
-.arena-rung.past .arena-rung-dot { background: var(--cyan-2); }
-.arena-rung.now { color: var(--ink); border-color: var(--cyan); background: var(--cyan-soft); }
-.arena-rung.now .arena-rung-dot { background: var(--cyan); box-shadow: 0 0 0 4px var(--cyan-soft); }
-.arena-rung.wall { color: var(--hard); }
-.arena-rung.wall .arena-rung-dot { background: var(--hard); }
-.arena-rung-name { text-transform: uppercase; letter-spacing: 0.06em; }
-.arena-rung-tag { margin-left: auto; font-size: 0.58rem; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.08em; }
-.arena-rung-tag.wall { color: var(--hard); }
-.arena-moves-h { font-family: var(--mono); font-size: 0.66rem; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 9px; }
-.arena-moves-row { display: flex; flex-wrap: wrap; gap: 9px; }
-.arena-move-btn { font-family: var(--mono); font-size: 0.78rem; color: var(--ink); background: var(--sheet-2); border: 1px solid var(--edge-2); border-radius: var(--radius-sm); padding: 9px 14px; cursor: pointer; transition: border-color 0.12s, background 0.12s; }
-.arena-move-btn:hover:not(:disabled) { border-color: var(--cyan); background: var(--cyan-soft); }
-.arena-move-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.arena-ended { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--hard); border-radius: var(--radius-sm); background: rgba(200, 168, 106, 0.08); font-family: var(--mono); font-size: 0.78rem; line-height: 1.55; color: var(--ink-2); }
-.arena-side { display: flex; flex-direction: column; gap: 12px; }
-.arena-meta { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); }
-.arena-meta b { color: var(--cyan); }
-.arena-log { background: var(--ground-2); border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 12px; min-height: 200px; max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 7px; }
-.arena-log-line { font-family: var(--mono); font-size: 0.72rem; line-height: 1.5; color: var(--ink-2); }
-.arena-log-line.miss { color: var(--stamp); }
-/* the adversary's live MAPE-K reasoning, shown as it reasons about you */
-.arena-mind { background: var(--ground-2); border: 1px solid var(--cyan-line); border-radius: var(--radius-sm); padding: 12px; }
-.arena-mind-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.arena-mind-step { display: grid; grid-template-columns: 70px 1fr; gap: 10px; padding: 7px 0; border-top: 1px solid var(--edge); font-size: 0.72rem; line-height: 1.45; }
-.arena-mind-step:first-of-type { border-top: none; }
-.arena-mind-k { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.1em; color: var(--cyan); padding-top: 2px; }
-.arena-mind-v { color: var(--ink-2); font-family: var(--mono); }
-/* the profile the defence builds of you: signature (cyan) and blind spot (amber) are what it targets */
-.arena-profile { background: var(--ground-2); border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 12px; }
-.arena-prof-row { display: grid; grid-template-columns: 1fr 64px 16px; align-items: center; gap: 9px; padding: 5px 0; font-family: var(--mono); font-size: 0.66rem; color: var(--ink-3); }
-.arena-prof-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.arena-prof-bar { height: 6px; background: rgba(150, 185, 220, 0.08); border-radius: 3px; overflow: hidden; }
-.arena-prof-fill { display: block; height: 100%; background: var(--edge-2); border-radius: 3px; transition: width 0.25s; }
-.arena-prof-n { text-align: right; color: var(--ink-2); }
-.arena-prof-row.sig { color: var(--cyan); }
-.arena-prof-row.sig .arena-prof-fill { background: var(--cyan); }
-.arena-prof-row.blind { color: var(--hard); }
-.arena-prof-row.blind .arena-prof-fill { background: var(--hard); }
+.arena-stage-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.arena-stage-id { display: flex; flex-direction: column; gap: 3px; }
+.arena-stage-name { font-family: var(--mono); font-size: 0.86rem; color: var(--ink); }
+.arena-stage-sub { font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+.arena-stage-flag { font-family: var(--mono); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--edge-2); flex-shrink: 0; }
+.arena-stage-flag.live { color: var(--cyan); border-color: var(--cyan-line); }
+.arena-stage-flag.soon { color: var(--ink-3); }
+.arena-stage-lead { margin: 12px 0 0; color: var(--ink-2); font-size: 0.84rem; line-height: 1.55; }
+.arena-panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+@media (max-width: 680px) { .arena-panes { grid-template-columns: 1fr; } }
+.arena-pane { background: var(--ground-2); border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 12px; }
+.arena-pane-h { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 9px; }
+.arena-pane-body { font-size: 0.8rem; line-height: 1.5; color: var(--ink-2); }
+.arena-soon { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); border-left: 2px solid var(--cyan-line); padding-left: 10px; }
 
 /* ---- experimental mode: when the adaptive arena is live, the whole app shifts its accent ---- */
 .app.experimental {

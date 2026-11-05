@@ -7,7 +7,7 @@ import { getMe, logout, type Me } from './auth';
 import { AuthPanel } from './AuthPanel';
 import { Monitor } from './Monitor';
 import { Console } from './console/Console';
-import { Arena } from './Arena';
+import { Arena } from './arena/Arena';
 
 // The .NET 9 Desktop Runtime, which the level apps need to run. Installed once, then every level runs.
 const RUNTIME_URL = 'https://dotnet.microsoft.com/download/dotnet/9.0/runtime';

@@ -27,14 +27,6 @@ export async function fetchLevels(): Promise<Level[]> {
   return res.json() as Promise<Level[]>;
 }
 
-// Builds the download URL for a level. I hand back a URL for a plain link rather than fetching
-// the bytes myself: the browser downloads the file directly and the server sets the filename.
-export function generateUrl(level: number): string {
-  // Encode the level into the path (even though it is a number) so the request URL is never built from an
-  // unencoded caller value: the client-side request-forgery defence. The server only accepts a level id.
-  return `${API_BASE}/generate/${encodeURIComponent(String(level))}`;
-}
-
 // Downloads the target zip. I fetch the bytes and save them with a blob link so a failed request
 // (backend down) surfaces as an error the guide can show, rather than a browser error page.
 export async function downloadTarget(level: number, filename?: string, features?: string[]): Promise<void> {
@@ -47,7 +39,9 @@ export async function downloadTarget(level: number, filename?: string, features?
   const n = Math.trunc(level);
   if (!Number.isFinite(n) || n < 1) throw new Error(`invalid level: ${level}`);
   const query = features?.length ? `?features=${encodeURIComponent(features.join(','))}` : '';
-  const res = await fetch(generateUrl(n) + query, { credentials: 'include' });
+  // Encode the level straight into the path here, at the request itself, so the URL is sanitised right at the
+  // sink (the client-side request-forgery defence): the persisted level is treated as untrusted input.
+  const res = await fetch(`${API_BASE}/generate/${encodeURIComponent(String(n))}${query}`, { credentials: 'include' });
   if (!res.ok) throw new Error(`download failed: ${res.status}`);
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);

@@ -3,6 +3,13 @@
 The BreakBox launcher + Console (frontend). Written by Max-Anton Horvat, HBO-i S6 "Complex Software
 Systems". Signature 0x4D414836 = "MAH6". Canonical rules for this repo: read it before building.
 
+## Where we are (read this first, every session)
+**Read `../breakbox/handoff.md` before doing any work.** The living source of truth lives in the sibling
+backend repo (committed on its `main`, so it is readable even when the code work here is on a feature branch):
+current status, the locked decisions, the per-phase build plan (the PHASE N STATUS entries), and pointers to
+the design and learning docs. Front-end phases are built here but tracked there, so a cold start or a full
+context window rediscovers the thread by opening that one file. Keep it updated every turn.
+
 ## Stack
 - **React 19 + Vite + TypeScript**. Linter: **oxlint**. No unit-test runner yet (see TDD note below).
 - Entry: `src/main.tsx` -> `src/App.tsx`. The launcher, auth, Monitor and the admin **Console** are views

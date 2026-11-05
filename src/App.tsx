@@ -404,14 +404,18 @@ export default function App() {
                 : <Guide key={activeNumber ?? 'none'} level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} signedIn={!!me} solved={activeNumber !== null && solved.has(activeNumber)} onSolved={reloadProgress} />}
             </div>
 
-            <section className="ladder-adv">
-              <h2 className="section">advanced <span className="dim">later sprints</span></h2>
-              <ol className="targets targets-adv">
-                {advanced.map((l) => (
-                  <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} solved={solved.has(l.number)} onSelect={setSelected} />
-                ))}
-              </ol>
-            </section>
+            {/* The advanced "later sprints" preview is launcher-only: the arena is the boss fight over the
+                levels that actually exist, so the unbuilt-level preview is hidden there. */}
+            {!arena && (
+              <section className="ladder-adv">
+                <h2 className="section">advanced <span className="dim">later sprints</span></h2>
+                <ol className="targets targets-adv">
+                  {advanced.map((l) => (
+                    <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} solved={solved.has(l.number)} onSelect={setSelected} />
+                  ))}
+                </ol>
+              </section>
+            )}
           </>
         )}
         </>)}

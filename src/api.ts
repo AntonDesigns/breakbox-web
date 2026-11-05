@@ -27,6 +27,11 @@ export async function fetchLevels(): Promise<Level[]> {
   return res.json() as Promise<Level[]>;
 }
 
+// The levels the catalogue can actually generate. Resolving the target through this fixed set (instead of
+// using the caller's number directly) keeps the request URL built from a known constant, never from the
+// persisted, and therefore untrusted, level value: the client-side request-forgery defence.
+const GENERATABLE_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
+
 // Downloads the target zip. I fetch the bytes and save them with a blob link so a failed request
 // (backend down) surfaces as an error the guide can show, rather than a browser error page.
 export async function downloadTarget(level: number, filename?: string, features?: string[]): Promise<void> {
@@ -36,12 +41,12 @@ export async function downloadTarget(level: number, filename?: string, features?
   // Level2_computedkey.zip, with its features baked into the generated target).
   // Validate the level to a plain integer before it reaches the request URL, so a caller can never steer the
   // fetch at a crafted path: the generate endpoint only ever takes a level number.
-  const n = Math.trunc(level);
-  if (!Number.isFinite(n) || n < 1) throw new Error(`invalid level: ${level}`);
+  // Resolve the requested level to one of the fixed generatable levels, so the value that reaches the URL is a
+  // constant from the set above, never the (untrusted) persisted number itself.
+  const n = GENERATABLE_LEVELS.find((lvl) => lvl === Math.trunc(level));
+  if (n === undefined) throw new Error(`invalid level: ${level}`);
   const query = features?.length ? `?features=${encodeURIComponent(features.join(','))}` : '';
-  // Encode the level straight into the path here, at the request itself, so the URL is sanitised right at the
-  // sink (the client-side request-forgery defence): the persisted level is treated as untrusted input.
-  const res = await fetch(`${API_BASE}/generate/${encodeURIComponent(String(n))}${query}`, { credentials: 'include' });
+  const res = await fetch(`${API_BASE}/generate/${n}${query}`, { credentials: 'include' });
   if (!res.ok) throw new Error(`download failed: ${res.status}`);
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);

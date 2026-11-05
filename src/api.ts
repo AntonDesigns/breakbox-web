@@ -30,7 +30,9 @@ export async function fetchLevels(): Promise<Level[]> {
 // Builds the download URL for a level. I hand back a URL for a plain link rather than fetching
 // the bytes myself: the browser downloads the file directly and the server sets the filename.
 export function generateUrl(level: number): string {
-  return `${API_BASE}/generate/${level}`;
+  // Encode the level into the path (even though it is a number) so the request URL is never built from an
+  // unencoded caller value: the client-side request-forgery defence. The server only accepts a level id.
+  return `${API_BASE}/generate/${encodeURIComponent(String(level))}`;
 }
 
 // Downloads the target zip. I fetch the bytes and save them with a blob link so a failed request

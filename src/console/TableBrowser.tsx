@@ -13,7 +13,8 @@ export function TableBrowser({ name, onClose }: Readonly<{ name: string; onClose
   const { data, error } = useLoad(() => fetchConsoleTable(name, page, 25), [name, page]);
 
   const pages = data ? Math.max(1, Math.ceil(data.total / data.size)) : 1;
-  const countLabel = data ? `${data.total} row${data.total === 1 ? '' : 's'}` : '';
+  let countLabel = '';
+  if (data) countLabel = `${data.total} row${data.total === 1 ? '' : 's'}`;
 
   return (
     <div className="tbrowse">

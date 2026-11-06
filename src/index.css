@@ -667,9 +667,12 @@ code {
 .arena-toggle:not(.on) .at-lab:first-child { color: var(--ink-2); }
 
 /* arena worktop: the warden takes the big left column, the ladder moves right, the chosen level focused */
-.app.arena-on .worktop { grid-template-columns: 420px minmax(0, 1fr); align-items: start; }
-.app.arena-on .arena-focus { grid-column: 1; grid-row: 1; }
-.app.arena-on .ladder-core { grid-column: 2; grid-row: 1; }
+/* Phase 2: the workbench is the star, so the ladder narrows to a left rail (the level switcher) and the
+   arena-focus column goes wide to hold the warden + the in-arena workbench. */
+.app.arena-on .worktop { grid-template-columns: 216px minmax(0, 1fr); align-items: start; }
+.app.arena-on .ladder-core { grid-column: 1; grid-row: 1; }
+.app.arena-on .arena-focus { grid-column: 2; grid-row: 1; }
+.app.arena-on .targets-core { grid-template-columns: 1fr; }   /* a single vertical rail of levels in the arena */
 @media (max-width: 920px) {
   .app.arena-on .worktop { grid-template-columns: 1fr; }
   .app.arena-on .arena-focus, .app.arena-on .ladder-core { grid-column: auto; grid-row: auto; }
@@ -688,10 +691,24 @@ code {
 .af-flag.live { color: var(--cyan); border-color: var(--cyan-line); }
 .af-flag.soon { color: var(--ink-3); }
 .af-sum { margin: 11px 0 0; color: var(--ink-2); font-size: 0.85rem; line-height: 1.55; }
-.af-pane { margin-top: 14px; background: var(--ground-2); border: 1px solid var(--edge); border-radius: var(--radius-sm); padding: 12px; }
-.af-pane-h { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 8px; }
-.af-pane-b { font-family: var(--mono); font-size: 0.72rem; line-height: 1.55; color: var(--ink-3); border-left: 2px solid var(--cyan-line); padding-left: 10px; }
 .af-empty { font-family: var(--mono); font-size: 0.76rem; color: var(--ink-3); }
+
+/* Phase 2 arena-focus layout: the warden + a side column (target + the warden's feed) sit on top in a
+   stage, and the workbench runs full-width below. */
+.af-stage { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 760px) { .af-stage { grid-template-columns: 1fr; } }
+.af-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* the warden's feed: what he has seen you do (step 4). Newest first, keyed red in the arena like everything. */
+.af-feed { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); padding: 13px 14px; }
+.af-feed-h { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 9px; }
+.af-feed-empty { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); }
+.af-feed-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.af-feed-line { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-2); padding-left: 10px; border-left: 2px solid var(--edge-2); }
+.af-feed-line.tone-watch { border-left-color: var(--cyan-line); }
+.af-feed-line.tone-hit { border-left-color: var(--cyan); color: var(--ink); }
+.af-feed-line.tone-hold { border-left-color: var(--edge-2); color: var(--ink-3); }
+.af-feed-line.tone-crack { border-left-color: var(--cyan); color: var(--cyan); }
 
 /* the warden art, shown large in its panel so the detail reads (not the old boxed thumbnail) */
 .hx { display: flex; flex-direction: column; gap: 12px; }
@@ -709,10 +726,44 @@ code {
 @keyframes af-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .app.arena-on .arena-head { animation: af-rise .4s cubic-bezier(.2, .72, .2, 1) both; }
 .app.arena-on .af-warden { animation: af-rise .46s cubic-bezier(.2, .72, .2, 1) .04s both; }
-.app.arena-on .af-target { animation: af-rise .46s cubic-bezier(.2, .72, .2, 1) .12s both; }
+.app.arena-on .af-side { animation: af-rise .46s cubic-bezier(.2, .72, .2, 1) .12s both; }
+.app.arena-on .wb { animation: af-rise .5s cubic-bezier(.2, .72, .2, 1) .18s both; }
 @media (prefers-reduced-motion: reduce) {
-  .app.arena-on .arena-head, .app.arena-on .af-warden, .app.arena-on .af-target { animation: none; }
+  .app.arena-on .arena-head, .app.arena-on .af-warden, .app.arena-on .af-side, .app.arena-on .wb { animation: none; }
 }
+
+/* ---- The in-arena workbench (Phase 2): dnSpy-lite. The level's real source in Monaco, a method tree to
+   navigate it, and a server-run "run my patch". Monochrome-blueprint, keyed red in the arena. ---- */
+.wb { margin-top: 2px; border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); overflow: hidden; display: flex; flex-direction: column; }
+.wb-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--edge); }
+.wb-file { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--ink); }
+.wb-h-tools { display: inline-flex; align-items: center; gap: 8px; }
+.wb-reset { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-3); background: transparent; border: 1px solid var(--edge-2); border-radius: var(--radius-sm); padding: 5px 10px; cursor: pointer; }
+.wb-reset:hover { border-color: var(--cyan-line); color: var(--ink-2); }
+.wb-run { font-family: var(--mono); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.02em; color: var(--ground); background: var(--cyan); border: 1px solid var(--cyan-2); border-radius: var(--radius-sm); padding: 6px 15px; cursor: pointer; }
+.wb-run:hover:not(:disabled) { background: var(--cyan-2); }
+.wb-run:disabled { opacity: 0.5; cursor: default; }
+.wb-body { display: grid; grid-template-columns: 176px minmax(0, 1fr); align-items: stretch; min-height: 380px; }
+@media (max-width: 760px) { .wb-body { grid-template-columns: 1fr; } }
+.wb-tree { border-right: 1px solid var(--edge); background: var(--ground-2); padding: 10px 0; overflow: auto; max-height: 440px; }
+.wb-tree-h { font-family: var(--mono); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); padding: 0 12px 8px; }
+.wb-tree-empty { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-3); padding: 0 12px; }
+.wb-tree-list { list-style: none; margin: 0; padding: 0; }
+.wb-method { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; width: 100%; text-align: left; background: transparent; border: none; border-left: 2px solid transparent; padding: 5px 12px; cursor: pointer; font-family: var(--mono); font-size: 0.74rem; color: var(--ink-2); }
+.wb-method:hover { background: var(--cyan-soft); border-left-color: var(--cyan); color: var(--ink); }
+.wb-method-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-method-line { color: var(--ink-3); font-size: 0.64rem; flex: none; }
+.wb-editor { position: relative; min-height: 380px; min-width: 0; background: #1e1e1e; }
+.wb-editor-loading { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 380px; font-family: var(--mono); font-size: 0.74rem; color: var(--ink-3); }
+.wb-term { border-top: 1px solid var(--edge); background: var(--ground-2); padding: 12px 14px; font-family: var(--mono); font-size: 0.74rem; line-height: 1.6; max-height: 230px; overflow: auto; }
+.wb-term-idle { color: var(--ink-3); line-height: 1.55; }
+.wb-term-line { color: var(--ink-2); white-space: pre-wrap; }
+.wb-diags { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+.wb-diag { color: var(--hard); border-left: 2px solid var(--hard); padding-left: 9px; font-size: 0.7rem; }
+.wb-diag-line { color: var(--ink-3); }
+.wb-verdict { margin-top: 10px; font-family: var(--mono); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.06em; }
+.wb-verdict.cracked { color: var(--cyan); }
+.wb-verdict.held { color: var(--ink-3); }
 
 .xlevel-warn { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-2); line-height: 1.45; border: 1px solid rgba(200, 168, 106, 0.5); background: rgba(200, 168, 106, 0.08); border-radius: var(--radius-sm); padding: 9px 12px; display: flex; gap: 9px; align-items: baseline; }
 .xlevel-k { font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--hard); border: 1px solid rgba(200, 168, 106, 0.5); border-radius: 999px; padding: 2px 8px; flex-shrink: 0; }

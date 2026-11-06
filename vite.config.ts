@@ -10,6 +10,12 @@ import { defineConfig } from 'vite'
 // API origin from config.
 export default defineConfig({
   plugins: [react()],
+  // The in-arena workbench pulls in @monaco-editor/react lazily. In dev, Vite can otherwise pre-bundle a
+  // second React copy for that lazy chunk, which trips React's "Invalid hook call" guard. Deduping React and
+  // pre-bundling the wrapper keeps one React instance, so the editor mounts clean. The production build already
+  // dedupes, so this only matters for the dev server.
+  resolve: { dedupe: ['react', 'react-dom'] },
+  optimizeDeps: { include: ['@monaco-editor/react'] },
   server: {
     // Fixed, uncommon ports so a locked-down network (school / corporate) is unlikely to be holding
     // them; strictPort makes dev.ps1 open the right URL instead of Vite silently drifting to 38174.

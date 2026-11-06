@@ -6,10 +6,10 @@ import { type Level } from '../api';
 import { Hexwarden, type HexState } from './Hexwarden';
 import { Workbench, type WorkbenchActivity } from './Workbench';
 
-// The arena side: what the launcher's run-guide becomes in arena mode. It holds the warden and the in-arena
-// workbench (Phase 2), and it is where the warden REACTS (step 4): every workbench move is reported here and
-// nudges his state, rage and the activity feed. The real MAPE-K brain (ArenaEngine) re-points in Phase 3; this
-// is an honest, bounded client-side escalation driven by what you actually do.
+// The arena: a compact warden rail (the warden, the level switcher, the warden's feed) beside the in-arena
+// dnSpy workbench, which opens full-size like a window inside a window so it is actually usable. The warden
+// REACTS here (step 4): every workbench move is reported and nudges his state, rage and the feed. The real
+// MAPE-K brain (ArenaEngine) re-points in Phase 3; this is an honest, bounded client-side escalation.
 
 // The order of escalation, so the warden never visibly calms down mid-fight.
 const RANK: Record<HexState, number> = { contempt: 0, enraged: 1, wrath: 2, server: 3 };
@@ -17,7 +17,13 @@ const atLeast = (current: HexState, floor: HexState): HexState => (RANK[current]
 
 interface FeedLine { id: number; text: string; tone: 'watch' | 'hit' | 'hold' | 'crack'; }
 
-export function ArenaFocus({ level }: Readonly<{ level: Level | null }>) {
+export function ArenaFocus({ level, levels, activeNumber, onSelect, solved }: Readonly<{
+  level: Level | null;
+  levels: Level[];
+  activeNumber: number | null;
+  onSelect: (n: number) => void;
+  solved: Set<number>;
+}>) {
   const [hex, setHex] = useState<HexState>('contempt');
   const [rage, setRage] = useState(0);
   const [watching, setWatching] = useState('');
@@ -30,7 +36,7 @@ export function ArenaFocus({ level }: Readonly<{ level: Level | null }>) {
     const add = (text: string, tone: FeedLine['tone']) => {
       seq.current += 1;
       const id = seq.current;
-      setFeed((f) => [{ id, text, tone }, ...f].slice(0, 8));
+      setFeed((f) => [{ id, text, tone }, ...f].slice(0, 10));
     };
     const provoke = (floor: HexState) => {
       setHex((s) => atLeast(s, floor));
@@ -39,7 +45,6 @@ export function ArenaFocus({ level }: Readonly<{ level: Level | null }>) {
 
     switch (a.kind) {
       case 'open':
-        // A fresh target: the warden resets to contempt and the feed starts over.
         setHex('contempt');
         setRage(0);
         setWatching('');
@@ -76,8 +81,8 @@ export function ArenaFocus({ level }: Readonly<{ level: Level | null }>) {
   }, []);
 
   return (
-    <aside className="arena-focus" aria-label="the arena">
-      <div className="af-stage">
+    <div className="arena-focus" aria-label="the arena">
+      <aside className="af-rail">
         <div className="af-warden">
           <div className="af-h">
             <span className="label">the warden</span>
@@ -86,40 +91,48 @@ export function ArenaFocus({ level }: Readonly<{ level: Level | null }>) {
           <Hexwarden state={hex} rage={rage} watching={{ line: watching }} />
         </div>
 
-        <div className="af-side">
-          {level ? (
-            <div className="af-target">
-              <div className="af-target-h">
-                <span className="af-target-name">{level.name}</span>
-                <span className={`tag tag-${level.difficulty.toLowerCase()}`}>{level.difficulty}</span>
-                <span className={`af-flag ${level.available ? 'live' : 'soon'}`}>{level.available ? 'in the arena' : 'not built yet'}</span>
-              </div>
-              <p className="af-sum">{level.summary}</p>
-            </div>
-          ) : (
-            <p className="af-empty">Pick a target on the ladder. The warden is already watching.</p>
-          )}
+        <div className="af-levels">
+          <label className="af-levels-h" htmlFor="af-level-select">target</label>
+          <select
+            id="af-level-select"
+            className="af-level-select"
+            value={activeNumber ?? ''}
+            onChange={(e) => onSelect(Number(e.target.value))}
+          >
+            {levels.map((l) => (
+              <option key={l.number} value={l.number}>
+                {`0x0${l.number}  ${l.name}${l.available ? '' : '  (soon)'}${solved.has(l.number) ? '  ✓' : ''}`}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          <div className="af-feed" aria-label="the warden's feed">
-            <div className="af-feed-h">the warden sees</div>
-            {feed.length === 0
-              ? <div className="af-feed-empty">nothing yet. make a move.</div>
-              : (
-                <ul className="af-feed-list">
-                  {feed.map((f) => <li key={f.id} className={`af-feed-line tone-${f.tone}`}>{f.text}</li>)}
-                </ul>
-              )}
+        <div className="af-feed" aria-label="the warden's feed">
+          <div className="af-feed-h">the warden sees</div>
+          {feed.length === 0
+            ? <div className="af-feed-empty">nothing yet. make a move.</div>
+            : (
+              <ul className="af-feed-list">
+                {feed.map((f) => <li key={f.id} className={`af-feed-line tone-${f.tone}`}>{f.text}</li>)}
+              </ul>
+            )}
+        </div>
+      </aside>
+
+      <div className="af-main">
+        {level && level.available && <Workbench key={level.number} level={level.number} onActivity={onActivity} />}
+        {level && !level.available && (
+          <div className="wb">
+            <div className="wb-h"><span className="wb-file">{level.name} &middot; in-arena workbench</span></div>
+            <div className="wb-term"><div className="wb-term-idle">{level.name} is not built yet, so there is nothing to crack here. Pick a live target (0x01). The warden is holding this rung.</div></div>
           </div>
-        </div>
+        )}
+        {!level && (
+          <div className="wb">
+            <div className="wb-term"><div className="wb-term-idle">Pick a target in the rail. The warden is already watching.</div></div>
+          </div>
+        )}
       </div>
-
-      {level && level.available && <Workbench key={level.number} level={level.number} onActivity={onActivity} />}
-      {level && !level.available && (
-        <div className="wb">
-          <div className="wb-h"><span className="wb-file">in-arena workbench</span></div>
-          <div className="wb-term"><div className="wb-term-idle">{level.name} is not built yet, so there is nothing to crack here. The warden is holding the rung.</div></div>
-        </div>
-      )}
-    </aside>
+    </div>
   );
 }

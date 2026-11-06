@@ -666,43 +666,33 @@ code {
 .arena-toggle.on .at-lab:last-child { color: var(--cyan); }
 .arena-toggle:not(.on) .at-lab:first-child { color: var(--ink-2); }
 
-/* arena worktop: the warden takes the big left column, the ladder moves right, the chosen level focused */
-/* Phase 2: the workbench is the star, so the ladder narrows to a left rail (the level switcher) and the
-   arena-focus column goes wide to hold the warden + the in-arena workbench. */
-.app.arena-on .worktop { grid-template-columns: 240px minmax(0, 1fr); align-items: start; }
-.app.arena-on .ladder-core { grid-column: 1; grid-row: 1; min-width: 0; }
-.app.arena-on .arena-focus { grid-column: 2; grid-row: 1; }
-/* a single vertical rail of levels in the arena. minmax(0,1fr) (not a bare 1fr) + min-width:0 lets the cards
-   shrink to the rail; a bare 1fr keeps the cards' 2-column min-content width, so they spill over the workbench. */
-.app.arena-on .targets-core { grid-template-columns: minmax(0, 1fr); flex: none; min-width: 0; grid-auto-rows: auto; }
-@media (max-width: 920px) {
-  .app.arena-on .worktop { grid-template-columns: 1fr; }
-  .app.arena-on .arena-focus, .app.arena-on .ladder-core { grid-column: auto; grid-row: auto; }
-}
+/* Phase 2 arena: the ladder is launcher-only now, so the worktop holds only the arena. The warden + level
+   switcher + feed sit in a compact rail, and the dnSpy workbench opens full-size beside them (a window inside
+   a window), so it is actually usable. */
+.app.arena-on .worktop { display: block; }
 
-/* the warden side panel (what the run-guide becomes) */
-.arena-focus { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.af-warden { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); padding: 14px; }
+/* the arena: a compact warden rail beside the full-size workbench window */
+.arena-focus { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: stretch; min-width: 0; }
+@media (max-width: 920px) { .arena-focus { grid-template-columns: 1fr; } }
+.af-rail { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.af-main { min-width: 0; }   /* holds the workbench, which opens full-size */
+
+.af-warden { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); padding: 14px; flex: none; }
 .af-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .af-h .label { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); }
 .af-watch { font-family: var(--mono); font-size: 0.62rem; color: var(--cyan); }
-.af-target { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); padding: 15px 16px; }
-.af-target-h { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
-.af-target-name { font-family: var(--mono); font-weight: 700; font-size: 1rem; color: var(--ink); }
-.af-flag { margin-left: auto; font-family: var(--mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--edge-2); }
-.af-flag.live { color: var(--cyan); border-color: var(--cyan-line); }
-.af-flag.soon { color: var(--ink-3); }
-.af-sum { margin: 11px 0 0; color: var(--ink-2); font-size: 0.85rem; line-height: 1.55; }
-.af-empty { font-family: var(--mono); font-size: 0.76rem; color: var(--ink-3); }
 
-/* Phase 2 arena-focus layout: the warden + a side column (target + the warden's feed) sit on top in a
-   stage, and the workbench runs full-width below. */
-.af-stage { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 14px; align-items: start; }
-@media (max-width: 760px) { .af-stage { grid-template-columns: 1fr; } }
-.af-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+/* the level switcher, moved into the rail so the workbench can open full-size */
+.af-levels { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); padding: 13px 14px; flex: none; }
+.af-levels-h { display: block; font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 9px; }
+/* a compact dropdown: it shows only the active target, and opens the list to switch. */
+.af-level-select { width: 100%; font-family: var(--mono); font-size: 0.82rem; color: var(--ink); background: var(--ground-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239a9a9e' fill='none' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 11px center; border: 1px solid var(--edge-2); border-radius: var(--radius-sm); padding: 9px 30px 9px 11px; cursor: pointer; appearance: none; -webkit-appearance: none; }
+.af-level-select:hover { border-color: var(--cyan-line); }
+.af-level-select:focus { outline: none; border-color: var(--cyan); }
+.af-level-select option { background: var(--ground-2); color: var(--ink); }
 
 /* the warden's feed: what he has seen you do (step 4). Newest first, keyed red in the arena like everything. */
-.af-feed { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); padding: 13px 14px; }
+.af-feed { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); padding: 13px 14px; flex: 1 1 auto; min-height: 120px; overflow: auto; }
 .af-feed-h { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 9px; }
 .af-feed-empty { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); }
 .af-feed-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -727,17 +717,18 @@ code {
 /* the transform: arena content rises in. transform + opacity only, so it is composited and cheap. */
 @keyframes af-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .app.arena-on .arena-head { animation: af-rise .4s cubic-bezier(.2, .72, .2, 1) both; }
-.app.arena-on .af-warden { animation: af-rise .46s cubic-bezier(.2, .72, .2, 1) .04s both; }
-.app.arena-on .af-side { animation: af-rise .46s cubic-bezier(.2, .72, .2, 1) .12s both; }
-.app.arena-on .wb { animation: af-rise .5s cubic-bezier(.2, .72, .2, 1) .18s both; }
+.app.arena-on .af-rail { animation: af-rise .46s cubic-bezier(.2, .72, .2, 1) .04s both; }
+.app.arena-on .af-main { animation: af-rise .5s cubic-bezier(.2, .72, .2, 1) .12s both; }
 @media (prefers-reduced-motion: reduce) {
-  .app.arena-on .arena-head, .app.arena-on .af-warden, .app.arena-on .af-side, .app.arena-on .wb { animation: none; }
+  .app.arena-on .arena-head, .app.arena-on .af-rail, .app.arena-on .af-main { animation: none; }
 }
 
 /* ---- The in-arena workbench (Phase 2): dnSpy-lite. The level's real source in Monaco, a method tree to
    navigate it, and a server-run "run my patch". Monochrome-blueprint, keyed red in the arena. ---- */
-.wb { margin-top: 2px; border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); overflow: hidden; display: flex; flex-direction: column; }
-.wb-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--edge); }
+/* the workbench opens full-size: a window inside a window. It fills the arena height so the editor is big and
+   actually usable; the title bar and run output are fixed, and Monaco takes all the room between them. */
+.wb { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 196px); min-height: 540px; }
+.wb-h { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--edge); }
 .wb-file { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--ink); }
 .wb-h-tools { display: inline-flex; align-items: center; gap: 8px; }
 .wb-reset { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-3); background: transparent; border: 1px solid var(--edge-2); border-radius: var(--radius-sm); padding: 5px 10px; cursor: pointer; }
@@ -745,9 +736,9 @@ code {
 .wb-run { font-family: var(--mono); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.02em; color: var(--ground); background: var(--cyan); border: 1px solid var(--cyan-2); border-radius: var(--radius-sm); padding: 6px 15px; cursor: pointer; }
 .wb-run:hover:not(:disabled) { background: var(--cyan-2); }
 .wb-run:disabled { opacity: 0.5; cursor: default; }
-.wb-body { display: grid; grid-template-columns: 176px minmax(0, 1fr); align-items: stretch; min-height: 380px; }
+.wb-body { display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: stretch; flex: 1 1 auto; min-height: 0; }
 @media (max-width: 760px) { .wb-body { grid-template-columns: 1fr; } }
-.wb-tree { border-right: 1px solid var(--edge); background: var(--ground-2); padding: 10px 0; overflow: auto; max-height: 440px; }
+.wb-tree { border-right: 1px solid var(--edge); background: var(--ground-2); padding: 10px 0; overflow: auto; min-height: 0; }
 .wb-tree-h { font-family: var(--mono); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); padding: 0 12px 8px; }
 .wb-tree-empty { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-3); padding: 0 12px; }
 .wb-tree-list { list-style: none; margin: 0; padding: 0; }
@@ -755,9 +746,9 @@ code {
 .wb-method:hover { background: var(--cyan-soft); border-left-color: var(--cyan); color: var(--ink); }
 .wb-method-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wb-method-line { color: var(--ink-3); font-size: 0.64rem; flex: none; }
-.wb-editor { position: relative; min-height: 380px; min-width: 0; background: #1e1e1e; }
+.wb-editor { position: relative; min-height: 0; min-width: 0; background: #1e1e1e; }
 .wb-editor-loading { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 380px; font-family: var(--mono); font-size: 0.74rem; color: var(--ink-3); }
-.wb-term { border-top: 1px solid var(--edge); background: var(--ground-2); padding: 12px 14px; font-family: var(--mono); font-size: 0.74rem; line-height: 1.6; max-height: 230px; overflow: auto; }
+.wb-term { flex: none; border-top: 1px solid var(--edge); background: var(--ground-2); padding: 12px 14px; font-family: var(--mono); font-size: 0.74rem; line-height: 1.6; max-height: 230px; overflow: auto; }
 .wb-term-idle { color: var(--ink-3); line-height: 1.55; }
 .wb-term-line { color: var(--ink-2); white-space: pre-wrap; }
 .wb-diags { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }

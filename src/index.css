@@ -804,3 +804,81 @@ code {
   .pp-sides { grid-template-columns: 1fr; }
   .pp-rail { max-height: 200px; }
 }
+
+/* ---- Phase 3: the in-arena app (NoteBox licence dialog) + the BR flag, stacked under the dnSpy workbench ---- */
+.wb-split {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: calc(100vh - 196px);
+  min-height: 560px;
+}
+.wb-split .wb { height: auto; min-height: 0; flex: 1 1 auto; }   /* the dnSpy flexes so the app has room below */
+.nb {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--glass-brd);
+  border-radius: var(--radius);
+  background: var(--ground);
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+}
+.nb-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--ground-2);
+  border-bottom: 1px solid var(--edge);
+}
+.nb-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.nb-sub { font-size: 0.72rem; color: var(--ink-3); white-space: nowrap; }
+.nb-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
+.nb-label { font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); }
+.nb-row { display: flex; gap: 8px; }
+.nb-key {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  padding: 9px 12px;
+  color: var(--ink);
+  background: var(--ground-2);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+}
+.nb-key:focus { outline: none; border-color: var(--cyan); }
+.nb-go {
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+  padding: 9px 16px;
+  color: var(--ground);
+  background: var(--ink);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.nb-go:disabled { opacity: 0.5; cursor: default; }
+.nb-status { font-size: 0.85rem; line-height: 1.5; }
+.nb-status-idle, .nb-status-locked { color: var(--ink-2); }
+.nb-status-bypass { color: #d89b4a; }
+.nb-status-unlocked { color: #5ab07a; }
+.nb-status-error { color: var(--cyan); }
+.nb.nb-unlocked { box-shadow: 0 0 0 1px rgba(90, 176, 122, 0.35), var(--glass-shadow); }
+.br {
+  margin-top: 2px;
+  padding: 12px 14px;
+  border: 1px dashed var(--edge-2);
+  border-radius: var(--radius-sm);
+  background: var(--ground-2);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.br-h { font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); }
+.br-flag { font-family: var(--mono); font-size: 1rem; color: var(--ink); word-break: break-all; }
+.br-submit { background: #5ab07a; color: #06281a; }
+.br-solved { font-size: 0.9rem; color: #5ab07a; }
+.br-msg { font-size: 0.82rem; color: var(--ink-2); }

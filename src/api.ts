@@ -158,3 +158,29 @@ export async function runWorkbenchPatch(level: number, source: string): Promise<
   if (!res.ok) throw new Error(`run failed: ${res.status}`);
   return res.json() as Promise<PatchRun>;
 }
+
+// The in-arena app run (Phase 3): run the level's REAL app against one typed key, on the player's CURRENT
+// build. "opened" is the app's own behaviour (the build's IsValid accepted the key): patch the check and any
+// key opens it, which is the showcase. "genuine" is decided server-side (the typed key is the real one), and
+// the flag is released ONLY on a genuine unlock, so a patched build proves the lock is dead but earns nothing.
+export interface AppRun {
+  compiled: boolean;
+  opened: boolean;
+  genuine: boolean;
+  flag: string | null;
+  output: string[];
+  diagnostics: PatchDiagnostic[];
+}
+
+export async function runWorkbenchApp(level: number, source: string, key: string): Promise<AppRun> {
+  const n = GENERATABLE_LEVELS.find((lvl) => lvl === Math.trunc(level));
+  if (n === undefined) throw new Error(`invalid level: ${level}`);
+  const res = await fetch(`${API}/arena/workbench/app`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ level: n, source, key }),
+  });
+  if (!res.ok) throw new Error(`app run failed: ${res.status}`);
+  return res.json() as Promise<AppRun>;
+}

@@ -123,3 +123,38 @@ export async function arenaMove(move: string): Promise<ArenaState> {
   if (!res.ok) throw new Error(`arena move failed: ${res.status}`);
   return res.json() as Promise<ArenaState>;
 }
+
+// The in-arena workbench (Phase 2), the browser "dnSpy-lite". The server serves the level's REAL source + a
+// method map (what the player reads and edits), and runs the player's edited source SERVER-SIDE to decide if
+// the crack worked. Credentialed: the arena is signed-in only. The level is resolved through the fixed set
+// above, so the value that reaches the request is a known constant, never a steered path.
+
+// One method in the served source, for the method tree: its name, a readable signature, and the 1-based line.
+export interface WorkbenchMethod { name: string; signature: string; line: number; }
+export interface WorkbenchSource { level: number; fileName: string; source: string; methods: WorkbenchMethod[]; }
+
+export async function fetchWorkbenchSource(level: number): Promise<WorkbenchSource> {
+  const n = GENERATABLE_LEVELS.find((lvl) => lvl === Math.trunc(level));
+  if (n === undefined) throw new Error(`invalid level: ${level}`);
+  const res = await fetch(`${API}/arena/workbench/source/${n}`, { credentials: 'include' });
+  if (!res.ok) throw new Error(`workbench source failed: ${res.status}`);
+  return res.json() as Promise<WorkbenchSource>;
+}
+
+// One compiler message for the build panel. A run result: whether it built, whether the gate fell, the
+// narration lines for the terminal, and any build diagnostics (populated only when compiled is false).
+export interface PatchDiagnostic { message: string; line: number; isError: boolean; }
+export interface PatchRun { compiled: boolean; cracked: boolean; output: string[]; diagnostics: PatchDiagnostic[]; }
+
+export async function runWorkbenchPatch(level: number, source: string): Promise<PatchRun> {
+  const n = GENERATABLE_LEVELS.find((lvl) => lvl === Math.trunc(level));
+  if (n === undefined) throw new Error(`invalid level: ${level}`);
+  const res = await fetch(`${API}/arena/workbench/run`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ level: n, source }),
+  });
+  if (!res.ok) throw new Error(`run failed: ${res.status}`);
+  return res.json() as Promise<PatchRun>;
+}

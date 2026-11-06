@@ -389,17 +389,21 @@ export default function App() {
         {levels && (
           <>
             <div className="worktop">
-              <section className="ladder-core">
-                <h2 className="section">core</h2>
-                <ol className="targets targets-core">
-                  {core.map((l) => (
-                    <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} solved={solved.has(l.number)} onSelect={setSelected} />
-                  ))}
-                </ol>
-              </section>
+              {/* The ladder is launcher-only now. In the arena the level switcher moves into the warden rail, so
+                  the dnSpy workbench can open full-size (a window inside a window). */}
+              {!arena && (
+                <section className="ladder-core">
+                  <h2 className="section">core</h2>
+                  <ol className="targets targets-core">
+                    {core.map((l) => (
+                      <LevelCard key={l.number} lvl={l} active={l.number === activeNumber} solved={solved.has(l.number)} onSelect={setSelected} />
+                    ))}
+                  </ol>
+                </section>
+              )}
 
               {arena
-                ? <ArenaFocus level={selectedLevel} />
+                ? <ArenaFocus level={selectedLevel} levels={core} activeNumber={activeNumber} onSelect={setSelected} solved={solved} />
                 : <Guide key={activeNumber ?? 'none'} level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} signedIn={!!me} solved={activeNumber !== null && solved.has(activeNumber)} onSolved={reloadProgress} />}
             </div>
 

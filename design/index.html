@@ -14,7 +14,7 @@
 <div class="topbar">
   <header class="rule">
     <span class="name">BreakBox <span class="d">// design sheet</span></span>
-    <span class="rev">living sheet &middot; Sprint 2 &middot; the arms race + the adaptive arena, built</span>
+    <span class="rev">living sheet &middot; Sprint 2 &middot; the arms race + the in-arena boss fight (Levels 1-2 live), built</span>
     <span class="sig" title="my mark: MAH6">0x4D414836</span>
   </header>
   <nav class="tabs" role="tablist" aria-label="sections">
@@ -415,7 +415,7 @@
     </figure>
 <figure data-status="built" data-sprint="2">
       <div class="fig-tab">Arena</div>
-      <div class="fig-media"><svg class="dg glassy" viewBox="0 0 960 540" role="img" aria-label="The arena, drawn as the launcher transformed. A toggle flips the launcher into the arena, which re-keys the whole page to the warden and swaps the run-guide for The Hexwarden, drawn as a horned hexagonal watcher with eyes and a rage core, watching the level the player has chosen. On the right the ladder of levels is shown as the targets he guards, with the chosen Level 1 marked in the arena and the focus, and the advanced preview hidden. A note says the arena is a mode of the launcher, not a page, that the foundation is built, and that the in-arena crack is phase 2 and the warden brain is phase 3.">
+      <div class="fig-media"><svg class="dg glassy" viewBox="0 0 960 540" role="img" aria-label="The arena, drawn as the launcher transformed. A toggle flips the launcher into the arena, which re-keys the whole page to the warden and swaps the run-guide for The Hexwarden, drawn as a horned hexagonal watcher with eyes and a rage core, watching the level the player has chosen. On the right the ladder of levels is shown as the targets he guards, with the chosen Level 1 marked in the arena and the focus, and the advanced preview hidden. A note says the arena is a mode of the launcher, not a page, that Levels 1 and 2 are cracked live here with the real app and the flag, and that the warden's full server-side brain is a later phase.">
   <rect class="win" x="16" y="12" width="928" height="516" rx="6"/>
   <rect class="box" x="16" y="12" width="928" height="28" rx="6"/>
   <circle cx="34" cy="26" r="3" fill="#8aa2bd"/><circle cx="46" cy="26" r="3" fill="#8aa2bd"/><circle cx="58" cy="26" r="3" fill="#8aa2bd"/>
@@ -461,11 +461,11 @@
   <text class="t-xs mut" x="480" y="404">the advanced &ldquo;later sprints&rdquo; is hidden: the arena fights the built levels.</text>
 
   <rect class="ctrlbox" x="40" y="480" width="880" height="40" rx="5"/>
-  <text class="t-xs ctrl" x="56" y="500">The arena is a MODE of the launcher, not a page. The foundation is built: transform, warden, focused level.</text>
-  <text class="t-xs mut" x="56" y="516">The in-arena crack (a level's real IL / C#) is Phase 2; the warden brain (rage + the server-side wall) is Phase 3.</text>
+  <text class="t-xs ctrl" x="56" y="500">The arena is a MODE of the launcher, not a page. Built + live: the transform, the warden, the dnSpy, the real app + flag.</text>
+  <text class="t-xs mut" x="56" y="516">Crack the real code in the browser, run it on the server, unlock the real app for its BR flag. The warden's full brain is Phase 4.</text>
 </svg></div>
-      <figcaption><b>Level-Experimental: the adaptive arena.</b> Enter it and the whole console shifts into experimental mode: a server-decided duel against an adversary that models how you attack, shifts to the technique you avoid, reasons out loud through a live MAPE-K loop, remembers you across sessions, and rubber-bands to your edge, until it goes server-side where no move on your machine wins. Deterministic, no API cost. Built.</figcaption>
-      <div class="pophint">It learns your style and shifts the defence to your blind spot, live.</div>
+      <figcaption><b>The arena: the Hexwarden boss fight.</b> Flip one toggle and the launcher turns into the arena: the whole page re-keys to the warden's red and the run-guide becomes The Hexwarden, the anti-cheat personified, watching the level you chose. Levels 1 and 2 are cracked live here. You read or reverse the real check in the in-arena dnSpy, run your patch on the server, then unlock the level's real app with the key you recovered to earn the BR flag and clear the rung. Patch the check and the app opens for any key, which proves the lock is dead, but the warden keeps the flag. The server enforces the order and decides every win. Built; his full server-side rage and his watch over your every move are Phase 4.</figcaption>
+      <div class="pophint">Crack it live while he watches; the real app only opens for the key you actually recover.</div>
     </figure>
 </div>
   </div>
@@ -473,7 +473,7 @@
     <h3>What the Console provides</h3>
     <div class="comp"><h4>Attack &rarr; control &rarr; standard correlation<span class="tag">Sprint 2</span></h4><p>Every event is mapped live to the control that stopped it and the standard it satisfies: OWASP Top 10, ASVS Level 2, and MITRE ATT&amp;CK techniques. An attack is never just a red line, it is evidence against a published benchmark.</p></div>
     <div class="comp"><h4>Full DB operations: the live schema + deep CRUD<span class="tag">built</span></h4><p>Backed by the real <code>breakbox.db</code> (SQLite), whose tables are created by an EF Core migration from <code>BreakBoxDbContext</code>. Browse every table, add, edit and delete records, and manage users and roles, admin-only and audited. The same Console points at MySQL or the Render deploy with one config value.</p></div>
-    <div class="comp"><h4>Level-Experimental: the adaptive arena<span class="tag">built</span></h4><p>An in-app, server-decided duel against an adaptive adversary. It models how you attack, shifts the defence to the technique you lean away from, escalates as you diversify, and runs a live MAPE-K loop you can watch reason about you. It remembers you across sessions and opens the next duel already countering your style, and it rubber-bands to sit at your edge. No trained model and no API cost: Moving Target Defence driven by a player model. Enter it and the whole app shifts into experimental mode.</p></div>
+    <div class="comp"><h4>The arena: the Hexwarden boss fight<span class="tag">built</span></h4><p>The arena is a mode of the launcher, not a page: one toggle re-keys the whole app to the warden and swaps the run-guide for The Hexwarden watching your chosen level. Levels 1 and 2 are cracked live inside it. The in-arena dnSpy serves the level's real code, a server-side run decides whether the gate fell, and the level's real app unlocks only for the key you recover, handing you the BR flag to submit. A patch opens the app but earns no flag, and the server enforces the ladder and grants every win. The adaptive engine that models how you play is kept underneath and re-points onto these real moves in Phase 4.</p></div>
     <div class="comp"><h4>Purple-team split view<span class="tag">built</span></h4><p>The attacker's payload and the defence's exact response to the same event, side by side. The two halves of BreakBox on one screen, which is the whole reason I built both.</p></div>
     <div class="comp"><h4>Tamper-evident audit log<span class="tag">Sprint 3</span></h4><p>A hash-chained, append-only audit trail: each row carries a hash of the previous row, so an intruder who gets in cannot quietly erase or rewrite what they did without breaking the chain.</p></div>
     <div class="comp"><h4>Detection rules engine<span class="tag">Sprint 3</span></h4><p>A small rules engine over the log (failed-login bursts, id-walking, injection patterns) that scores what looks wrong, Sigma-style, without dragging in a heavy SIEM I could not justify on a solo project.</p></div>

@@ -163,6 +163,13 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
     else appState = 'locked';
   }
 
+  // Each level's real app wears its own name and field, so Level 2 is Ledger with a serial, not NoteBox.
+  const meta = ({
+    1: { name: 'NoteBox', field: 'Licence key', placeholder: 'BR-XXXX-XXXX' },
+    2: { name: 'Ledger', field: 'Serial number', placeholder: '000000000' },
+  } as Record<number, { name: string; field: string; placeholder: string }>)[level]
+    ?? { name: 'Target app', field: 'Licence key', placeholder: '' };
+
   return (
     <div className="wb-split">
       <div className="wb">
@@ -240,18 +247,18 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
         <div className="nb-h">
           <span className="nb-title">
             <span className="wb-dots" aria-hidden="true"><i /><i /><i /></span>
-            <span className="wb-file">NoteBox &middot; Activate Premium</span>
+            <span className="wb-file">{meta.name} &middot; Activate</span>
           </span>
           <span className="nb-sub">runs your current build</span>
         </div>
 
         <div className="nb-body">
-          <label className="nb-label" htmlFor="nb-key">Licence key</label>
+          <label className="nb-label" htmlFor="nb-key">{meta.field}</label>
           <div className="nb-row">
             <input
               id="nb-key"
               className="nb-key"
-              placeholder="BR-XXXX-XXXX"
+              placeholder={meta.placeholder}
               value={appKey}
               spellCheck={false}
               autoComplete="off"
@@ -264,10 +271,10 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
           </div>
 
           <div className={`nb-status nb-status-${appState}`}>
-            {appState === 'idle' && 'Premium is locked. Enter a licence key to activate.'}
-            {appState === 'locked' && 'Invalid licence key. The app stayed shut.'}
-            {appState === 'bypass' && 'Premium unlocked - the lock is bypassed, any key opens it now. But you never recovered the real key, so the warden kept the flag.'}
-            {appState === 'unlocked' && 'Premium unlocked with the real licence key. The flag is yours.'}
+            {appState === 'idle' && `The app is locked. Enter a ${meta.field.toLowerCase()} to activate.`}
+            {appState === 'locked' && `Invalid ${meta.field.toLowerCase()}. The app stayed shut.`}
+            {appState === 'bypass' && `Unlocked - the lock is bypassed, any ${meta.field.toLowerCase()} opens it now. But you never recovered the real one, so the warden kept the flag.`}
+            {appState === 'unlocked' && `Unlocked with the real ${meta.field.toLowerCase()}. The flag is yours.`}
             {appState === 'error' && 'Your build would not compile, so the app never ran.'}
           </div>
 

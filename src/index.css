@@ -728,24 +728,28 @@ code {
 /* the workbench opens full-size: a window inside a window. It fills the arena height so the editor is big and
    actually usable; the title bar and run output are fixed, and Monaco takes all the room between them. */
 .wb { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 196px); min-height: 540px; }
-.wb-h { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--edge); }
-.wb-file { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--ink); }
+.wb-h { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--edge); background: var(--ground-2); }
+.wb-title { display: inline-flex; align-items: center; gap: 11px; min-width: 0; }
+.wb-dots { display: inline-flex; gap: 5px; flex: none; }
+.wb-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--edge-2); display: block; }
+.wb-file { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.wb-tag { flex: none; font-family: var(--mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); border: 1px solid var(--edge-2); border-radius: 999px; padding: 2px 8px; }
 .wb-h-tools { display: inline-flex; align-items: center; gap: 8px; }
 .wb-reset { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-3); background: transparent; border: 1px solid var(--edge-2); border-radius: var(--radius-sm); padding: 5px 10px; cursor: pointer; }
 .wb-reset:hover { border-color: var(--cyan-line); color: var(--ink-2); }
 .wb-run { font-family: var(--mono); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.02em; color: var(--ground); background: var(--cyan); border: 1px solid var(--cyan-2); border-radius: var(--radius-sm); padding: 6px 15px; cursor: pointer; }
 .wb-run:hover:not(:disabled) { background: var(--cyan-2); }
 .wb-run:disabled { opacity: 0.5; cursor: default; }
-.wb-body { display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: stretch; flex: 1 1 auto; min-height: 0; }
+.wb-body { display: grid; grid-template-columns: 178px minmax(0, 1fr); align-items: stretch; flex: 1 1 auto; min-height: 0; }
 @media (max-width: 760px) { .wb-body { grid-template-columns: 1fr; } }
-.wb-tree { border-right: 1px solid var(--edge); background: var(--ground-2); padding: 10px 0; overflow: auto; min-height: 0; }
-.wb-tree-h { font-family: var(--mono); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); padding: 0 12px 8px; }
-.wb-tree-empty { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-3); padding: 0 12px; }
+.wb-tree { border-right: 1px solid var(--edge); background: var(--ground-2); padding: 9px 0; overflow: auto; min-height: 0; }
+.wb-tree-h { font-family: var(--mono); font-size: 0.54rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); padding: 0 12px 7px; }
+.wb-tree-empty { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-3); padding: 0 12px; }
 .wb-tree-list { list-style: none; margin: 0; padding: 0; }
-.wb-method { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; width: 100%; text-align: left; background: transparent; border: none; border-left: 2px solid transparent; padding: 5px 12px; cursor: pointer; font-family: var(--mono); font-size: 0.74rem; color: var(--ink-2); }
+.wb-method { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; width: 100%; text-align: left; background: transparent; border: none; border-left: 2px solid transparent; padding: 3px 12px; cursor: pointer; font-family: var(--mono); font-size: 0.68rem; line-height: 1.5; color: var(--ink-2); }
 .wb-method:hover { background: var(--cyan-soft); border-left-color: var(--cyan); color: var(--ink); }
 .wb-method-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wb-method-line { color: var(--ink-3); font-size: 0.64rem; flex: none; }
+.wb-method-line { color: var(--ink-3); font-size: 0.56rem; flex: none; }
 .wb-editor { position: relative; min-height: 0; min-width: 0; background: #1e1e1e; }
 .wb-editor-loading { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 380px; font-family: var(--mono); font-size: 0.74rem; color: var(--ink-3); }
 .wb-term { flex: none; border-top: 1px solid var(--edge); background: var(--ground-2); padding: 12px 14px; font-family: var(--mono); font-size: 0.74rem; line-height: 1.6; max-height: 230px; overflow: auto; }

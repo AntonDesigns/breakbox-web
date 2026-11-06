@@ -40,7 +40,8 @@ export default function MonacoEditor({ value, onChange, onReady }: Readonly<{
       height="100%"
       loading={<div className="wb-editor-loading">loading the editor...</div>}
       options={{
-        fontSize: 13,
+        fontSize: 14,
+        lineHeight: 21,
         fontFamily: MONO,
         minimap: { enabled: false },
         scrollBeyondLastLine: false,
@@ -48,7 +49,7 @@ export default function MonacoEditor({ value, onChange, onReady }: Readonly<{
         tabSize: 4,
         renderLineHighlight: 'line',
         smoothScrolling: true,
-        padding: { top: 10, bottom: 10 },
+        padding: { top: 12, bottom: 12 },
       }}
     />
   );

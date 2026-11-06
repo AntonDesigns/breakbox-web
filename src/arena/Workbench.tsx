@@ -102,7 +102,11 @@ export function Workbench({ level, onActivity }: Readonly<{
   return (
     <div className="wb">
       <div className="wb-h">
-        <span className="wb-file">{loading ? 'opening target...' : fileName}</span>
+        <span className="wb-title">
+          <span className="wb-dots" aria-hidden="true"><i /><i /><i /></span>
+          <span className="wb-file">{loading ? 'opening target...' : fileName}</span>
+          <span className="wb-tag">dnSpy-lite</span>
+        </span>
         <span className="wb-h-tools">
           {edited && <button type="button" className="wb-reset" onClick={reset}>reset</button>}
           <button type="button" className="wb-run" onClick={run} disabled={loading || running}>

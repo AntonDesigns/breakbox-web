@@ -17,12 +17,13 @@ const atLeast = (current: HexState, floor: HexState): HexState => (RANK[current]
 
 interface FeedLine { id: number; text: string; tone: 'watch' | 'hit' | 'hold' | 'crack'; }
 
-export function ArenaFocus({ level, levels, activeNumber, onSelect, solved }: Readonly<{
+export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSolved }: Readonly<{
   level: Level | null;
   levels: Level[];
   activeNumber: number | null;
   onSelect: (n: number) => void;
   solved: Set<number>;
+  onSolved?: (level: number) => void;
 }>) {
   const [hex, setHex] = useState<HexState>('contempt');
   const [rage, setRage] = useState(0);
@@ -77,6 +78,25 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved }: Re
         setRage(9);
         add('the gate fell - you are through', 'crack');
         break;
+      case 'launch':
+        provoke('enraged');
+        add('he watched you run the app', 'hit');
+        break;
+      case 'bypass':
+        setHex('wrath');
+        setRage(9);
+        add('the lock is bypassed - any key opens it. he is furious, but he kept the flag', 'crack');
+        break;
+      case 'unlocked':
+        setHex('wrath');
+        setRage(9);
+        add('you recovered the real key - the app is genuinely yours', 'crack');
+        break;
+      case 'solved':
+        setHex('wrath');
+        setRage(9);
+        add('the flag is submitted - this rung is broken', 'crack');
+        break;
     }
   }, []);
 
@@ -120,7 +140,7 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved }: Re
       </aside>
 
       <div className="af-main">
-        {level && level.available && <Workbench key={level.number} level={level.number} onActivity={onActivity} />}
+        {level && level.available && <Workbench key={level.number} level={level.number} onActivity={onActivity} onSolved={onSolved} />}
         {level && !level.available && (
           <div className="wb">
             <div className="wb-h"><span className="wb-file">{level.name} &middot; in-arena workbench</span></div>

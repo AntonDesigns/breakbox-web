@@ -403,7 +403,7 @@ export default function App() {
               )}
 
               {arena
-                ? <ArenaFocus level={selectedLevel} levels={core} activeNumber={activeNumber} onSelect={setSelected} solved={solved} />
+                ? <ArenaFocus level={selectedLevel} levels={core} activeNumber={activeNumber} onSelect={setSelected} solved={solved} onSolved={reloadProgress} />
                 : <Guide key={activeNumber ?? 'none'} level={selectedLevel} prereqDone={prereqDone} setPrereqDone={setPrereqDone} signedIn={!!me} solved={activeNumber !== null && solved.has(activeNumber)} onSolved={reloadProgress} />}
             </div>
 

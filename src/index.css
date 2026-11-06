@@ -669,10 +669,12 @@ code {
 /* arena worktop: the warden takes the big left column, the ladder moves right, the chosen level focused */
 /* Phase 2: the workbench is the star, so the ladder narrows to a left rail (the level switcher) and the
    arena-focus column goes wide to hold the warden + the in-arena workbench. */
-.app.arena-on .worktop { grid-template-columns: 216px minmax(0, 1fr); align-items: start; }
-.app.arena-on .ladder-core { grid-column: 1; grid-row: 1; }
+.app.arena-on .worktop { grid-template-columns: 240px minmax(0, 1fr); align-items: start; }
+.app.arena-on .ladder-core { grid-column: 1; grid-row: 1; min-width: 0; }
 .app.arena-on .arena-focus { grid-column: 2; grid-row: 1; }
-.app.arena-on .targets-core { grid-template-columns: 1fr; }   /* a single vertical rail of levels in the arena */
+/* a single vertical rail of levels in the arena. minmax(0,1fr) (not a bare 1fr) + min-width:0 lets the cards
+   shrink to the rail; a bare 1fr keeps the cards' 2-column min-content width, so they spill over the workbench. */
+.app.arena-on .targets-core { grid-template-columns: minmax(0, 1fr); flex: none; min-width: 0; grid-auto-rows: auto; }
 @media (max-width: 920px) {
   .app.arena-on .worktop { grid-template-columns: 1fr; }
   .app.arena-on .arena-focus, .app.arena-on .ladder-core { grid-column: auto; grid-row: auto; }

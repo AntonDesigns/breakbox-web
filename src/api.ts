@@ -61,7 +61,8 @@ export async function downloadTarget(level: number, filename?: string, features?
 
 // What the server returns for a flag submission: whether it was right, the level's new status, and how
 // many attempts the player has made. Decided server-side, so the UI cannot fake a solve.
-export interface SubmitResult { correct: boolean; status: string; attempts: number; }
+// An arena flag that clears a level also ends that fight, so the warden's last word rides along (Phase 4).
+export interface SubmitResult { correct: boolean; status: string; attempts: number; warden?: WardenView | null; }
 
 // Submit a flag for a level. Credentialed, so the server ties the attempt to the signed-in player; it
 // answers 401 when signed out. The server checks the flag against the exact target it issued.
@@ -131,7 +132,13 @@ export async function arenaMove(move: string): Promise<ArenaState> {
 
 // One method in the served source, for the method tree: its name, a readable signature, and the 1-based line.
 export interface WorkbenchMethod { name: string; signature: string; line: number; }
-export interface WorkbenchSource { level: number; fileName: string; source: string; methods: WorkbenchMethod[]; }
+export interface WorkbenchSource {
+  level: number;
+  fileName: string;
+  source: string;
+  methods: WorkbenchMethod[];
+  warden?: WardenView | null;   // opening a level begins the fight: his greeting (Phase 4)
+}
 
 export async function fetchWorkbenchSource(level: number): Promise<WorkbenchSource> {
   const n = GENERATABLE_LEVELS.find((lvl) => lvl === Math.trunc(level));
@@ -144,7 +151,13 @@ export async function fetchWorkbenchSource(level: number): Promise<WorkbenchSour
 // One compiler message for the build panel. A run result: whether it built, whether the gate fell, the
 // narration lines for the terminal, and any build diagnostics (populated only when compiled is false).
 export interface PatchDiagnostic { message: string; line: number; isError: boolean; }
-export interface PatchRun { compiled: boolean; cracked: boolean; output: string[]; diagnostics: PatchDiagnostic[]; }
+export interface PatchRun {
+  compiled: boolean;
+  cracked: boolean;
+  output: string[];
+  diagnostics: PatchDiagnostic[];
+  warden?: WardenView | null;   // the server fed him its own verdict on the run
+}
 
 export async function runWorkbenchPatch(level: number, source: string): Promise<PatchRun> {
   const n = GENERATABLE_LEVELS.find((lvl) => lvl === Math.trunc(level));
@@ -170,6 +183,7 @@ export interface AppRun {
   flag: string | null;
   output: string[];
   diagnostics: PatchDiagnostic[];
+  warden?: WardenView | null;   // the server fed him its own verdict on the app
 }
 
 export async function runWorkbenchApp(level: number, source: string, key: string): Promise<AppRun> {
@@ -183,4 +197,65 @@ export async function runWorkbenchApp(level: number, source: string, key: string
   });
   if (!res.ok) throw new Error(`app run failed: ${res.status}`);
   return res.json() as Promise<AppRun>;
+}
+
+// The Hexwarden (Phase 4): his reaction, decided on the server from what he saw. How he looks (mood, rage),
+// what he watches and says, what he thinks the player is doing and the move he expects, whether he called this
+// one or was surprised, his MAPE-K reasoning, and any harassment to throw (never blocking the editor).
+export interface WardenReasoning { monitor: string; analyse: string; plan: string; execute: string; }
+export interface WardenHarass { kind: 'trace' | 'scan' | 'av' | 'flicker' | 'countdown'; text: string; }
+export interface WardenView {
+  mood: 'contempt' | 'enraged' | 'wrath';
+  rage: number;
+  watching: string;
+  line: string;
+  thinks: string;
+  confidence: number;
+  expects: string | null;
+  calledIt: boolean;
+  surprised: boolean;
+  reasoning: WardenReasoning;
+  harass: WardenHarass | null;
+}
+
+// Tell the warden what only the browser sees: a member the player opened, or their source after an edit. The
+// server refuses anything else; every verdict on the lock is reached on the server itself.
+export async function observeWarden(level: number, kind: 'read' | 'edit', member?: string, source?: string): Promise<WardenView> {
+  const n = GENERATABLE_LEVELS.find((lvl) => lvl === Math.trunc(level));
+  if (n === undefined) throw new Error(`invalid level: ${level}`);
+  const res = await fetch(`${API}/arena/warden/observe`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ level: n, kind, member: member ?? null, source: source ?? null }),
+  });
+  if (!res.ok) throw new Error(`observe failed: ${res.status}`);
+  return res.json() as Promise<WardenView>;
+}
+
+// Phase 4b, the honest hacks: the server tests one against the live defence and it wins only if it is genuinely
+// strong enough. The answer says whether it worked, what the lock did, how the verifier behaves when blind, the
+// verdict, the one-line lesson, and the warden's reaction.
+export type HackKind = 'patch' | 'forge' | 'outage';
+export interface HackResult {
+  hack: HackKind;
+  worked: boolean;
+  lockOpened: boolean | null;
+  defence: string;
+  verdict: string;
+  lesson: string;
+  warden: WardenView | null;
+}
+
+export async function runWorkbenchHack(level: number, hack: HackKind, source: string, key: string): Promise<HackResult> {
+  const n = GENERATABLE_LEVELS.find((lvl) => lvl === Math.trunc(level));
+  if (n === undefined) throw new Error(`invalid level: ${level}`);
+  const res = await fetch(`${API}/arena/workbench/hack`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ level: n, hack, source, key }),
+  });
+  if (!res.ok) throw new Error(`hack failed: ${res.status}`);
+  return res.json() as Promise<HackResult>;
 }

@@ -169,19 +169,22 @@ SERVER = "222,118 458,118 470,140 470,540 210,540 210,140"
 SERVER_PALM = "186,306 210,304 210,382 188,380"
 SERVER_CLAWS = ["200,308 236,316 204,320", "198,328 238,335 202,340", "198,348 236,354 202,359",
                 "200,368 230,373 203,377"]
-# every client-side move he has watched you use, now hitting a wall it cannot reach past:
+# every shortcut the arena offers, hitting a wall it cannot reach past. Phase 5 made this the arena's real last
+# rung (decision A), so these are the arena's own honest hacks and what the server really does to each (the first
+# draft, for Level 9 Keysmith, said keygen fails; on a real last rung reversing the key is the honest way through):
 # (tag x, tag y, tag width, move, arrow from, arrow to, arrow y, what happened, caption y, caption anchor)
 MOVES = [
-    (48, 409, 70, "patch", 118, 206, 420, "rejected", 438, "end"),
-    (48, 465, 92, "breakpoint", 140, 206, 476, "nothing to step", 500, "end"),
-    (576, 409, 70, "forge", 576, 474, 420, "signature fails", 438, "start"),
-    (570, 465, 76, "keygen", 570, 474, 476, "key never leaves", 500, "start"),
+    (48, 409, 70, "patch", 118, 206, 420, "no flag", 438, "end"),
+    (48, 465, 92, "brute force", 140, 206, 476, "every try logged", 500, "end"),
+    (576, 409, 70, "forge", 576, 474, 420, "hash mismatch", 438, "start"),
+    (570, 465, 76, "outage", 570, 474, 476, "fails closed", 500, "start"),
 ]
-SERVER_DESC = ("The Hexwarden's final form, the server. He has withdrawn into a server monolith: his horns rise over "
-               "its top, his claws grip its sides and his eyes watch from behind bars in a slit. Where his rage core "
-               "was, a lock seal reads server-signed, ECDSA P-256. The player's client-side moves, patch, breakpoint, "
-               "forge and keygen, all strike the wall and fail. He says: nothing on your machine reaches me. The "
-               "meter is full and the wall holds.")
+SERVER_DESC = ("The Hexwarden's final form, the server, on the arena's last rung. He has withdrawn into a server "
+               "monolith: his horns rise over its top, his claws grip its sides and his eyes watch from behind bars in "
+               "a slit. Where his rage core was, a lock seal reads server-verified, SHA-256: the flag is only ever "
+               "checked on the server. The player's shortcuts, a patch, brute force, a forged flag and a cut database "
+               "line, all strike the wall and fail. He says: nothing on your machine reaches me. Only the honest "
+               "technique gets through, and that is how he falls.")
 
 CAPTIONS = [
     ("1 · contempt", "levels 1-3 · rage 1",
@@ -193,9 +196,10 @@ CAPTIONS = [
     ("3 · wrath", "levels 7-9 · rage 7-9",
      "Nothing held back. New eyes open on his horns and arms, two plates shatter and re-form, and four solid "
      "beams hunt every keystroke."),
-    ("final form · the server", "after level 9",
-     "He withdraws behind the wall. Your patch, breakpoint, forge and keygen all hit it and fail, because the "
-     "check never runs on your machine. The thesis, as a boss."),
+    ("final form · the server", "the arena's last rung",
+     "He withdraws behind the wall. A patch, brute force, a forged flag and a cut database line all hit it and "
+     "fail, because the flag is only ever checked on the server. Only the honest technique gets through, and that "
+     "is how he falls."),
 ]
 
 
@@ -564,14 +568,14 @@ def server_scene():
                      f'<circle cx="442" cy="{y + 9}" r="2.2" fill="{leds[i % len(leds)]}"/>')
     parts += ['<rect x="226" y="285" width="228" height="16" fill="#0e0619" opacity="0.92"/>',
               text(340, 297, "the check never runs on your machine", "#c9b5ef", anchor="middle"),
-              # where his rage core was: a signature now, the licence grant he signs and you cannot forge
+              # where his rage core was: a seal now, the flag hash only the server checks and you cannot forge
               poly(hexagon(340, 360, 46), "#1a0f2e", "#b48cf2", 1.5),
               poly(hexagon(340, 360, 34), "#24163d", "#6b52a8", 0.75),
               '<path d="M 332 359 V 352 A 8 8 0 0 1 348 352 V 359" fill="none" stroke="#b48cf2" stroke-width="3"/>',
               '<rect x="327" y="358" width="26" height="20" rx="3" fill="#b48cf2"/>',
               '<circle cx="340" cy="366" r="2.6" fill="#1a0f2e"/><rect x="339" y="367" width="2" height="6" fill="#1a0f2e"/>',
               '<rect x="226" y="413" width="228" height="16" fill="#0e0619" opacity="0.92"/>',
-              text(340, 425, "server-signed · ECDSA P-256", "#b9a3e8", font=MONO, anchor="middle"),
+              text(340, 425, "server-verified · SHA-256", "#b9a3e8", font=MONO, anchor="middle"),
               '<g fill="#2f1e50" stroke="#7a5fc0" stroke-width="0.5">' + "".join(pair(c) for c in SERVER_CLAWS) + "</g>"]
     for tx, ty, tw, move, x1, x2, ay, what, cy, anchor in MOVES:
         parts += [f'<rect x="{tx}" y="{ty}" width="{tw}" height="22" rx="4" fill="#1a0f2e" stroke="#6b52a8" stroke-width="0.75"/>',
@@ -585,11 +589,11 @@ def server_scene():
              + [f'<rect x="{400 + 28 * i}" y="617" width="24" height="16" rx="2" fill="{"#b48cf2" if i == 8 else "#5b4596"}"/>'
                 for i in range(9)]
              + ['<rect x="652" y="613" width="5" height="24" fill="#e0609a"/>',
-                text(400, 652, "levels 1-9 cleared", "#7a63b4"),
+                text(400, 652, "the last rung", "#7a63b4"),
                 text(648, 652, "the wall holds", "#b48cf2", anchor="end")])
     parts += ['<line x1="384" y1="170" x2="512" y2="230" stroke="#b48cf2" stroke-width="0.8" opacity="0.6"/>',
-              panel(dict(stroke="#6b52a8", head="your move", l1="forge: grant.sig", caret=631,
-                         l2="verify: P-256 fail", status="denied, server-side", status_fill="#e0609a")),
+              panel(dict(stroke="#6b52a8", head="your move", l1="forge: BR{...}", caret=618,
+                         l2="verify: hash fail", status="denied, server-side", status_fill="#e0609a")),
               taunt("his only words", ["“Nothing on", "your machine", "reaches me.”"]),
               topbar(("live · out of reach", "#b48cf2", 516)), "".join(meter), "</svg>"]
     return "\n".join(parts)

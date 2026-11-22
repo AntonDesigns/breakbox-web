@@ -1,0 +1,65 @@
+/* BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
+   Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
+
+   Phase 6: the gauntlet, the warden's rematch. Only draws what the server decided (the run, the rungs, his reason
+   and his belief in each skill) plus the morph between two targets. Every rule is scoped under .af-main, because
+   main.tsx loads index.css after the app's modules and an equally specific rule there would otherwise win. */
+
+.af-main .gt { display: flex; flex-direction: column; gap: 12px; }
+
+.af-main .gt-head { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); }
+.af-main .gt-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.af-main .gt-title { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); }
+.af-main .gt-cycle { margin-left: 8px; color: var(--cyan); }
+.af-main .gt-score { display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 0.68rem; color: var(--ink-3); }
+.af-main .gt-score b { color: var(--ink); font-size: 0.82rem; }
+
+.af-main .gt-rungs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px; }
+.af-main .gt-rung { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border: 1px solid var(--cyan-line); border-radius: var(--radius-sm); min-width: 0; }
+.af-main .gt-rung-name { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-2); }
+.af-main .gt-rung-sub { font-size: 0.62rem; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.af-main .gt-rung.here { border-color: var(--cyan); background: var(--cyan-soft); }
+.af-main .gt-rung.here .gt-rung-name { color: var(--ink); }
+.af-main .gt-rung.broken { border-style: dashed; opacity: 0.6; }
+.af-main .gt-rung.broken .gt-rung-name { text-decoration: line-through; }
+.af-main .gt-rung.last .gt-rung-sub::after { content: " \00b7 the server"; color: var(--cyan); }
+
+.af-main .gt-why { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; font-size: 0.74rem; }
+.af-main .gt-why-h { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cyan); }
+.af-main .gt-why-text { color: var(--ink-2); }
+.af-main .gt-won { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid var(--hard); border-radius: var(--radius-sm); font-size: 0.76rem; color: var(--ink); }
+
+.af-main .gt-mastery { display: grid; gap: 5px; }
+.af-main .gt-skill { display: grid; grid-template-columns: 96px 1fr 76px; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.64rem; color: var(--ink-3); }
+.af-main .gt-bar { position: relative; height: 6px; border-radius: 3px; background: rgba(150, 185, 220, 0.08); }
+.af-main .gt-bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--cyan); transition: width 0.5s ease; }
+.af-main .gt-bar-band { position: absolute; top: -2px; bottom: -2px; border: 1px solid var(--cyan-line); border-radius: 3px; transition: left 0.5s ease, width 0.5s ease; }
+.af-main .gt-skill-pct { text-align: right; }
+
+.af-main .gt-btn { font-family: var(--mono); font-size: 0.7rem; padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--cyan-line); background: var(--cyan-soft); color: var(--ink); cursor: pointer; }
+.af-main .gt-btn:hover:not(:disabled) { border-color: var(--cyan); }
+.af-main .gt-btn:disabled { opacity: 0.5; cursor: default; }
+.af-main .gt-stop { background: transparent; }
+
+.af-main .gt-locked { padding: 18px; border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); color: var(--ink-2); font-size: 0.82rem; }
+.af-main .gt-locked p { margin: 8px 0 12px; }
+
+/* The morph: when he moves the fight to another rung, a scan line sweeps the dnSpy while its content changes, so
+   the swap is felt without a reload or a "Level N" screen. */
+.af-main .wb.wb-morph { position: relative; }
+.af-main .wb.wb-morph::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, transparent 0%, var(--cyan-soft) 48%, var(--cyan) 50%, var(--cyan-soft) 52%, transparent 100%); background-size: 100% 220%; animation: gt-sweep 0.9s ease-in-out 1; opacity: 0.55; }
+.af-main .wb.wb-morph .wb-editor { animation: gt-dip 0.9s ease-in-out 1; }
+@keyframes gt-sweep { from { background-position: 0 100%; } to { background-position: 0 -120%; } }
+@keyframes gt-dip { 0%, 100% { opacity: 1; } 40% { opacity: 0.35; } }
+
+/* The rail's way in and out of the gauntlet. */
+.af-rematch { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; flex: none; }
+.af-rematch-h { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); }
+.af-rematch-note { font-size: 0.7rem; color: var(--ink-3); }
+.af-rematch-btn { font-family: var(--mono); font-size: 0.74rem; padding: 7px 10px; border-radius: var(--radius-sm); border: 1px solid var(--cyan-line); background: var(--cyan-soft); color: var(--ink); cursor: pointer; text-align: left; }
+.af-rematch-btn:hover { border-color: var(--cyan); }
+
+@media (prefers-reduced-motion: reduce) {
+  .af-main .wb.wb-morph::after, .af-main .wb.wb-morph .wb-editor { animation: none; }
+  .af-main .gt-bar-fill, .af-main .gt-bar-band { transition: none; }
+}

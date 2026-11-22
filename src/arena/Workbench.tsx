@@ -2,11 +2,9 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import {
-  fetchWorkbenchSource, observeWarden, runWorkbenchApp, runWorkbenchHack, runWorkbenchPatch, submitFlag,
-  type AppRun, type HackKind, type HackResult, type PatchRun, type WardenView, type WorkbenchMethod,
-} from '../api';
+import type { AppRun, HackKind, HackResult, PatchRun, WardenView, WorkbenchMethod } from '../api';
 import type { EditorJump } from './MonacoEditor';
+import type { Target, WorkbenchPort } from './ports';
 import { TargetApp } from './TargetApp';
 
 // Monaco is heavy, so it is pulled in lazily: the chunk loads the first time the workbench renders (in the
@@ -17,87 +15,114 @@ const MonacoEditor = lazy(() => import('./MonacoEditor'));
 // keystroke.
 const EDIT_PAUSE_MS = 1200;
 
+// How long the morph between two gauntlet targets shows.
+const MORPH_MS = 900;
+
 // The in-arena dnSpy-lite plus the level's REAL app. You read and patch the code on the left, then run the app
 // with a key: patch IsValid and any key opens it (the showcase), or recover the real key and the app hands you
 // the BR{...} flag to submit. The crack, the unlock and the flag are all decided on the server, and since Phase
 // 4 so is the warden: every answer from the server carries his reaction, and the browser only reports what it
-// alone sees (a method opened, an edit) for HIM to judge.
-export function Workbench({ level, onWarden, onSolved }: Readonly<{
-  level: number;
+// alone sees (a method opened, an edit) for HIM to judge. Since Phase 6 it talks through a port, so the same
+// workbench serves the ladder (it fetches its own level) and the gauntlet (the warden hands it each new target,
+// and it morphs in place: same editor, new source, new method map, new check, no reload).
+export function Workbench({ port, target, onWarden }: Readonly<{
+  port: WorkbenchPort;
+  target?: Target | null;
   onWarden: (w: WardenView) => void;
-  onSolved?: (level: number) => void;
 }>) {
-  const [fileName, setFileName] = useState('');
-  const [methods, setMethods] = useState<WorkbenchMethod[]>([]);
-  const [source, setSource] = useState('');
-  const [baseline, setBaseline] = useState('');          // the served source, to detect edits and offer a reset
+  const [shown, setShown] = useState<Target | null>(target ?? null);
+  const [source, setSource] = useState(target?.source ?? '');
+  const [baseline, setBaseline] = useState(target?.source ?? '');   // the served source, to detect edits and reset
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<PatchRun | null>(null);
+  const [morphing, setMorphing] = useState(false);
 
   // The in-arena app (step 1: the licence key) and the flag it earns (step 2).
   const [appKey, setAppKey] = useState('');
   const [app, setApp] = useState<AppRun | null>(null);
   const [appBusy, setAppBusy] = useState(false);
   const [flag, setFlag] = useState('');
-  const [solved, setSolved] = useState(false);
+  const [solved, setSolved] = useState<string | null>(null);
   const [submitMsg, setSubmitMsg] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Phase 4b, the honest hacks.
+  // Phase 4b, the honest hacks (the ladder only).
   const [hack, setHack] = useState<HackResult | null>(null);
   const [hacking, setHacking] = useState<HackKind | null>(null);
 
   const jumpRef = useRef<EditorJump | null>(null);        // reveal a line in the editor (set on editor mount)
-  const lastShown = useRef('');                            // the last source the warden was shown
+  const lastShown = useRef(target?.source ?? '');          // the last source the warden was shown
+  const seenKey = useRef(target?.key ?? '');               // the target that last source belongs to
+
+  // A new target from the gauntlet: swap it in while rendering (React's "adjust state when a prop changes"), so the
+  // editor keeps its model and only its content, map and check change. The first target is not a morph.
+  if (target && target.key !== shown?.key) {
+    setShown(target);
+    setSource(target.source);
+    setBaseline(target.source);
+    setResult(null);
+    setApp(null);
+    setAppKey('');
+    setFlag('');
+    setSolved(null);
+    setSubmitMsg(null);
+    setMorphing(shown !== null);
+  }
 
   // A reaction from the server, if it carried one, goes to the warden's rail.
   const report = useCallback((w: WardenView | null | undefined) => { if (w) onWarden(w); }, [onWarden]);
 
-  // Fetch the level's real source on mount; opening it begins the fight, so his greeting comes with it. The
-  // parent keys this component by level, so a new target remounts it fresh.
+  // The ladder fetches its own target on mount; opening it begins the fight, so his greeting comes with it.
   useEffect(() => {
+    if (!port.open) return undefined;
     let cancelled = false;
-    fetchWorkbenchSource(level)
-      .then((ws) => {
+    port.open()
+      .then(({ target: t, warden }) => {
         if (cancelled) return;
-        setFileName(ws.fileName);
-        setMethods(ws.methods);
-        setSource(ws.source);
-        setBaseline(ws.source);
-        lastShown.current = ws.source;
-        setLoading(false);
-        report(ws.warden);
+        setShown(t);
+        setSource(t.source);
+        setBaseline(t.source);
+        report(warden);
       })
-      .catch((e: unknown) => {
-        if (cancelled) return;
-        setLoadError(String(e));
-        setLoading(false);
-      });
+      .catch((e: unknown) => { if (!cancelled) setLoadError(String(e)); });
     return () => { cancelled = true; };
-  }, [level, report]);
+  }, [port, report]);
+
+  useEffect(() => {
+    if (!morphing) return undefined;
+    const timer = setTimeout(() => setMorphing(false), MORPH_MS);
+    return () => clearTimeout(timer);
+  }, [morphing]);
+
+  const loading = shown === null;
 
   // Show the warden the player's edit once they pause, and only if it changed since he last saw it: his
-  // forensics on the server decide what the edit actually did.
+  // forensics on the server decide what the edit actually did. A freshly swapped-in target is not an edit.
   useEffect(() => {
-    if (loading || source === lastShown.current) return;
+    if (!shown) return undefined;
+    if (seenKey.current !== shown.key) {
+      seenKey.current = shown.key;
+      lastShown.current = source;
+      return undefined;
+    }
+    if (source === lastShown.current) return undefined;
     const timer = setTimeout(() => {
       lastShown.current = source;
-      observeWarden(level, 'edit', undefined, source).then(report).catch(() => { /* he can miss a beat */ });
+      port.observe('edit', undefined, source).then(report).catch(() => { /* he can miss a beat */ });
     }, EDIT_PAUSE_MS);
     return () => clearTimeout(timer);
-  }, [source, level, loading, report]);
+  }, [source, shown, port, report]);
 
   const openMethod = (m: WorkbenchMethod) => {
     jumpRef.current?.(m.line);
-    observeWarden(level, 'read', m.name).then(report).catch(() => { /* he can miss a beat */ });
+    port.observe('read', m.name).then(report).catch(() => { /* he can miss a beat */ });
   };
 
   const run = async () => {
     setRunning(true);
     try {
-      const r = await runWorkbenchPatch(level, source);
+      const r = await port.run(source);
       lastShown.current = source;
       setResult(r);
       report(r.warden);
@@ -114,7 +139,7 @@ export function Workbench({ level, onWarden, onSolved }: Readonly<{
     setAppBusy(true);
     setSubmitMsg(null);
     try {
-      const r = await runWorkbenchApp(level, source, appKey);
+      const r = await port.app(source, appKey);
       lastShown.current = source;
       setApp(r);
       if (r.genuine && r.flag) setFlag(r.flag);
@@ -126,20 +151,15 @@ export function Workbench({ level, onWarden, onSolved }: Readonly<{
     }
   };
 
-  // Step 2: submit the earned flag; the server verifies it and clears the level.
+  // Step 2: submit the earned flag; the server verifies it (and, in the gauntlet, the fight may morph onward).
   const submit = async () => {
     setSubmitting(true);
     setSubmitMsg(null);
     try {
-      const res = await submitFlag(level, flag.trim());
+      const res = await port.submit(flag.trim());
       report(res.warden);
-      if (res.correct) {
-        setSolved(true);
-        setSubmitMsg('Flag accepted. This level is cleared, the next rung is open.');
-        onSolved?.(level);
-      } else {
-        setSubmitMsg('That flag is not right for this target.');
-      }
+      if (res.correct) setSolved(res.solved ?? 'Cleared.');
+      setSubmitMsg(res.message);
     } catch (e: unknown) {
       setSubmitMsg(`submit failed: ${String(e)}`);
     } finally {
@@ -149,12 +169,12 @@ export function Workbench({ level, onWarden, onSolved }: Readonly<{
 
   // Phase 4b: try a hack against the live defence. The server decides whether it was strong enough.
   const tryHack = async (kind: HackKind) => {
+    if (!port.hack) return;
     setHacking(kind);
     try {
-      const r = await runWorkbenchHack(level, kind, source, appKey);
+      const r = await port.hack(kind, source, appKey);
       setHack(r);
       report(r.warden);
-      if (r.worked) onSolved?.(level);
     } catch (e: unknown) {
       setHack({ hack: kind, worked: false, lockOpened: null, defence: '', verdict: `hack failed: ${String(e)}`, lesson: '', warden: null });
     } finally {
@@ -173,6 +193,7 @@ export function Workbench({ level, onWarden, onSolved }: Readonly<{
     );
   }
 
+  const level = shown?.level ?? 1;
   const edited = source !== baseline && !loading;
   const errors = result?.diagnostics.filter((d) => d.isError) ?? [];
 
@@ -195,11 +216,11 @@ export function Workbench({ level, onWarden, onSolved }: Readonly<{
 
   return (
     <div className="wb-split">
-      <div className="wb">
+      <div className={`wb${morphing ? ' wb-morph' : ''}`}>
         <div className="wb-h">
           <span className="wb-title">
             <span className="wb-dots" aria-hidden="true"><i /><i /><i /></span>
-            <span className="wb-file">{loading ? 'opening target...' : fileName}</span>
+            <span className="wb-file">{shown ? shown.fileName : 'opening target...'}</span>
             <span className="wb-tag">dnSpy-lite</span>
           </span>
           <span className="wb-h-tools">
@@ -213,11 +234,11 @@ export function Workbench({ level, onWarden, onSolved }: Readonly<{
         <div className="wb-body">
           <aside className="wb-tree" aria-label="methods">
             <div className="wb-tree-h">methods</div>
-            {methods.length === 0
+            {!shown || shown.methods.length === 0
               ? <div className="wb-tree-empty">{loading ? 'reading...' : 'no methods'}</div>
               : (
                 <ul className="wb-tree-list">
-                  {methods.map((m) => (
+                  {shown.methods.map((m) => (
                     <li key={`${m.name}:${m.line}`}>
                       <button type="button" className="wb-method" onClick={() => openMethod(m)} title={m.signature}>
                         <span className="wb-method-name">{m.name}</span>
@@ -264,34 +285,36 @@ export function Workbench({ level, onWarden, onSolved }: Readonly<{
           )}
         </div>
 
-        {/* Phase 4b: the honest hacks, tested on the server against the live defence. */}
-        <div className="hk" aria-label="honest hacks">
-          <div className="hk-h">
-            <span className="hk-title">honest hacks</span>
-            <span className="hk-sub">each one is tested on the server; it only wins if it is genuinely strong enough</span>
-          </div>
-          <div className="hk-row">
-            <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('patch')}>
-              {hacking === 'patch' ? 'patching...' : 'patch the check'}
-            </button>
-            <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('forge')}>
-              {hacking === 'forge' ? 'forging...' : "forge the server's answer"}
-            </button>
-            <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('outage')}>
-              {hacking === 'outage' ? 'cutting...' : 'cut the database line'}
-            </button>
-          </div>
-          {hack && (
-            <div className={`hk-res ${hack.worked ? 'won' : 'held'}`} role="status">
-              <div className="hk-res-h">
-                <b>{hack.worked ? 'IT WORKED' : 'THE DEFENCE HELD'}</b>
-                {hack.defence && <span className="hk-def">verifier {hack.defence}</span>}
-              </div>
-              <div className="hk-verdict">{hack.verdict}</div>
-              {hack.lesson && <div className="hk-lesson">{hack.lesson}</div>}
+        {/* Phase 4b: the honest hacks, tested on the server against the live defence (the ladder only). */}
+        {port.hack && (
+          <div className="hk" aria-label="honest hacks">
+            <div className="hk-h">
+              <span className="hk-title">honest hacks</span>
+              <span className="hk-sub">each one is tested on the server; it only wins if it is genuinely strong enough</span>
             </div>
-          )}
-        </div>
+            <div className="hk-row">
+              <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('patch')}>
+                {hacking === 'patch' ? 'patching...' : 'patch the check'}
+              </button>
+              <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('forge')}>
+                {hacking === 'forge' ? 'forging...' : "forge the server's answer"}
+              </button>
+              <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('outage')}>
+                {hacking === 'outage' ? 'cutting...' : 'cut the database line'}
+              </button>
+            </div>
+            {hack && (
+              <div className={`hk-res ${hack.worked ? 'won' : 'held'}`} role="status">
+                <div className="hk-res-h">
+                  <b>{hack.worked ? 'IT WORKED' : 'THE DEFENCE HELD'}</b>
+                  {hack.defence && <span className="hk-def">verifier {hack.defence}</span>}
+                </div>
+                <div className="hk-verdict">{hack.verdict}</div>
+                {hack.lesson && <div className="hk-lesson">{hack.lesson}</div>}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* The level's real app, run server-side against whatever key you type, on your current build. */}
@@ -354,7 +377,7 @@ export function Workbench({ level, onWarden, onSolved }: Readonly<{
                   </button>
                 </div>
               )}
-              {solved && <div className="br-solved">Level {level} cleared.</div>}
+              {solved && <div className="br-solved">{solved}</div>}
               {submitMsg && <div className="br-msg">{submitMsg}</div>}
             </div>
           )}

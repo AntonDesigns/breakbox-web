@@ -39,14 +39,15 @@
 @keyframes hz-scan { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
 
 /* Phase 4 made the app and the hacks taller, so the split no longer fits one screen. Let it grow (the page
-   scrolls) and give the dnSpy a real minimum, instead of squeezing the editor to a few lines. */
-.wb-split { height: auto; }
-.wb-split .wb { flex: none; min-height: 640px; }
-.wb-split .wb-body { min-height: 360px; }
+   scrolls) and give the dnSpy a real minimum, instead of squeezing the editor to a few lines. Scoped under .af-main
+   on purpose: main.tsx loads index.css AFTER the app's modules, so its equally specific ".wb-split .wb" rule would
+   win; the extra class makes these win on specificity whatever order the stylesheets load in. */
+.af-main .wb-split { height: auto; }
+.af-main .wb-split .wb { flex: none; min-height: 640px; }
+.af-main .wb-split .wb-body { min-height: 360px; }
 
-/* The honest hacks panel, under the dnSpy. */
-.hk { flex: none; }
-.hk { border-top: 1px solid var(--glass-brd); padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px; }
+/* The honest hacks panel, under the dnSpy. Scoped to the arena, because the console's Hack tab also uses .hk. */
+.af-main .hk { flex: none; border-top: 1px solid var(--glass-brd); padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px; }
 .hk-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
 .hk-title { font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-2); }
 .hk-sub { font-size: 0.7rem; color: var(--ink-3); }

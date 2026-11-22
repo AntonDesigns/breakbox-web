@@ -326,25 +326,65 @@ def veins(p):
     return f'<g fill="none" stroke="{color}" stroke-width="{width}" opacity="{op}">{body}</g>'
 
 
+# Phase 5: every plate is drawn twice, whole and broken, and the state table only picks which one shows by default
+# (so the sheet looks exactly as designed). In the arena the server's list of broken plates (data-beaten) picks
+# instead, and each fragment carries the direction it flies when the plate shatters (--dx, --dy, --r), so the CSS
+# can burst it out and pull it back into the dashed outline. C and D were only ever drawn cracked, so their broken
+# layer is cut from the plate's own outline.
+SHATTER_TAG = {"C": ("licence · reforming", 140), "D": ("integrity · reforming", 152)}
+HIDE = ' display="none"'
+
+
+def auto_shatter(points):
+    (x1, y1), (x2, _), (x3, y3), (x4, _) = [tuple(float(v) for v in q.split(",")) for q in points.split()]
+    cuts = [0.27, 0.55, 0.78]
+    tops = [x1] + [x1 + (x2 - x1) * c for c in cuts] + [x2]
+    bots = [x4] + [x4 + (x3 - x4) * c for c in cuts] + [x3]
+    r = lambda v: f"{round(v, 1):g}"
+    frags = [f"{r(tops[i] + 2)},{r(y1 + 1)} {r(tops[i + 1] - 2)},{r(y1 + 1)} {r(bots[i + 1] - 2)},{r(y3 - 1)} "
+             f"{r(bots[i] + 2)},{r(y3 - 1)}" for i in range(4)]
+    mid = (y1 + y3) / 2
+    cracks = [f"{r(tops[k])},{r(y1 - 1)} {r(tops[k] - 3)},{r(mid - 3)} {r(bots[k] + 2)},{r(mid + 3)} {r(bots[k])},{r(y3 + 1)}"
+              for k in (1, 2, 3)]
+    ghost = f"{r(x1 - 3)},{r(y1 - 3)} {r(x2 + 3)},{r(y1 - 3)} {r(x3 + 3)},{r(y3 + 2)} {r(x4 - 3)},{r(y3 + 2)}"
+    return frags, cracks, ghost
+
+
+def frag_motion(points, i):
+    xs = [float(q.split(",")[0]) for q in points.split()]
+    cx = sum(xs) / len(xs)
+    dx = (cx - 340) * 0.16 + (3 if cx >= 340 else -3)
+    dy = -(9 + 5 * (i % 2))
+    turn = (14 + 5 * i) * (1 if i % 2 == 0 else -1)
+    return f"--dx:{dx:.1f}px;--dy:{dy}px;--r:{turn}deg"
+
+
 def plates(p):
     out = []
     for key in "ABCD":
         d, state = PLATES[key], p["plates"][key]
-        if state == "shattered":
-            frags = "".join(f'<polygon points="{f}"/>' for f in d["frags"])
-            cracks = "".join(f'<polyline points="{c}"/>' for c in d["cracks"])
-            out += [f'<g fill="#2e1d4f" stroke="{p["helm"]}" stroke-width="0.6">{frags}</g>',
-                    f'<g fill="none" stroke="#e0609a" stroke-width="1.3">{cracks}</g>',
-                    f'<polygon points="{d["ghost"]}" fill="none" stroke="#d07af0" stroke-width="1.3" stroke-dasharray="5 3"/>',
-                    f'<rect x="{340 - d["tagw"] / 2:g}" y="{d["y"] - 11}" width="{d["tagw"]}" height="15" rx="2" fill="#140a24" opacity="0.88"/>',
-                    text(340, d["y"], d["tag"], "#f6ecff", font=MONO, anchor="middle")]
+        broken = state == "shattered"
+        if "frags" in d:
+            frags, cracks, ghost, tag, tagw = d["frags"], d["cracks"], d["ghost"], d["tag"], d["tagw"]
         else:
-            out.append(poly(d["poly"], "#22153d", p["plate_stroke"], 0.6))
-            if state == "cracked":
-                out.append(f'<polyline points="{d["crack"]}" fill="none" stroke="#e0609a" stroke-width="1.1"/>')
-            out.append(text(340, d["y"], d["name"], p["label"], font=MONO, anchor="middle"))
-    if "shattered" in p["plates"].values():
-        out.append('<g fill="#d07af0">' + "".join(f'<polygon points="{s}"/>' for s in SHARDS) + "</g>")
+            (frags, cracks, ghost), (tag, tagw) = auto_shatter(d["poly"]), SHATTER_TAG[key]
+        whole = [poly(d["poly"], "#22153d", p["plate_stroke"], 0.6)]
+        if state == "cracked":
+            whole.append(f'<polyline points="{d["crack"]}" fill="none" stroke="#e0609a" stroke-width="1.1"/>')
+        whole.append(text(340, d["y"], d["name"], p["label"], font=MONO, anchor="middle"))
+        pieces = "".join(f'<polygon class="hx-frag" style="{frag_motion(f, i)}" points="{f}"/>' for i, f in enumerate(frags))
+        lines = "".join(f'<polyline points="{c}"/>' for c in cracks)
+        shards = [f'<g fill="#2e1d4f" stroke="{p["helm"]}" stroke-width="0.6">{pieces}</g>',
+                  f'<g fill="none" stroke="#e0609a" stroke-width="1.3">{lines}</g>',
+                  f'<polygon class="hx-ghost" points="{ghost}" fill="none" stroke="#d07af0" stroke-width="1.3" stroke-dasharray="5 3"/>',
+                  f'<rect x="{340 - tagw / 2:g}" y="{d["y"] - 11}" width="{tagw}" height="15" rx="2" fill="#140a24" opacity="0.88"/>',
+                  text(340, d["y"], tag, "#f6ecff", font=MONO, anchor="middle")]
+        out.append(f'<g class="hx-plate" data-plate="{d["name"]}">'
+                   f'<g class="hx-whole"{HIDE if broken else ""}>{"".join(whole)}</g>'
+                   f'<g class="hx-broken"{"" if broken else HIDE}>{"".join(shards)}</g></g>')
+    loose = "".join(f'<polygon points="{x}"/>' for x in SHARDS)
+    any_broken = "shattered" in p["plates"].values()
+    out.append(f'<g class="hx-shards" fill="#d07af0"{"" if any_broken else HIDE}>{loose}</g>')
     return "".join(out)
 
 
@@ -398,18 +438,29 @@ def eye(cx, cy, r, mode, main=False):
             f'<ellipse cx="{cx}" cy="{cy}" rx="{max(0.8, r * 0.23):.1f}" ry="{r * 0.7:.1f}" fill="#12081f"/>')
 
 
+def watcher(svg, n):
+    # Phase 5: one eye as its own group, with its place in the opening order (--n: 0 opens first, near 1 last), so
+    # the arena can open his eyes one by one as the server's rage climbs. Outside the arena --n does nothing.
+    return f'<g class="hx-eye" style="--n:{n:.3f}">{svg}</g>'
+
+
 def eyes(p):
     mode = p["eyes"]
     out = []
-    for cx, cy, r in VISOR:
-        main = (cx, cy) == (340, 177)
-        if mode == "shut":
-            out.append(eye(cx, cy, r, "lidded" if main else "shut"))
-        else:
-            out.append(eye(cx, cy, r, mode, main))
-    out += [eye(cx, cy, r, mode) for cx, cy, r in BODY_EYES]
+    if mode == "shut":
+        for cx, cy, r in VISOR:
+            out.append(watcher(eye(cx, cy, r, "lidded" if (cx, cy) == (340, 177) else "shut"), 0))
+        out += [watcher(eye(cx, cy, r, mode), 0) for cx, cy, r in BODY_EYES]
+        return "".join(out)
+    # awake: the visor opens from its centre eye outwards, then the body; in wrath those are all open already and
+    # only his wrath eyes (horns, forearms) are still to open
+    visor = sorted(VISOR, key=lambda e: (e[0] - 340) ** 2 + (e[1] - 177) ** 2)
+    order = visor + BODY_EYES
+    for i, (cx, cy, r) in enumerate(order):
+        n = 0 if mode == "wrath" else i / len(order)
+        out.append(watcher(eye(cx, cy, r, mode, (cx, cy) == (340, 177)), n))
     if mode == "wrath":
-        out += [eye(cx, cy, r, "wrath") for cx, cy, r in WRATH_EYES]
+        out += [watcher(eye(cx, cy, r, "wrath"), 0.5 + 0.125 * i) for i, (cx, cy, r) in enumerate(WRATH_EYES)]
     return "".join(out)
 
 
@@ -423,7 +474,7 @@ DISSOLVE = ("".join(f'<rect x="{x}" y="{y}" width="{s}" height="{s}" fill="{c}"/
 
 
 def beams(p):
-    return "".join(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{c}" stroke-width="{w}" '
+    return "".join(f'<line class="hx-beam" x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{c}" stroke-width="{w}" '
                    f'stroke-dasharray="{dash}" opacity="{op}"/>' for x1, y1, x2, y2, c, op, dash, w in p["beams"])
 
 
@@ -501,9 +552,11 @@ def server_scene():
              poly(SERVER, "#140a24", "#5b4596", 1),
              text(340, 140, "server-side", "#8a72c4", anchor="middle", extra=";letter-spacing:3px"),
              poly("240,150 440,150 436,190 244,190", "#0e0619", "#5b4596", 0.6)]
-    parts += [eye(cx, cy - 12, r, "cold") for cx, cy, r in VISOR]
+    parts += [watcher(eye(cx, cy - 12, r, "cold"), 0) for cx, cy, r in VISOR]
+    bars = list(range(254, 436, 14))
     parts.append('<g stroke="#2a1a46" stroke-width="2.5">'
-                 + "".join(f'<line x1="{x}" y1="151" x2="{x}" y2="189"/>' for x in range(254, 436, 14)) + "</g>")
+                 + "".join(f'<line class="hx-bar" style="--n:{i / len(bars):.3f}" x1="{x}" y1="151" x2="{x}" y2="189"/>'
+                           for i, x in enumerate(bars)) + "</g>")
     leds = ("#b48cf2", "#4d3780", "#4d3780", "#e0609a", "#b48cf2", "#4d3780")
     for i, y in enumerate(range(206, 530, 26)):
         parts.append(f'<rect x="226" y="{y}" width="228" height="18" rx="2" fill="#1b1030" stroke="#2e2150" stroke-width="0.5"/>'

@@ -3,6 +3,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { type Level, type WardenView } from '../api';
+import { BossBar } from './BossBar';
 import { HarassLayer, type HarassItem } from './Harassment';
 import { Hexwarden } from './Hexwarden';
 import { Workbench } from './Workbench';
@@ -78,7 +79,14 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSo
             <span className="label">the warden</span>
             {level && <span className="af-watch">watching &middot; {warden?.watching || level.name}</span>}
           </div>
-          <Hexwarden state={warden?.mood ?? 'contempt'} rage={warden?.rage ?? 0} watching={{ line: warden?.watching ?? '' }} line={warden?.line} />
+          <Hexwarden
+            state={warden?.form ?? 'contempt'}
+            rage={warden?.rage ?? 0}
+            watching={{ line: warden?.watching ?? '' }}
+            beaten={warden?.broken}
+            shattered={warden?.shattered}
+            line={warden?.line}
+          />
         </div>
 
         {warden && (
@@ -129,6 +137,7 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSo
       </aside>
 
       <div className="af-main">
+        {level && warden && <BossBar warden={warden} level={level.number} />}
         {level && level.available && <Workbench key={level.number} level={level.number} onWarden={onWarden} onSolved={onSolved} />}
         {level && !level.available && (
           <div className="wb">

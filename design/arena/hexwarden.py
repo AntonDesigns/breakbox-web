@@ -169,19 +169,22 @@ SERVER = "222,118 458,118 470,140 470,540 210,540 210,140"
 SERVER_PALM = "186,306 210,304 210,382 188,380"
 SERVER_CLAWS = ["200,308 236,316 204,320", "198,328 238,335 202,340", "198,348 236,354 202,359",
                 "200,368 230,373 203,377"]
-# every client-side move he has watched you use, now hitting a wall it cannot reach past:
+# every shortcut the arena offers, hitting a wall it cannot reach past. Phase 5 made this the arena's real last
+# rung (decision A), so these are the arena's own honest hacks and what the server really does to each (the first
+# draft, for Level 9 Keysmith, said keygen fails; on a real last rung reversing the key is the honest way through):
 # (tag x, tag y, tag width, move, arrow from, arrow to, arrow y, what happened, caption y, caption anchor)
 MOVES = [
-    (48, 409, 70, "patch", 118, 206, 420, "rejected", 438, "end"),
-    (48, 465, 92, "breakpoint", 140, 206, 476, "nothing to step", 500, "end"),
-    (576, 409, 70, "forge", 576, 474, 420, "signature fails", 438, "start"),
-    (570, 465, 76, "keygen", 570, 474, 476, "key never leaves", 500, "start"),
+    (48, 409, 70, "patch", 118, 206, 420, "no flag", 438, "end"),
+    (48, 465, 92, "brute force", 140, 206, 476, "every try logged", 500, "end"),
+    (576, 409, 70, "forge", 576, 474, 420, "hash mismatch", 438, "start"),
+    (570, 465, 76, "outage", 570, 474, 476, "fails closed", 500, "start"),
 ]
-SERVER_DESC = ("The Hexwarden's final form, the server. He has withdrawn into a server monolith: his horns rise over "
-               "its top, his claws grip its sides and his eyes watch from behind bars in a slit. Where his rage core "
-               "was, a lock seal reads server-signed, ECDSA P-256. The player's client-side moves, patch, breakpoint, "
-               "forge and keygen, all strike the wall and fail. He says: nothing on your machine reaches me. The "
-               "meter is full and the wall holds.")
+SERVER_DESC = ("The Hexwarden's final form, the server, on the arena's last rung. He has withdrawn into a server "
+               "monolith: his horns rise over its top, his claws grip its sides and his eyes watch from behind bars in "
+               "a slit. Where his rage core was, a lock seal reads server-verified, SHA-256: the flag is only ever "
+               "checked on the server. The player's shortcuts, a patch, brute force, a forged flag and a cut database "
+               "line, all strike the wall and fail. He says: nothing on your machine reaches me. Only the honest "
+               "technique gets through, and that is how he falls.")
 
 CAPTIONS = [
     ("1 · contempt", "levels 1-3 · rage 1",
@@ -193,9 +196,10 @@ CAPTIONS = [
     ("3 · wrath", "levels 7-9 · rage 7-9",
      "Nothing held back. New eyes open on his horns and arms, two plates shatter and re-form, and four solid "
      "beams hunt every keystroke."),
-    ("final form · the server", "after level 9",
-     "He withdraws behind the wall. Your patch, breakpoint, forge and keygen all hit it and fail, because the "
-     "check never runs on your machine. The thesis, as a boss."),
+    ("final form · the server", "the arena's last rung",
+     "He withdraws behind the wall. A patch, brute force, a forged flag and a cut database line all hit it and "
+     "fail, because the flag is only ever checked on the server. Only the honest technique gets through, and that "
+     "is how he falls."),
 ]
 
 
@@ -326,25 +330,65 @@ def veins(p):
     return f'<g fill="none" stroke="{color}" stroke-width="{width}" opacity="{op}">{body}</g>'
 
 
+# Phase 5: every plate is drawn twice, whole and broken, and the state table only picks which one shows by default
+# (so the sheet looks exactly as designed). In the arena the server's list of broken plates (data-beaten) picks
+# instead, and each fragment carries the direction it flies when the plate shatters (--dx, --dy, --r), so the CSS
+# can burst it out and pull it back into the dashed outline. C and D were only ever drawn cracked, so their broken
+# layer is cut from the plate's own outline.
+SHATTER_TAG = {"C": ("licence · reforming", 140), "D": ("integrity · reforming", 152)}
+HIDE = ' display="none"'
+
+
+def auto_shatter(points):
+    (x1, y1), (x2, _), (x3, y3), (x4, _) = [tuple(float(v) for v in q.split(",")) for q in points.split()]
+    cuts = [0.27, 0.55, 0.78]
+    tops = [x1] + [x1 + (x2 - x1) * c for c in cuts] + [x2]
+    bots = [x4] + [x4 + (x3 - x4) * c for c in cuts] + [x3]
+    r = lambda v: f"{round(v, 1):g}"
+    frags = [f"{r(tops[i] + 2)},{r(y1 + 1)} {r(tops[i + 1] - 2)},{r(y1 + 1)} {r(bots[i + 1] - 2)},{r(y3 - 1)} "
+             f"{r(bots[i] + 2)},{r(y3 - 1)}" for i in range(4)]
+    mid = (y1 + y3) / 2
+    cracks = [f"{r(tops[k])},{r(y1 - 1)} {r(tops[k] - 3)},{r(mid - 3)} {r(bots[k] + 2)},{r(mid + 3)} {r(bots[k])},{r(y3 + 1)}"
+              for k in (1, 2, 3)]
+    ghost = f"{r(x1 - 3)},{r(y1 - 3)} {r(x2 + 3)},{r(y1 - 3)} {r(x3 + 3)},{r(y3 + 2)} {r(x4 - 3)},{r(y3 + 2)}"
+    return frags, cracks, ghost
+
+
+def frag_motion(points, i):
+    xs = [float(q.split(",")[0]) for q in points.split()]
+    cx = sum(xs) / len(xs)
+    dx = (cx - 340) * 0.16 + (3 if cx >= 340 else -3)
+    dy = -(9 + 5 * (i % 2))
+    turn = (14 + 5 * i) * (1 if i % 2 == 0 else -1)
+    return f"--dx:{dx:.1f}px;--dy:{dy}px;--r:{turn}deg"
+
+
 def plates(p):
     out = []
     for key in "ABCD":
         d, state = PLATES[key], p["plates"][key]
-        if state == "shattered":
-            frags = "".join(f'<polygon points="{f}"/>' for f in d["frags"])
-            cracks = "".join(f'<polyline points="{c}"/>' for c in d["cracks"])
-            out += [f'<g fill="#2e1d4f" stroke="{p["helm"]}" stroke-width="0.6">{frags}</g>',
-                    f'<g fill="none" stroke="#e0609a" stroke-width="1.3">{cracks}</g>',
-                    f'<polygon points="{d["ghost"]}" fill="none" stroke="#d07af0" stroke-width="1.3" stroke-dasharray="5 3"/>',
-                    f'<rect x="{340 - d["tagw"] / 2:g}" y="{d["y"] - 11}" width="{d["tagw"]}" height="15" rx="2" fill="#140a24" opacity="0.88"/>',
-                    text(340, d["y"], d["tag"], "#f6ecff", font=MONO, anchor="middle")]
+        broken = state == "shattered"
+        if "frags" in d:
+            frags, cracks, ghost, tag, tagw = d["frags"], d["cracks"], d["ghost"], d["tag"], d["tagw"]
         else:
-            out.append(poly(d["poly"], "#22153d", p["plate_stroke"], 0.6))
-            if state == "cracked":
-                out.append(f'<polyline points="{d["crack"]}" fill="none" stroke="#e0609a" stroke-width="1.1"/>')
-            out.append(text(340, d["y"], d["name"], p["label"], font=MONO, anchor="middle"))
-    if "shattered" in p["plates"].values():
-        out.append('<g fill="#d07af0">' + "".join(f'<polygon points="{s}"/>' for s in SHARDS) + "</g>")
+            (frags, cracks, ghost), (tag, tagw) = auto_shatter(d["poly"]), SHATTER_TAG[key]
+        whole = [poly(d["poly"], "#22153d", p["plate_stroke"], 0.6)]
+        if state == "cracked":
+            whole.append(f'<polyline points="{d["crack"]}" fill="none" stroke="#e0609a" stroke-width="1.1"/>')
+        whole.append(text(340, d["y"], d["name"], p["label"], font=MONO, anchor="middle"))
+        pieces = "".join(f'<polygon class="hx-frag" style="{frag_motion(f, i)}" points="{f}"/>' for i, f in enumerate(frags))
+        lines = "".join(f'<polyline points="{c}"/>' for c in cracks)
+        shards = [f'<g fill="#2e1d4f" stroke="{p["helm"]}" stroke-width="0.6">{pieces}</g>',
+                  f'<g fill="none" stroke="#e0609a" stroke-width="1.3">{lines}</g>',
+                  f'<polygon class="hx-ghost" points="{ghost}" fill="none" stroke="#d07af0" stroke-width="1.3" stroke-dasharray="5 3"/>',
+                  f'<rect x="{340 - tagw / 2:g}" y="{d["y"] - 11}" width="{tagw}" height="15" rx="2" fill="#140a24" opacity="0.88"/>',
+                  text(340, d["y"], tag, "#f6ecff", font=MONO, anchor="middle")]
+        out.append(f'<g class="hx-plate" data-plate="{d["name"]}">'
+                   f'<g class="hx-whole"{HIDE if broken else ""}>{"".join(whole)}</g>'
+                   f'<g class="hx-broken"{"" if broken else HIDE}>{"".join(shards)}</g></g>')
+    loose = "".join(f'<polygon points="{x}"/>' for x in SHARDS)
+    any_broken = "shattered" in p["plates"].values()
+    out.append(f'<g class="hx-shards" fill="#d07af0"{"" if any_broken else HIDE}>{loose}</g>')
     return "".join(out)
 
 
@@ -398,18 +442,29 @@ def eye(cx, cy, r, mode, main=False):
             f'<ellipse cx="{cx}" cy="{cy}" rx="{max(0.8, r * 0.23):.1f}" ry="{r * 0.7:.1f}" fill="#12081f"/>')
 
 
+def watcher(svg, n):
+    # Phase 5: one eye as its own group, with its place in the opening order (--n: 0 opens first, near 1 last), so
+    # the arena can open his eyes one by one as the server's rage climbs. Outside the arena --n does nothing.
+    return f'<g class="hx-eye" style="--n:{n:.3f}">{svg}</g>'
+
+
 def eyes(p):
     mode = p["eyes"]
     out = []
-    for cx, cy, r in VISOR:
-        main = (cx, cy) == (340, 177)
-        if mode == "shut":
-            out.append(eye(cx, cy, r, "lidded" if main else "shut"))
-        else:
-            out.append(eye(cx, cy, r, mode, main))
-    out += [eye(cx, cy, r, mode) for cx, cy, r in BODY_EYES]
+    if mode == "shut":
+        for cx, cy, r in VISOR:
+            out.append(watcher(eye(cx, cy, r, "lidded" if (cx, cy) == (340, 177) else "shut"), 0))
+        out += [watcher(eye(cx, cy, r, mode), 0) for cx, cy, r in BODY_EYES]
+        return "".join(out)
+    # awake: the visor opens from its centre eye outwards, then the body; in wrath those are all open already and
+    # only his wrath eyes (horns, forearms) are still to open
+    visor = sorted(VISOR, key=lambda e: (e[0] - 340) ** 2 + (e[1] - 177) ** 2)
+    order = visor + BODY_EYES
+    for i, (cx, cy, r) in enumerate(order):
+        n = 0 if mode == "wrath" else i / len(order)
+        out.append(watcher(eye(cx, cy, r, mode, (cx, cy) == (340, 177)), n))
     if mode == "wrath":
-        out += [eye(cx, cy, r, "wrath") for cx, cy, r in WRATH_EYES]
+        out += [watcher(eye(cx, cy, r, "wrath"), 0.5 + 0.125 * i) for i, (cx, cy, r) in enumerate(WRATH_EYES)]
     return "".join(out)
 
 
@@ -423,7 +478,7 @@ DISSOLVE = ("".join(f'<rect x="{x}" y="{y}" width="{s}" height="{s}" fill="{c}"/
 
 
 def beams(p):
-    return "".join(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{c}" stroke-width="{w}" '
+    return "".join(f'<line class="hx-beam" x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{c}" stroke-width="{w}" '
                    f'stroke-dasharray="{dash}" opacity="{op}"/>' for x1, y1, x2, y2, c, op, dash, w in p["beams"])
 
 
@@ -501,9 +556,11 @@ def server_scene():
              poly(SERVER, "#140a24", "#5b4596", 1),
              text(340, 140, "server-side", "#8a72c4", anchor="middle", extra=";letter-spacing:3px"),
              poly("240,150 440,150 436,190 244,190", "#0e0619", "#5b4596", 0.6)]
-    parts += [eye(cx, cy - 12, r, "cold") for cx, cy, r in VISOR]
+    parts += [watcher(eye(cx, cy - 12, r, "cold"), 0) for cx, cy, r in VISOR]
+    bars = list(range(254, 436, 14))
     parts.append('<g stroke="#2a1a46" stroke-width="2.5">'
-                 + "".join(f'<line x1="{x}" y1="151" x2="{x}" y2="189"/>' for x in range(254, 436, 14)) + "</g>")
+                 + "".join(f'<line class="hx-bar" style="--n:{i / len(bars):.3f}" x1="{x}" y1="151" x2="{x}" y2="189"/>'
+                           for i, x in enumerate(bars)) + "</g>")
     leds = ("#b48cf2", "#4d3780", "#4d3780", "#e0609a", "#b48cf2", "#4d3780")
     for i, y in enumerate(range(206, 530, 26)):
         parts.append(f'<rect x="226" y="{y}" width="228" height="18" rx="2" fill="#1b1030" stroke="#2e2150" stroke-width="0.5"/>'
@@ -511,14 +568,14 @@ def server_scene():
                      f'<circle cx="442" cy="{y + 9}" r="2.2" fill="{leds[i % len(leds)]}"/>')
     parts += ['<rect x="226" y="285" width="228" height="16" fill="#0e0619" opacity="0.92"/>',
               text(340, 297, "the check never runs on your machine", "#c9b5ef", anchor="middle"),
-              # where his rage core was: a signature now, the licence grant he signs and you cannot forge
+              # where his rage core was: a seal now, the flag hash only the server checks and you cannot forge
               poly(hexagon(340, 360, 46), "#1a0f2e", "#b48cf2", 1.5),
               poly(hexagon(340, 360, 34), "#24163d", "#6b52a8", 0.75),
               '<path d="M 332 359 V 352 A 8 8 0 0 1 348 352 V 359" fill="none" stroke="#b48cf2" stroke-width="3"/>',
               '<rect x="327" y="358" width="26" height="20" rx="3" fill="#b48cf2"/>',
               '<circle cx="340" cy="366" r="2.6" fill="#1a0f2e"/><rect x="339" y="367" width="2" height="6" fill="#1a0f2e"/>',
               '<rect x="226" y="413" width="228" height="16" fill="#0e0619" opacity="0.92"/>',
-              text(340, 425, "server-signed · ECDSA P-256", "#b9a3e8", font=MONO, anchor="middle"),
+              text(340, 425, "server-verified · SHA-256", "#b9a3e8", font=MONO, anchor="middle"),
               '<g fill="#2f1e50" stroke="#7a5fc0" stroke-width="0.5">' + "".join(pair(c) for c in SERVER_CLAWS) + "</g>"]
     for tx, ty, tw, move, x1, x2, ay, what, cy, anchor in MOVES:
         parts += [f'<rect x="{tx}" y="{ty}" width="{tw}" height="22" rx="4" fill="#1a0f2e" stroke="#6b52a8" stroke-width="0.75"/>',
@@ -532,11 +589,11 @@ def server_scene():
              + [f'<rect x="{400 + 28 * i}" y="617" width="24" height="16" rx="2" fill="{"#b48cf2" if i == 8 else "#5b4596"}"/>'
                 for i in range(9)]
              + ['<rect x="652" y="613" width="5" height="24" fill="#e0609a"/>',
-                text(400, 652, "levels 1-9 cleared", "#7a63b4"),
+                text(400, 652, "the last rung", "#7a63b4"),
                 text(648, 652, "the wall holds", "#b48cf2", anchor="end")])
     parts += ['<line x1="384" y1="170" x2="512" y2="230" stroke="#b48cf2" stroke-width="0.8" opacity="0.6"/>',
-              panel(dict(stroke="#6b52a8", head="your move", l1="forge: grant.sig", caret=631,
-                         l2="verify: P-256 fail", status="denied, server-side", status_fill="#e0609a")),
+              panel(dict(stroke="#6b52a8", head="your move", l1="forge: BR{...}", caret=618,
+                         l2="verify: hash fail", status="denied, server-side", status_fill="#e0609a")),
               taunt("his only words", ["“Nothing on", "your machine", "reaches me.”"]),
               topbar(("live · out of reach", "#b48cf2", 516)), "".join(meter), "</svg>"]
     return "\n".join(parts)

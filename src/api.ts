@@ -204,8 +204,18 @@ export async function runWorkbenchApp(level: number, source: string, key: string
 // one or was surprised, his MAPE-K reasoning, and any harassment to throw (never blocking the editor).
 export interface WardenReasoning { monitor: string; analyse: string; plan: string; execute: string; }
 export interface WardenHarass { kind: 'trace' | 'scan' | 'av' | 'flicker' | 'countdown'; text: string; }
+// Phase 5: where the fight stands on the arena's ladder. final is the last rung (clearing it defeats him), cleared
+// is every rung this player has broken with an accepted flag, defeats how often they have beaten him there.
+export interface WardenLadder { final: number; cleared: number[]; defeats: number; }
+
 export interface WardenView {
   mood: 'contempt' | 'enraged' | 'wrath';
+  form: 'contempt' | 'enraged' | 'wrath' | 'server' | 'defeated';   // which body to draw (Phase 5)
+  final: boolean;
+  defeated: boolean;
+  broken: string[];             // the plates of his armour the player's grudge has broken
+  shattered: string | null;     // the plate THIS move broke, so the art plays the break once
+  ladder: WardenLadder;
   rage: number;
   watching: string;
   line: string;

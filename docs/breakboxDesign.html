@@ -434,7 +434,7 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
 <div class="topbar">
   <header class="rule">
     <span class="name">BreakBox <span class="d">// design sheet</span></span>
-    <span class="rev">living sheet &middot; Sprint 3 &middot; the arena finished: the warden's mind, his ending and the gauntlet (Phases 4-6), built</span>
+    <span class="rev">living sheet &middot; Sprint 3 &middot; the arena finished (Phases 4-6), and Level 4 Protected (real obfuscation + anti-debug) built</span>
     <span class="sig" title="my mark: MAH6">0x4D414836</span>
   </header>
   <nav class="tabs" role="tablist" aria-label="sections">
@@ -483,7 +483,7 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
   <div class="facts">
     <div class="fact"><span class="fl">What it is</span><p>A personal reverse-engineering lab. I build software, break it, then defend it, to learn both sides at once.</p></div>
     <div class="fact"><span class="fl">Where I am</span><p>Sprint 3: the platform, the live Console and the per-level arms race are built, and the arena is finished: the warden's server-side mind, his ending and the gauntlet rematch (Phases 4 to 6).</p></div>
-    <div class="fact"><span class="fl">The two halves</span><p>Offensive: a nine-level crack ladder (1-3 built). Defensive: the Console, the arms race and the adaptive arena, built, then attacked by me.</p></div>
+    <div class="fact"><span class="fl">The two halves</span><p>Offensive: a nine-level crack ladder (1-4 built). Defensive: the Console, the arms race and the adaptive arena, built, then attacked by me.</p></div>
     <div class="fact"><span class="fl">The shape</span><p>Three repos (web, api, security), .NET 9 and React, Docker and CI, across four sprints.</p></div>
   </div>
 
@@ -701,7 +701,7 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
       <div class="sec"><b>security:</b> read only, always offline. It never runs a target and never touches the server. Pointing it at a file is safe, and it proves the lesson that compiled code hides almost nothing.</div>
     </div>
     <div class="comp"><h4>The levels <span class="tag">the ladder</span></h4>
-      <p>The path from easy to expert: a plain stored key, then a computed serial, then patching a real app, then obfuscation and anti-debugging, a native memory overflow, weak crypto, an integrity check, and safe malware analysis. Levels 1 to 3 are built and playable as minimal desktop apps, a notes app, a budget app and a photo app, each with a premium feature locked behind a check; the rest are the plan, one clear idea each, and a rung only opens once I have actually built it.</p>
+      <p>The path from easy to expert: a plain stored key, then a computed serial, then patching a real app, then obfuscation and anti-debugging, a native memory overflow, weak crypto, an integrity check, and safe malware analysis. Levels 1 to 4 are built and playable as minimal desktop apps, a notes app, a budget app and a photo app, each with a premium feature locked behind a check; Level 4 is that photo app again wrapped in a real obfuscator (Obfuscar) and a refuse-and-exit anti-debug, so expert tier practises on genuinely mangled output. The rest are the plan, one clear idea each, and a rung only opens once I have actually built it.</p>
       <div class="sec"><b>scope:</b> only my own generated targets, only authorised use. I break what I make.</div>
     </div>
     <div class="comp"><h4>The pipeline and the containers <span class="tag">CI/CD &middot; Docker</span></h4>
@@ -1798,10 +1798,10 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
       <p><b>Fits my context?</b> The multi-tenancy maps straight onto what I built: scope every row to its owner, in one place, so a new endpoint cannot forget. Vector-DB security is current, HBO-i level-4 material and fits &ldquo;build then break&rdquo;. But a vector store does not belong in this relational reverse-engineering lab yet.</p>
       <p class="chose"><b>My choice (researched, NOT built):</b> keep these as future threads. The multi-tenant framing justifies the data design now; the vector-DB piece I take on as an <b>advanced defensive thread later in the sprints</b>: a second, vector database showing how the current wave of company data leaks happens through shared AI stores, and how the same row-scoping stops it (drawn out in the Security tab). And I keep the tools straight: <b>vector</b> DBs for the AI's retrieval and memory, a <b>graph</b> DB for attack paths (the BloodHound shape), relational for the structured records. Knowing which store fits which job is the point. I have only read into this so far; it is not a conclusion, and nothing here is built.</p></div>
 
-    <div class="finding"><h4>11 &middot; Level 4 obfuscation: a real obfuscator, as a post-compile stage <span class="uc-sh">designed</span></h4>
+    <div class="finding"><h4>11 &middot; Level 4 obfuscation: a real obfuscator, as a post-compile stage <span class="uc-sh">built</span></h4>
       <p><b>Looked at:</b> three ways to obfuscate Level 4. Hand-rolling the obfuscation in the template source, which stays pure Roslyn but a custom scheme is not what de4dot or dnSpy practice is really about; a real obfuscator run over the compiled dll (ConfuserEx or Obfuscar); or my own Mono.Cecil pass. ConfuserEx is archived (last release 2016, no modern .NET), so it cannot touch a .NET 9 target; Obfuscar is active and obfuscates .NET 9, with identifier renaming plus XOR string encryption.</p>
       <p><b>Fits my context?</b> An expert level has to hand the attacker genuinely obfuscated output, or the dnSpy, de4dot and x64dbg practice is fake. A hand-rolled scheme cannot honestly stand in for a real obfuscator's metadata mangling. The cost is a step after compile, which my levels never had.</p>
-      <p class="chose"><b>My choice (designed):</b> Obfuscar as a real post-compile stage, behind a new <code>IObfuscator</code> seam the generator calls only for levels that ask for it (Levels 1 to 3 compile and ship exactly as before). This relaxes my own rule that generation is pure Roslyn in one path, so I make the exception on purpose and write down why. The anti-debug is hand-written in the template and gets renamed and encrypted along with the rest; de4dot then only cleans part of it, which is itself the lesson.</p></div>
+      <p class="chose"><b>My choice (built):</b> Obfuscar as a real post-compile stage, behind a new <code>IObfuscator</code> seam the generator calls only for levels that ask for it (Levels 1 to 3 compile and ship exactly as before). This relaxes my own rule that generation is pure Roslyn in one path, so I made the exception on purpose and wrote down why (Decision-Log entry 19). Obfuscar ships as a .NET Framework console tool with no library, so the seam shells out to <code>Obfuscar.Console.exe</code> after compile, with its config pointing at the .NET 9 and WindowsDesktop runtime dirs so Mono.Cecil resolves the target. The anti-debug is hand-written in the template and gets renamed and encrypted along with the rest; de4dot then only cleans part of it, which is itself the lesson. A test proves it for real: the premium gate (<code>IsPremium</code>) is renamed away in the shipped build but present in a plain build, while the two startup P/Invokes and the managed entry point survive so the app still runs. Merged to main, PR #32.</p></div>
   </section>
 
   <!-- ============================= DIAGRAMS ============================= -->
@@ -2132,10 +2132,10 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
           <li><b>Outcomes it deepens:</b> Software Engineering (the Console and the adaptive arena, each designed around one repository seam and a real control loop), Software Quality Control (SonarQube joins the scans; test-first on every arms-race step), Professional Standard (the server-side wall as the thesis, honest built-versus-planned), Personal Leadership (I own both halves and the arms race I built between them).</li>
         </ul></div>
 
-      <div class="progrow" data-sprint="3"><h4>Sprint 3 <span class="s">S3</span> <span class="st">planned</span> &middot; Obfuscation + native</h4>
+      <div class="progrow" data-sprint="3"><h4>Sprint 3 <span class="s">S3</span> <span class="st">in progress</span> &middot; Obfuscation + native</h4>
         <p>Get past protection, and drop out of managed code. The Console, the arms race and the app-layer abuse defence I first imagined here were pulled into Sprint 2; Sprint 3 is now the harder targets.</p>
         <ul>
-          <li><b>Add:</b> Protected (Pixler with a real obfuscator run after compile plus a refuse-and-exit anti-debug, Level 4, design locked) and my first native C target with a memory bug (Overflow, Level 5), for Ghidra and x64dbg.</li>
+          <li><b>Done:</b> Protected (Pixler with a real obfuscator run after compile plus a refuse-and-exit anti-debug, Level 4) is <b>built and merged</b> (PR #32); the obfuscation runs behind a new <code>IObfuscator</code> seam, only for Level 4. <b>Next:</b> my first native C target with a memory bug (Overflow, Level 5), for Ghidra and x64dbg.</li>
           <li><b>Why obfuscation is here, not S1 or S2:</b> you can only learn to <em>defeat</em> protection once you have cracked the <em>unprotected</em> version first. Protected is Pixler with armour bolted on; without the S2 crack as a baseline the lesson is meaningless. Native waits too, so I add exactly one new hard thing at a time (managed first, then native).</li>
           <li><b>Outcomes it deepens:</b> Software Engineering (harder trade-offs, the native memory model, system thinking), Software Quality Control (performance + security benchmarks on hardened targets), Software Delivery (3-repo delivery with the reusable scan workflow), Professional Standard (deeper research; GDPR on the data).</li>
         </ul></div>
@@ -2165,9 +2165,9 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
         <li><b>Week 3</b> stand up the database auth: argon2id hashing, server-side sessions, and a row-scoped repository; enforce the SonarQube gate.</li>
         <li><b>Week 4+</b> attack the data layer myself (SQL injection, IDOR) and harden it; then the parts that grew past the plan: the live Console, the full per-level arms race, and Level-Experimental, the adaptive arena.</li>
       </ul></div>
-    <div class="roadcard" data-sprint="3"><h4>Sprint 3 <span class="s">S3</span> <span class="st">planned</span> &middot; Obfuscation + native</h4>
+    <div class="roadcard" data-sprint="3"><h4>Sprint 3 <span class="s">S3</span> <span class="st">in progress</span> &middot; Obfuscation + native</h4>
       <ul class="deepen">
-        <li><b>Week 1</b> obfuscate Pixler with a real obfuscator (Obfuscar) as a post-compile stage, add a refuse-and-exit anti-debug (Protected, Level 4); research the techniques.</li>
+        <li><b>Week 1 (done)</b> obfuscate Pixler with a real obfuscator (Obfuscar) as a post-compile stage, add a refuse-and-exit anti-debug (Protected, Level 4): built, tested and merged (PR #32).</li>
         <li><b>Week 2</b> defeat the protection; set up Ghidra and x64dbg.</li>
         <li><b>Week 3</b> build the native Overflow target (Level 5); crash and exploit it.</li>
         <li><b>Week 4</b> defend it; run performance and security benchmarks; a GDPR pass on the data.</li>

@@ -8,9 +8,13 @@
 // warns; a hack can only run against its own level's shield (cross-level is locked), per the handoff.
 //
 // server-key (Level 1) is enforced server-side today (the completion loop). computed-key / licence /
-// integrity (L2-L3) bake a real variant into the dynamic build via the generator.
+// integrity (L2-L3) bake a real variant into the dynamic build via the generator. Level 4's obfuscation is
+// different: it is INTRINSIC (every Level 4 build is obfuscated and anti-debugged by the generator), not an
+// armable toggle, and there is no auto-bypass for it. Defeating it is manual reverse engineering, which is the
+// whole point of the Protected level, so its hack is marked 'manual' and narrates the approach rather than
+// handing back a cracked build.
 
-export const LEVELS = [1, 2, 3] as const;
+export const LEVELS = [1, 2, 3, 4] as const;
 
 export interface AntiCheatDef {
   id: string;        // shared with its paired hack
@@ -23,7 +27,8 @@ export interface HackDef {
   id: string;        // the anti-cheat it counters (same id)
   tagline: string;
   level: number;
-  state: 'live' | 'locked';   // locked = the paired anti-cheat is not live yet
+  state: 'live' | 'locked' | 'manual';   // locked = the paired anti-cheat is not live yet; manual = no
+                                         // auto-bypass, the hack is manual reverse engineering (Level 4)
   outcome: 'bypassed' | 'defeated';   // 'defeated' = the proper defence wins and the hack fails (the arc's end)
   bypass: string[];           // the steps this hack narrates against its anti-cheat; the Hack tab composes
                               // the whole run from the bypasses of every ARMED anti-cheat
@@ -36,6 +41,7 @@ export const ANTICHEATS: AntiCheatDef[] = [
   { id: 'computed-key', tagline: 'harden the serial algorithm', level: 2, state: 'live' },
   { id: 'licence', tagline: 'server-side licence check', level: 3, state: 'live' },
   { id: 'integrity', tagline: 'tamper check', level: 3, state: 'designed' },
+  { id: 'obfuscation', tagline: 'obfuscate + anti-debug the build (always on for Level 4)', level: 4, state: 'live' },
 ];
 
 const LOCKED: string[] = [];
@@ -75,4 +81,15 @@ export const HACKS: HackDef[] = [
     note: 'The signed + nonce grant cannot be forged offline: this is where the client-side crack ends.',
   },
   { id: 'integrity', tagline: 'patch the verifier', level: 3, state: 'locked', outcome: 'defeated', bypass: LOCKED, build: 'Level3_integrity.zip', note: 'Server-attested integrity defeats the patch.' },
+  {
+    id: 'obfuscation', tagline: 'deobfuscate + strip the anti-debug (manual RE)', level: 4, state: 'manual', outcome: 'bypassed',
+    bypass: [
+      '  the build is renamed and its strings encrypted by a real obfuscator (Obfuscar)',
+      '  de4dot cleans part of the renaming, the rest is by hand',
+      '  the app refuses to run under a debugger: patch the check, or hide it with x64dbg',
+      '  trace the mangled code to the premium gate, then patch it',
+    ],
+    build: 'Level4_obfuscation.zip',
+    note: 'No auto-bypass here: obfuscation and anti-debug are defeated by manual reverse engineering, not a toggle. They only raise the cost; the server-side licence is still the real wall.',
+  },
 ];

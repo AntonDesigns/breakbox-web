@@ -1,18 +1,22 @@
 // BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { type Level, type WardenView } from '../api';
 import { BossBar } from './BossBar';
+import { GauntletArena } from './Gauntlet';
 import { HarassLayer, type HarassItem } from './Harassment';
 import { Hexwarden } from './Hexwarden';
+import { ladderPort } from './ports';
 import { Workbench } from './Workbench';
 import './phase4.css';
 
 // The arena: a compact warden rail (the warden, what he thinks, the level switcher, his feed) beside the in-arena
 // dnSpy workbench, which opens full-size like a window inside a window. Since Phase 4 the warden here is exactly
 // what the SERVER decided: his mood, rage, the member he watches, his words, his read on the player and his
-// MAPE-K reasoning all arrive with each answer, so this component only shows him; it decides nothing.
+// MAPE-K reasoning all arrive with each answer, so this component only shows him; it decides nothing. Since
+// Phase 6 the rail also holds the way into his rematch, the gauntlet, which takes the place of the ladder while it
+// runs; whether a player may enter it is the server's call.
 
 interface FeedLine { id: number; text: string; tone: 'watch' | 'hit' | 'hold' | 'crack'; }
 
@@ -38,17 +42,23 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSo
   const [feed, setFeed] = useState<FeedLine[]>([]);
   const [harass, setHarass] = useState<HarassItem[]>([]);
   const [flicker, setFlicker] = useState(false);
-  const [fightOn, setFightOn] = useState(activeNumber);
+  const [gauntlet, setGauntlet] = useState(false);
+  const [fightOn, setFightOn] = useState(`${activeNumber}`);
   const seq = useRef(0);
 
-  // A new target is a new fight: clear his rail while rendering (React's "adjust state when a prop changes"),
-  // not in an effect, so there is no extra render. His greeting arrives when the workbench opens the target.
-  if (activeNumber !== fightOn) {
-    setFightOn(activeNumber);
+  // A new target (or entering / leaving the gauntlet) is a new fight: clear his rail while rendering (React's
+  // "adjust state when a prop changes"), not in an effect, so there is no extra render. His greeting arrives when
+  // the workbench opens the target.
+  const fight = gauntlet ? 'gauntlet' : `${activeNumber}`;
+  if (fight !== fightOn) {
+    setFightOn(fight);
     setWarden(null);
     setFeed([]);
     setHarass([]);
   }
+
+  // The ladder's port for the chosen level; the same object while the level stays, so the workbench opens it once.
+  const port = useMemo(() => ladderPort(level?.number ?? 1, onSolved), [level?.number, onSolved]);
 
   const dismiss = useCallback((id: number) => setHarass((h) => h.filter((x) => x.id !== id)), []);
 
@@ -115,6 +125,7 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSo
             className="af-level-select"
             value={activeNumber ?? ''}
             onChange={(e) => onSelect(Number(e.target.value))}
+            disabled={gauntlet}
           >
             {levels.map((l) => (
               <option key={l.number} value={l.number}>
@@ -122,6 +133,16 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSo
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="af-rematch">
+          <div className="af-rematch-h">the rematch</div>
+          {gauntlet
+            ? <button type="button" className="af-rematch-btn" onClick={() => setGauntlet(false)}>back to the ladder</button>
+            : <button type="button" className="af-rematch-btn" onClick={() => setGauntlet(true)}>enter the gauntlet</button>}
+          <div className="af-rematch-note">
+            {gauntlet ? 'He chooses every rung now.' : 'Beat him on the last rung and he wants a rematch, where he chooses every challenge.'}
+          </div>
         </div>
 
         <div className="af-feed" aria-label="the warden's feed">
@@ -137,15 +158,16 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSo
       </aside>
 
       <div className="af-main">
-        {level && warden && <BossBar warden={warden} level={level.number} />}
-        {level && level.available && <Workbench key={level.number} level={level.number} onWarden={onWarden} onSolved={onSolved} />}
-        {level && !level.available && (
+        {gauntlet && <GauntletArena onWarden={onWarden} />}
+        {!gauntlet && level && warden && <BossBar warden={warden} level={level.number} />}
+        {!gauntlet && level && level.available && <Workbench key={level.number} port={port} onWarden={onWarden} />}
+        {!gauntlet && level && !level.available && (
           <div className="wb">
             <div className="wb-h"><span className="wb-file">{level.name} &middot; in-arena workbench</span></div>
             <div className="wb-term"><div className="wb-term-idle">{level.name} is not built yet, so there is nothing to crack here. Pick a live target (0x01). The warden is holding this rung.</div></div>
           </div>
         )}
-        {!level && (
+        {!gauntlet && !level && (
           <div className="wb">
             <div className="wb-term"><div className="wb-term-idle">Pick a target in the rail. The warden is already watching.</div></div>
           </div>

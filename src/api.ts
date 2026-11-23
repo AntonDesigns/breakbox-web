@@ -269,3 +269,51 @@ export async function runWorkbenchHack(level: number, hack: HackKind, source: st
   if (!res.ok) throw new Error(`hack failed: ${res.status}`);
   return res.json() as Promise<HackResult>;
 }
+
+// ---- Phase 6: the gauntlet, the warden's rematch. He chooses every rung; the server judges every flag. ----
+
+// His belief in one of the player's skills (a Beta mean and spread), one of the rungs of a cycle, and the run.
+export interface GauntletSkill { technique: string; mean: number; spread: number; }
+export interface GauntletRung { name: string; technique: string; tier: number; broken: boolean; }
+export interface GauntletState {
+  cycle: number;
+  cleared: number;        // rungs broken in this run (the streak)
+  best: number;           // the best run he remembers, this one included
+  final: boolean;         // the current rung is the cycle's last: he fights it as the server
+  cycleWon: boolean;
+  relented: boolean;      // he just eased off because the player was stuck
+  reason: string;         // why he chose the current rung, in his words
+  current: { rung: string; technique: string; tier: number; level: number };
+  rungs: GauntletRung[];
+  mastery: GauntletSkill[];
+}
+export interface GauntletTarget { level: number; fileName: string; source: string; methods: WorkbenchMethod[]; }
+
+// Every gauntlet answer: the run, a new target when the fight morphed into another rung, and his reaction.
+export interface GauntletAnswer { gauntlet: GauntletState; target: GauntletTarget | null; warden: WardenView; }
+export interface GauntletSubmit extends GauntletAnswer { correct: boolean; }
+export interface GauntletApp extends AppRun { gauntlet: GauntletState; target: GauntletTarget | null; }
+
+// One call to the gauntlet. A refusal throws the server's own words (for example "Beat the warden on the last rung
+// first."), so the UI can show exactly why.
+async function gauntlet<T>(path: string, body?: unknown): Promise<T | null> {
+  const res = await fetch(`${API}/arena/gauntlet${path}`, body === undefined && path === ''
+    ? { credentials: 'include' }
+    : { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) });
+  if (res.status === 204) return null;
+  if (!res.ok) {
+    const err = await res.json().catch(() => null) as { error?: string } | null;
+    throw new Error(err?.error ?? `gauntlet failed: ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export const currentGauntlet = () => gauntlet<GauntletAnswer>('');
+export const startGauntlet = async () => (await gauntlet<GauntletAnswer>('/start'))!;
+export const continueGauntlet = async () => (await gauntlet<GauntletAnswer>('/continue'))!;
+export const stopGauntlet = async () => (await gauntlet<{ cleared: number; best: number }>('/stop'))!;
+export const submitGauntlet = async (flag: string) => (await gauntlet<GauntletSubmit>('/submit', { flag }))!;
+export const gauntletApp = async (source: string, key: string) => (await gauntlet<GauntletApp>('/app', { source, key }))!;
+export const gauntletRun = async (source: string) => (await gauntlet<PatchRun>('/run', { source }))!;
+export const observeGauntlet = async (kind: 'read' | 'edit', member?: string, source?: string) =>
+  (await gauntlet<WardenView>('/observe', { kind, member, source }))!;

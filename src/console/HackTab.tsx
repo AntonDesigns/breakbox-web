@@ -4,7 +4,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type HTMLAttributes, type SetStateAction } from 'react';
 import { downloadTarget } from '../api';
 import { runAttack } from '../auth';
-import { ANTICHEATS, HACKS } from './armsRace';
+import { ANTICHEATS, HACKS, type HackDef } from './armsRace';
+
+// The idle-window message, pulled out so the JSX has no nested ternary. A runnable hack invites the run; a
+// 'manual' hack (Level 4) explains there is no auto-bypass; otherwise the level has no live hack yet.
+function renderIdle(runnable: HackDef | null, manualHack: HackDef | null, level: number): string {
+  if (runnable)
+    return `Hack is off for Level ${level}. Flip it on to run the bypass; the build it hands back unlocks with any key.`;
+  if (manualHack)
+    return `Level ${level} has no auto-bypass. Its obfuscation and anti-debug are defeated by manual reverse engineering (de4dot, then dnSpy and x64dbg), which is the whole point of the Protected level. The approach is in the card on the left.`;
+  return `No live hack for Level ${level} yet. Pick a made level (1-3) to run its bypass.`;
+}
 
 // The Hack tab: the offensive mirror of the Anti-cheat tab, and it now works the same way. Each level has
 // a single toggle: flip it ON and the attack runs in its live window (the key is never shown) and then
@@ -32,6 +42,9 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
   const stop = () => { if (timer.current) { window.clearInterval(timer.current); timer.current = null; } };
 
   const runnable = HACKS.find((h) => h.level === level && h.state === 'live') ?? null;
+  // A 'manual' hack (Level 4 obfuscation) has no auto-bypass: the window explains it is manual reverse
+  // engineering rather than offering a cracked build.
+  const manualHack = HACKS.find((h) => h.level === level && h.state === 'manual') ?? null;
   const armedDefs = ANTICHEATS.filter((a) => a.level === level && armed[a.id]);
   const appliedAc = armedDefs.map((a) => a.id).join(', ') || 'none';
   // Some anti-cheats cannot be hacked: a 'defeated' outcome means the proper server-side defence wins and
@@ -125,6 +138,7 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
             const live = h.level === level && h.state === 'live';
             let reason = '';
             if (h.level !== level) reason = 'cross-level, locked';
+            else if (h.state === 'manual') reason = 'manual RE — no auto-bypass';
             else if (h.state !== 'live') reason = 'shield not live yet';
             // Clicking a card that is not the current level targets that level: the cards are the level picker
             // now, so the old 1 2 3 buttons are gone. The handler sits on the text region, never wrapping the
@@ -165,9 +179,7 @@ export function HackTab({ armed, hackOn, setHackOn, level, setLevel }: Readonly<
           <div className="hk-term">
             {termLines.length === 0 ? (
               <div className="hk-term-idle">
-                {runnable
-                  ? `Hack is off for Level ${level}. Flip it on to run the bypass; the build it hands back unlocks with any key.`
-                  : `No live hack for Level ${level} yet. Pick a made level (1-3) to run its bypass.`}
+                {renderIdle(runnable, manualHack, level)}
               </div>
             ) : termLines.map((l) => <div key={l} className="hk-line">{l}</div>)}
           </div>

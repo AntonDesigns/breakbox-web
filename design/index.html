@@ -1263,7 +1263,7 @@
     <div class="finding"><h4>UC3 &middot; Defeat a protection</h4>
       <p class="uc-meta"><span class="a">Attack</span> <span class="s">S3</span> <span class="plan">planned</span></p>
       <p><b>Goal:</b> beat obfuscation and anti-debugging, not just a plain check.</p>
-      <p><b>Main flow:</b> Level 4 is Pixler with armour on top; I strip obfuscation (de4dot), get past anti-debug (x64dbg), then reach the check. Only possible because I cracked the unprotected version first.</p></div>
+      <p><b>Main flow:</b> Level 4 is Pixler with real armour on top. A true obfuscator (Obfuscar) renames and encrypts the build after it compiles, and a refuse-and-exit anti-debug guards it. de4dot only gets part of the way on a custom-renamed build, so the real work is reading it in dnSpy and getting past the anti-debug in x64dbg before I reach the check. Only possible because I cracked the unprotected version first.</p></div>
 
     <div class="finding"><h4>UC4 &middot; Exploit a native bug</h4>
       <p class="uc-meta"><span class="a">Attack</span> <span class="s">S3</span> <span class="plan">planned</span></p>
@@ -1303,8 +1303,8 @@
       <p class="uc-meta"><span class="a">Hard</span> <span class="s">S2</span> <span class="plan">planned</span></p>
       <p>A small photo app with a locked premium feature. I patch the licence check. <b>Tools:</b> dnSpy, Flip.</p></div>
     <div class="finding"><h4>Level 4 &middot; Protected</h4>
-      <p class="uc-meta"><span class="a">Expert</span> <span class="s">S3</span> <span class="plan">planned</span></p>
-      <p>Pixler again, with obfuscation and anti-debugging over the check. I get past the protection first. <b>Tools:</b> dnSpy, x64dbg, de4dot.</p></div>
+      <p class="uc-meta"><span class="a">Expert</span> <span class="s">S3</span> <span class="plan">designed</span></p>
+      <p>Pixler again, with real armour over the check: a true obfuscator (Obfuscar) run after compile, plus a refuse-and-exit anti-debug. I get past the protection first. de4dot only cleans part of a custom-renamed build, so dnSpy and x64dbg do the real work. <b>Tools:</b> dnSpy, x64dbg, de4dot.</p></div>
     <div class="finding"><h4>Level 5 &middot; Overflow</h4>
       <p class="uc-meta"><span class="a">Expert</span> <span class="s">S3</span> <span class="plan">planned</span></p>
       <p>A small native C program with a planted bug. I crash it, exploit it, then defend it. <b>Tools:</b> Ghidra, x64dbg.</p></div>
@@ -1377,6 +1377,11 @@
       <p><b>Looked at:</b> where my security work points next. A <b>B2B SaaS</b> is multi-tenant (many businesses on one system), so its core rule, that tenant A never sees tenant B, is my row-scoping at company scale, and it is the shape of the Bosch camera platform I am security lead on. A <b>vector database</b> stores embeddings and finds nearest neighbours: useful for security as anomaly detection (flag outlier logins or events by distance) and sample similarity (a semantic cousin of YARA, for Level 8), and it brings new attacks to break: embedding inversion, RAG poisoning, and the same tenant-isolation problem inside the store.</p>
       <p><b>Fits my context?</b> The multi-tenancy maps straight onto what I built: scope every row to its owner, in one place, so a new endpoint cannot forget. Vector-DB security is current, HBO-i level-4 material and fits &ldquo;build then break&rdquo;. But a vector store does not belong in this relational reverse-engineering lab yet.</p>
       <p class="chose"><b>My choice (researched, NOT built):</b> keep these as future threads. The multi-tenant framing justifies the data design now; the vector-DB piece I take on as an <b>advanced defensive thread later in the sprints</b>: a second, vector database showing how the current wave of company data leaks happens through shared AI stores, and how the same row-scoping stops it (drawn out in the Security tab). And I keep the tools straight: <b>vector</b> DBs for the AI's retrieval and memory, a <b>graph</b> DB for attack paths (the BloodHound shape), relational for the structured records. Knowing which store fits which job is the point. I have only read into this so far; it is not a conclusion, and nothing here is built.</p></div>
+
+    <div class="finding"><h4>11 &middot; Level 4 obfuscation: a real obfuscator, as a post-compile stage <span class="uc-sh">designed</span></h4>
+      <p><b>Looked at:</b> three ways to obfuscate Level 4. Hand-rolling the obfuscation in the template source, which stays pure Roslyn but a custom scheme is not what de4dot or dnSpy practice is really about; a real obfuscator run over the compiled dll (ConfuserEx or Obfuscar); or my own Mono.Cecil pass. ConfuserEx is archived (last release 2016, no modern .NET), so it cannot touch a .NET 9 target; Obfuscar is active and obfuscates .NET 9, with identifier renaming plus XOR string encryption.</p>
+      <p><b>Fits my context?</b> An expert level has to hand the attacker genuinely obfuscated output, or the dnSpy, de4dot and x64dbg practice is fake. A hand-rolled scheme cannot honestly stand in for a real obfuscator's metadata mangling. The cost is a step after compile, which my levels never had.</p>
+      <p class="chose"><b>My choice (designed):</b> Obfuscar as a real post-compile stage, behind a new <code>IObfuscator</code> seam the generator calls only for levels that ask for it (Levels 1 to 3 compile and ship exactly as before). This relaxes my own rule that generation is pure Roslyn in one path, so I make the exception on purpose and write down why. The anti-debug is hand-written in the template and gets renamed and encrypted along with the rest; de4dot then only cleans part of it, which is itself the lesson.</p></div>
   </section>
 
   <!-- ============================= DIAGRAMS ============================= -->
@@ -1710,7 +1715,7 @@
       <div class="progrow" data-sprint="3"><h4>Sprint 3 <span class="s">S3</span> <span class="st">planned</span> &middot; Obfuscation + native</h4>
         <p>Get past protection, and drop out of managed code. The Console, the arms race and the app-layer abuse defence I first imagined here were pulled into Sprint 2; Sprint 3 is now the harder targets.</p>
         <ul>
-          <li><b>Add:</b> Protected (Pixler with obfuscation and anti-debugging, Level 4) and my first native C target with a memory bug (Overflow, Level 5), for Ghidra and x64dbg.</li>
+          <li><b>Add:</b> Protected (Pixler with a real obfuscator run after compile plus a refuse-and-exit anti-debug, Level 4, design locked) and my first native C target with a memory bug (Overflow, Level 5), for Ghidra and x64dbg.</li>
           <li><b>Why obfuscation is here, not S1 or S2:</b> you can only learn to <em>defeat</em> protection once you have cracked the <em>unprotected</em> version first. Protected is Pixler with armour bolted on; without the S2 crack as a baseline the lesson is meaningless. Native waits too, so I add exactly one new hard thing at a time (managed first, then native).</li>
           <li><b>Outcomes it deepens:</b> Software Engineering (harder trade-offs, the native memory model, system thinking), Software Quality Control (performance + security benchmarks on hardened targets), Software Delivery (3-repo delivery with the reusable scan workflow), Professional Standard (deeper research; GDPR on the data).</li>
         </ul></div>
@@ -1742,7 +1747,7 @@
       </ul></div>
     <div class="roadcard" data-sprint="3"><h4>Sprint 3 <span class="s">S3</span> <span class="st">planned</span> &middot; Obfuscation + native</h4>
       <ul class="deepen">
-        <li><b>Week 1</b> obfuscate and anti-debug Pixler (Protected, Level 4); research the techniques.</li>
+        <li><b>Week 1</b> obfuscate Pixler with a real obfuscator (Obfuscar) as a post-compile stage, add a refuse-and-exit anti-debug (Protected, Level 4); research the techniques.</li>
         <li><b>Week 2</b> defeat the protection; set up Ghidra and x64dbg.</li>
         <li><b>Week 3</b> build the native Overflow target (Level 5); crash and exploit it.</li>
         <li><b>Week 4</b> defend it; run performance and security benchmarks; a GDPR pass on the data.</li>

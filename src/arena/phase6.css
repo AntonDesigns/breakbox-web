@@ -41,8 +41,8 @@
 .af-main .gt-btn:disabled { opacity: 0.5; cursor: default; }
 .af-main .gt-stop { background: transparent; }
 
-.af-main .gt-locked { padding: 18px; border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); color: var(--ink-2); font-size: 0.82rem; }
-.af-main .gt-locked p { margin: 8px 0 12px; }
+.af-main .gt-locked { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 18px; border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); color: var(--ink-2); font-size: 0.82rem; }
+.af-main .gt-msg { display: block; }
 
 /* The morph: when he moves the fight to another rung, a scan line sweeps the dnSpy while its content changes, so
    the swap is felt without a reload or a "Level N" screen. */

@@ -62,8 +62,9 @@
 .hk-res.won b { color: var(--hard); }
 .hk-res.held b { color: var(--cyan); }
 .hk-def { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
-.hk-verdict { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-2); margin-top: 4px; }
-.hk-lesson { font-size: 0.74rem; color: var(--ink-3); margin-top: 4px; }
+.hk-res { display: block; }
+.hk-verdict { display: block; font-family: var(--mono); font-size: 0.7rem; color: var(--ink-2); margin-top: 4px; }
+.hk-lesson { display: block; font-size: 0.74rem; color: var(--ink-3); margin-top: 4px; }
 
 /* The two steps of the app: the licence key unlocks, the BR{...} flag clears. Never the same box. */
 .nb-step { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); }

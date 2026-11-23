@@ -36,7 +36,8 @@ export function GauntletArena({ onWarden }: Readonly<{ onWarden: (w: WardenView)
   // is only set once the server has answered.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    // Deliberately not awaited (an effect cannot be async); every failure is caught inside, so nothing is lost.
+    void (async () => {
       try {
         const a = (await currentGauntlet()) ?? await startGauntlet();
         if (cancelled) return;
@@ -113,10 +114,10 @@ export function GauntletArena({ onWarden }: Readonly<{ onWarden: (w: WardenView)
   if (error) {
     return (
       <div className="gt">
-        <div className="gt-locked" role="status">
-          <div className="gt-title">The gauntlet</div>
-          <p>{error}</p>
-        </div>
+        <output className="gt-locked">
+          <span className="gt-title">The gauntlet</span>
+          <span className="gt-msg">{error}</span>
+        </output>
       </div>
     );
   }
@@ -124,11 +125,11 @@ export function GauntletArena({ onWarden }: Readonly<{ onWarden: (w: WardenView)
   if (stopped) {
     return (
       <div className="gt">
-        <div className="gt-locked" role="status">
-          <div className="gt-title">Run over</div>
-          <p>You broke {stopped.cleared} {stopped.cleared === 1 ? 'rung' : 'rungs'}. Your best run against him is {stopped.best}.</p>
+        <output className="gt-locked">
+          <span className="gt-title">Run over</span>
+          <span className="gt-msg">You broke {stopped.cleared} {stopped.cleared === 1 ? 'rung' : 'rungs'}. Your best run against him is {stopped.best}.</span>
           <button type="button" className="gt-btn" disabled={busy} onClick={() => void again()}>start another rematch</button>
-        </div>
+        </output>
       </div>
     );
   }
@@ -177,10 +178,10 @@ function GauntletHeader({ run, busy, onContinue, onStop }: Readonly<{
 
       {run.cycleWon
         ? (
-          <div className="gt-won" role="status">
+          <output className="gt-won">
             <span>Every rung of cycle {run.cycle} is broken. Go on and he re-arms everything; stop and he remembers {run.cleared}.</span>
             <button type="button" className="gt-btn" disabled={busy} onClick={onContinue}>go on</button>
-          </div>
+          </output>
         )
         : (
           <div className="gt-why">

@@ -18,42 +18,44 @@ const EDIT_PAUSE_MS = 1200;
 // How long the morph between two gauntlet targets shows.
 const MORPH_MS = 900;
 
-// The in-arena dnSpy-lite plus the level's REAL app. You read and patch the code on the left, then run the app
-// with a key: patch IsValid and any key opens it (the showcase), or recover the real key and the app hands you
-// the BR{...} flag to submit. The crack, the unlock and the flag are all decided on the server, and since Phase
-// 4 so is the warden: every answer from the server carries his reaction, and the browser only reports what it
-// alone sees (a method opened, an edit) for HIM to judge. Since Phase 6 it talks through a port, so the same
-// workbench serves the ladder (it fetches its own level) and the gauntlet (the warden hands it each new target,
-// and it morphs in place: same editor, new source, new method map, new check, no reload).
-export function Workbench({ port, target, onWarden }: Readonly<{
-  port: WorkbenchPort;
-  target?: Target | null;
-  onWarden: (w: WardenView) => void;
-}>) {
+type Report = (w: WardenView | null | undefined) => void;
+type AppState = 'idle' | 'locked' | 'bypass' | 'unlocked' | 'error';
+interface AppMeta { name: string; field: string; placeholder: string; }
+
+// Each level's app wears its own field: Level 2 is Ledger with a serial, not NoteBox with a licence key.
+const APPS: Record<number, AppMeta> = {
+  1: { name: 'NoteBox', field: 'licence key', placeholder: 'BR-XXXX-XXXX' },
+  2: { name: 'Ledger', field: 'serial number', placeholder: '000000000' },
+};
+const metaFor = (level: number): AppMeta => APPS[level] ?? { name: 'Target app', field: 'licence key', placeholder: '' };
+
+// The app's state, by what the server decided.
+function appStateOf(app: AppRun | null): AppState {
+  if (!app) return 'idle';
+  if (!app.compiled) return 'error';
+  if (app.genuine) return 'unlocked';
+  return app.opened ? 'bypass' : 'locked';
+}
+
+function statusOf(state: AppState, field: string): string {
+  switch (state) {
+    case 'locked': return `Invalid ${field}. The app stayed shut.`;
+    case 'bypass': return `Opened by a patch: any ${field} works now. A patch earns no flag, though; only the real ${field} does.`;
+    case 'unlocked': return `Unlocked with the real ${field}. Step 2 is yours.`;
+    case 'error': return 'Your build would not compile, so the app never ran.';
+    default: return `The app is locked. Enter a ${field} to activate it.`;
+  }
+}
+
+// The target in the workbench: the gauntlet hands one in (and swaps it to morph), the ladder fetches its own. Owns
+// the source being edited, the served baseline, the app's key field (cleared on a new target) and the morph flag.
+function useTarget(port: WorkbenchPort, target: Target | null | undefined, report: Report) {
   const [shown, setShown] = useState<Target | null>(target ?? null);
   const [source, setSource] = useState(target?.source ?? '');
-  const [baseline, setBaseline] = useState(target?.source ?? '');   // the served source, to detect edits and reset
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [running, setRunning] = useState(false);
-  const [result, setResult] = useState<PatchRun | null>(null);
-  const [morphing, setMorphing] = useState(false);
-
-  // The in-arena app (step 1: the licence key) and the flag it earns (step 2).
+  const [baseline, setBaseline] = useState(target?.source ?? '');
   const [appKey, setAppKey] = useState('');
-  const [app, setApp] = useState<AppRun | null>(null);
-  const [appBusy, setAppBusy] = useState(false);
-  const [flag, setFlag] = useState('');
-  const [solved, setSolved] = useState<string | null>(null);
-  const [submitMsg, setSubmitMsg] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  // Phase 4b, the honest hacks (the ladder only).
-  const [hack, setHack] = useState<HackResult | null>(null);
-  const [hacking, setHacking] = useState<HackKind | null>(null);
-
-  const jumpRef = useRef<EditorJump | null>(null);        // reveal a line in the editor (set on editor mount)
-  const lastShown = useRef(target?.source ?? '');          // the last source the warden was shown
-  const seenKey = useRef(target?.key ?? '');               // the target that last source belongs to
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [morphing, setMorphing] = useState(false);
 
   // A new target from the gauntlet: swap it in while rendering (React's "adjust state when a prop changes"), so the
   // editor keeps its model and only its content, map and check change. The first target is not a morph.
@@ -61,17 +63,9 @@ export function Workbench({ port, target, onWarden }: Readonly<{
     setShown(target);
     setSource(target.source);
     setBaseline(target.source);
-    setResult(null);
-    setApp(null);
     setAppKey('');
-    setFlag('');
-    setSolved(null);
-    setSubmitMsg(null);
     setMorphing(shown !== null);
   }
-
-  // A reaction from the server, if it carried one, goes to the warden's rail.
-  const report = useCallback((w: WardenView | null | undefined) => { if (w) onWarden(w); }, [onWarden]);
 
   // The ladder fetches its own target on mount; opening it begins the fight, so his greeting comes with it.
   useEffect(() => {
@@ -95,10 +89,16 @@ export function Workbench({ port, target, onWarden }: Readonly<{
     return () => clearTimeout(timer);
   }, [morphing]);
 
-  const loading = shown === null;
+  return { shown, source, setSource, baseline, appKey, setAppKey, loadError, morphing };
+}
 
-  // Show the warden the player's edit once they pause, and only if it changed since he last saw it: his
-  // forensics on the server decide what the edit actually did. A freshly swapped-in target is not an edit.
+// Show the warden the player's edit once they pause, and only if it changed since he last saw it: his forensics on
+// the server decide what the edit actually did. A freshly swapped-in target is not an edit. Returns how to tell it
+// that a source was just shown to him another way (a run, the app).
+function useWardenEdits(shown: Target | null, source: string, port: WorkbenchPort, report: Report) {
+  const lastShown = useRef(source);       // the last source the warden was shown
+  const seenKey = useRef(shown?.key ?? '');   // the target that last source belongs to
+
   useEffect(() => {
     if (!shown) return undefined;
     if (seenKey.current !== shown.key) {
@@ -114,75 +114,60 @@ export function Workbench({ port, target, onWarden }: Readonly<{
     return () => clearTimeout(timer);
   }, [source, shown, port, report]);
 
-  const openMethod = (m: WorkbenchMethod) => {
-    jumpRef.current?.(m.line);
-    port.observe('read', m.name).then(report).catch(() => { /* he can miss a beat */ });
-  };
+  return useCallback((seen: string) => { lastShown.current = seen; }, []);
+}
 
-  const run = async () => {
+// "Run my patch": the server compiles and exercises the check. A run belongs to the target it ran on, so after a
+// morph the terminal is empty again without anything having to clear it.
+function useRunPatch(port: WorkbenchPort, shown: Target | null, source: string, report: Report, markShown: (s: string) => void) {
+  const [running, setRunning] = useState(false);
+  const [run, setRun] = useState<{ key: string; result: PatchRun } | null>(null);
+
+  const runPatch = async () => {
+    if (!shown) return;
+    const key = shown.key;
     setRunning(true);
     try {
       const r = await port.run(source);
-      lastShown.current = source;
-      setResult(r);
+      markShown(source);
+      setRun({ key, result: r });
       report(r.warden);
     } catch (e: unknown) {
-      setResult({ compiled: false, cracked: false, output: [`run failed: ${String(e)}`], diagnostics: [] });
+      setRun({ key, result: { compiled: false, cracked: false, output: [`run failed: ${String(e)}`], diagnostics: [] } });
     } finally {
       setRunning(false);
     }
   };
 
-  // Step 1: run the app against the typed key, on the CURRENT build. The server decides opened / genuine and only
-  // hands back a flag on a genuine unlock.
-  const launch = async () => {
-    setAppBusy(true);
-    setSubmitMsg(null);
-    try {
-      const r = await port.app(source, appKey);
-      lastShown.current = source;
-      setApp(r);
-      if (r.genuine && r.flag) setFlag(r.flag);
-      report(r.warden);
-    } catch (e: unknown) {
-      setApp({ compiled: false, opened: false, genuine: false, flag: null, output: [`app run failed: ${String(e)}`], diagnostics: [] });
-    } finally {
-      setAppBusy(false);
-    }
+  return { run, running, runPatch, clearRun: () => setRun(null) };
+}
+
+// The in-arena dnSpy-lite plus the level's REAL app. You read and patch the code on the left, then run the app
+// with a key: patch IsValid and any key opens it (the showcase), or recover the real key and the app hands you
+// the BR{...} flag to submit. The crack, the unlock and the flag are all decided on the server, and since Phase
+// 4 so is the warden: every answer from the server carries his reaction, and the browser only reports what it
+// alone sees (a method opened, an edit) for HIM to judge. Since Phase 6 it talks through a port, so the same
+// workbench serves the ladder (it fetches its own level) and the gauntlet (the warden hands it each new target,
+// and it morphs in place: same editor, new source, new method map, new check, no reload). The app panel and the
+// honest hacks are keyed by the target, so a new target gives them a fresh start while the editor stays put.
+export function Workbench({ port, target, onWarden }: Readonly<{
+  port: WorkbenchPort;
+  target?: Target | null;
+  onWarden: (w: WardenView) => void;
+}>) {
+  // A reaction from the server, if it carried one, goes to the warden's rail.
+  const report = useCallback<Report>((w) => { if (w) onWarden(w); }, [onWarden]);
+  const { shown, source, setSource, baseline, appKey, setAppKey, loadError, morphing } = useTarget(port, target, report);
+  const markShown = useWardenEdits(shown, source, port, report);
+  const { run, running, runPatch, clearRun } = useRunPatch(port, shown, source, report, markShown);
+  const jumpRef = useRef<EditorJump | null>(null);        // reveal a line in the editor (set on editor mount)
+
+  const openMethod = (m: WorkbenchMethod) => {
+    jumpRef.current?.(m.line);
+    port.observe('read', m.name).then(report).catch(() => { /* he can miss a beat */ });
   };
 
-  // Step 2: submit the earned flag; the server verifies it (and, in the gauntlet, the fight may morph onward).
-  const submit = async () => {
-    setSubmitting(true);
-    setSubmitMsg(null);
-    try {
-      const res = await port.submit(flag.trim());
-      report(res.warden);
-      if (res.correct) setSolved(res.solved ?? 'Cleared.');
-      setSubmitMsg(res.message);
-    } catch (e: unknown) {
-      setSubmitMsg(`submit failed: ${String(e)}`);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Phase 4b: try a hack against the live defence. The server decides whether it was strong enough.
-  const tryHack = async (kind: HackKind) => {
-    if (!port.hack) return;
-    setHacking(kind);
-    try {
-      const r = await port.hack(kind, source, appKey);
-      setHack(r);
-      report(r.warden);
-    } catch (e: unknown) {
-      setHack({ hack: kind, worked: false, lockOpened: null, defence: '', verdict: `hack failed: ${String(e)}`, lesson: '', warden: null });
-    } finally {
-      setHacking(null);
-    }
-  };
-
-  const reset = () => { setSource(baseline); setResult(null); };
+  const reset = () => { setSource(baseline); clearRun(); };
 
   if (loadError) {
     return (
@@ -193,196 +178,304 @@ export function Workbench({ port, target, onWarden }: Readonly<{
     );
   }
 
-  const level = shown?.level ?? 1;
-  const edited = source !== baseline && !loading;
-  const errors = result?.diagnostics.filter((d) => d.isError) ?? [];
-
-  // The app's state, by what the server decided.
-  let appState: 'idle' | 'locked' | 'bypass' | 'unlocked' | 'error' = 'idle';
-  if (app) {
-    if (!app.compiled) appState = 'error';
-    else if (app.genuine) appState = 'unlocked';
-    else if (app.opened) appState = 'bypass';
-    else appState = 'locked';
-  }
-  const appOpen = appState === 'unlocked' || appState === 'bypass';
-
-  // Each level's app wears its own field: Level 2 is Ledger with a serial, not NoteBox with a licence key.
-  const meta = ({
-    1: { name: 'NoteBox', field: 'licence key', placeholder: 'BR-XXXX-XXXX' },
-    2: { name: 'Ledger', field: 'serial number', placeholder: '000000000' },
-  } as Record<number, { name: string; field: string; placeholder: string }>)[level]
-    ?? { name: 'Target app', field: 'licence key', placeholder: '' };
+  const targetKey = shown?.key ?? 'none';
+  const edited = shown !== null && source !== baseline;
 
   return (
     <div className="wb-split">
-      <div className={`wb${morphing ? ' wb-morph' : ''}`}>
-        <div className="wb-h">
-          <span className="wb-title">
-            <span className="wb-dots" aria-hidden="true"><i /><i /><i /></span>
-            <span className="wb-file">{shown ? shown.fileName : 'opening target...'}</span>
-            <span className="wb-tag">dnSpy-lite</span>
-          </span>
-          <span className="wb-h-tools">
-            {edited && <button type="button" className="wb-reset" onClick={reset}>reset</button>}
-            <button type="button" className="wb-run" onClick={run} disabled={loading || running}>
-              {running ? 'running...' : 'run my patch'}
-            </button>
-          </span>
-        </div>
+      <div className={morphing ? 'wb wb-morph' : 'wb'}>
+        <WbHeader fileName={shown?.fileName} edited={edited} running={running} disabled={!shown || running} onReset={reset} onRun={() => void runPatch()} />
 
         <div className="wb-body">
-          <aside className="wb-tree" aria-label="methods">
-            <div className="wb-tree-h">methods</div>
-            {!shown || shown.methods.length === 0
-              ? <div className="wb-tree-empty">{loading ? 'reading...' : 'no methods'}</div>
-              : (
-                <ul className="wb-tree-list">
-                  {shown.methods.map((m) => (
-                    <li key={`${m.name}:${m.line}`}>
-                      <button type="button" className="wb-method" onClick={() => openMethod(m)} title={m.signature}>
-                        <span className="wb-method-name">{m.name}</span>
-                        <span className="wb-method-line">L{m.line}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-          </aside>
-
+          <MethodTree target={shown} onOpen={openMethod} />
           <div className="wb-editor">
-            {loading
-              ? <div className="wb-editor-loading">fetching the target source...</div>
-              : (
+            {shown
+              ? (
                 <Suspense fallback={<div className="wb-editor-loading">loading the editor...</div>}>
                   <MonacoEditor value={source} onChange={setSource} onReady={(j) => { jumpRef.current = j; }} />
                 </Suspense>
-              )}
+              )
+              : <div className="wb-editor-loading">fetching the target source...</div>}
           </div>
         </div>
 
-        <div className="wb-term" aria-label="run output">
-          {!result && (
-            <div className="wb-term-idle">
-              Find the key in IsValid, or patch the check to always pass, then run. The server compiles your edit and
-              decides if the gate fell. The warden reads every edit you make.
-            </div>
-          )}
-          {result?.output.map((line) => <div key={line} className="wb-term-line">{line}</div>)}
-          {errors.length > 0 && (
-            <div className="wb-diags">
-              {errors.map((d) => (
-                <div key={`${d.line}:${d.message}`} className="wb-diag">
-                  <span className="wb-diag-line">line {d.line}</span> {d.message}
-                </div>
-              ))}
-            </div>
-          )}
-          {result && (
-            <div className={`wb-verdict ${result.cracked ? 'cracked' : 'held'}`}>
-              {result.cracked ? 'CRACKED' : 'NOT CRACKED YET'}
-            </div>
-          )}
-        </div>
+        <RunTerminal run={run} targetKey={targetKey} />
 
         {/* Phase 4b: the honest hacks, tested on the server against the live defence (the ladder only). */}
-        {port.hack && (
-          <div className="hk" aria-label="honest hacks">
-            <div className="hk-h">
-              <span className="hk-title">honest hacks</span>
-              <span className="hk-sub">each one is tested on the server; it only wins if it is genuinely strong enough</span>
-            </div>
-            <div className="hk-row">
-              <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('patch')}>
-                {hacking === 'patch' ? 'patching...' : 'patch the check'}
-              </button>
-              <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('forge')}>
-                {hacking === 'forge' ? 'forging...' : "forge the server's answer"}
-              </button>
-              <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('outage')}>
-                {hacking === 'outage' ? 'cutting...' : 'cut the database line'}
-              </button>
-            </div>
-            {hack && (
-              <div className={`hk-res ${hack.worked ? 'won' : 'held'}`} role="status">
-                <div className="hk-res-h">
-                  <b>{hack.worked ? 'IT WORKED' : 'THE DEFENCE HELD'}</b>
-                  {hack.defence && <span className="hk-def">verifier {hack.defence}</span>}
-                </div>
-                <div className="hk-verdict">{hack.verdict}</div>
-                {hack.lesson && <div className="hk-lesson">{hack.lesson}</div>}
-              </div>
-            )}
-          </div>
-        )}
+        {port.hack && <HonestHacks key={targetKey} hack={port.hack} source={source} appKey={appKey} disabled={!shown} report={report} />}
       </div>
 
       {/* The level's real app, run server-side against whatever key you type, on your current build. */}
-      <div className={`nb nb-${appState}`}>
-        <div className="nb-h">
-          <span className="nb-title">
-            <span className="wb-dots" aria-hidden="true"><i /><i /><i /></span>
-            <span className="wb-file">{meta.name}</span>
-          </span>
-          <span className="nb-sub">runs your current build</span>
+      <AppPanel
+        key={targetKey}
+        level={shown?.level ?? 1}
+        port={port}
+        source={source}
+        appKey={appKey}
+        onKey={setAppKey}
+        disabled={!shown}
+        report={report}
+        onShown={markShown}
+      />
+    </div>
+  );
+}
+
+function WbHeader({ fileName, edited, running, disabled, onReset, onRun }: Readonly<{
+  fileName?: string;
+  edited: boolean;
+  running: boolean;
+  disabled: boolean;
+  onReset: () => void;
+  onRun: () => void;
+}>) {
+  return (
+    <div className="wb-h">
+      <span className="wb-title">
+        <span className="wb-dots" aria-hidden="true"><i /><i /><i /></span>
+        <span className="wb-file">{fileName ?? 'opening target...'}</span>
+        <span className="wb-tag">dnSpy-lite</span>
+      </span>
+      <span className="wb-h-tools">
+        {edited && <button type="button" className="wb-reset" onClick={onReset}>reset</button>}
+        <button type="button" className="wb-run" onClick={onRun} disabled={disabled}>
+          {running ? 'running...' : 'run my patch'}
+        </button>
+      </span>
+    </div>
+  );
+}
+
+function MethodTree({ target, onOpen }: Readonly<{ target: Target | null; onOpen: (m: WorkbenchMethod) => void }>) {
+  return (
+    <aside className="wb-tree" aria-label="methods">
+      <div className="wb-tree-h">methods</div>
+      {!target || target.methods.length === 0
+        ? <div className="wb-tree-empty">{target ? 'no methods' : 'reading...'}</div>
+        : (
+          <ul className="wb-tree-list">
+            {target.methods.map((m) => (
+              <li key={`${m.name}:${m.line}`}>
+                <button type="button" className="wb-method" onClick={() => onOpen(m)} title={m.signature}>
+                  <span className="wb-method-name">{m.name}</span>
+                  <span className="wb-method-line">L{m.line}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+    </aside>
+  );
+}
+
+// The run's output for THIS target (a run on an earlier target is not shown after a morph).
+function RunTerminal({ run, targetKey }: Readonly<{ run: { key: string; result: PatchRun } | null; targetKey: string }>) {
+  const result = run?.key === targetKey ? run.result : null;
+  const errors = result ? result.diagnostics.filter((d) => d.isError) : [];
+  return (
+    <div className="wb-term" aria-label="run output">
+      {!result && (
+        <div className="wb-term-idle">
+          Find the key in IsValid, or patch the check to always pass, then run. The server compiles your edit and
+          decides if the gate fell. The warden reads every edit you make.
         </div>
-
-        <div className="nb-body">
-          <TargetApp level={level} open={appOpen} />
-
-          <div className="nb-step">
-            <div className="nb-step-h"><span className="nb-num">1</span> {meta.field} <span className="nb-step-sub">unlocks the app</span></div>
-            <div className="nb-row">
-              <input
-                id="nb-key"
-                className="nb-key"
-                aria-label={`${meta.field}, unlocks the app`}
-                placeholder={meta.placeholder}
-                value={appKey}
-                spellCheck={false}
-                autoComplete="off"
-                onChange={(e) => setAppKey(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !appBusy && !loading) void launch(); }}
-              />
-              <button type="button" className="nb-go" onClick={launch} disabled={appBusy || loading}>
-                {appBusy ? 'checking...' : 'Activate'}
-              </button>
+      )}
+      {result?.output.map((line) => <div key={line} className="wb-term-line">{line}</div>)}
+      {errors.length > 0 && (
+        <div className="wb-diags">
+          {errors.map((d) => (
+            <div key={`${d.line}:${d.message}`} className="wb-diag">
+              <span className="wb-diag-line">line {d.line}</span> {d.message}
             </div>
-            <div className="nb-hint">The real {meta.field} is hidden in the code. The grey text only shows its format, not the key.</div>
-            <div className={`nb-status nb-status-${appState}`}>
-              {appState === 'idle' && `The app is locked. Enter a ${meta.field} to activate it.`}
-              {appState === 'locked' && `Invalid ${meta.field}. The app stayed shut.`}
-              {appState === 'bypass' && `Opened by a patch: any ${meta.field} works now. A patch earns no flag, though; only the real ${meta.field} does.`}
-              {appState === 'unlocked' && `Unlocked with the real ${meta.field}. Step 2 is yours.`}
-              {appState === 'error' && 'Your build would not compile, so the app never ran.'}
-            </div>
-          </div>
-
-          {appState === 'unlocked' && (
-            <div className="nb-step br">
-              <div className="nb-step-h"><span className="nb-num">2</span> flag BR&#123;...&#125; <span className="nb-step-sub">submit it to clear the level</span></div>
-              <code className="br-flag">{app?.flag}</code>
-              {!solved && (
-                <div className="nb-row">
-                  <input
-                    className="nb-key"
-                    aria-label="flag to submit"
-                    value={flag}
-                    spellCheck={false}
-                    onChange={(e) => setFlag(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !submitting) void submit(); }}
-                  />
-                  <button type="button" className="nb-go br-submit" onClick={submit} disabled={submitting || !flag.trim()}>
-                    {submitting ? 'submitting...' : 'Submit flag'}
-                  </button>
-                </div>
-              )}
-              {solved && <div className="br-solved">{solved}</div>}
-              {submitMsg && <div className="br-msg">{submitMsg}</div>}
-            </div>
-          )}
+          ))}
         </div>
+      )}
+      {result && <Verdict cracked={result.cracked} />}
+    </div>
+  );
+}
+
+const Verdict = ({ cracked }: Readonly<{ cracked: boolean }>) =>
+  cracked ? <div className="wb-verdict cracked">CRACKED</div> : <div className="wb-verdict held">NOT CRACKED YET</div>;
+
+const HACKS: { kind: HackKind; idle: string; busy: string }[] = [
+  { kind: 'patch', idle: 'patch the check', busy: 'patching...' },
+  { kind: 'forge', idle: "forge the server's answer", busy: 'forging...' },
+  { kind: 'outage', idle: 'cut the database line', busy: 'cutting...' },
+];
+
+// Phase 4b: try a hack against the live defence. The server decides whether it was strong enough.
+function HonestHacks({ hack, source, appKey, disabled, report }: Readonly<{
+  hack: NonNullable<WorkbenchPort['hack']>;
+  source: string;
+  appKey: string;
+  disabled: boolean;
+  report: Report;
+}>) {
+  const [result, setResult] = useState<HackResult | null>(null);
+  const [busy, setBusy] = useState<HackKind | null>(null);
+
+  const tryHack = async (kind: HackKind) => {
+    setBusy(kind);
+    try {
+      const r = await hack(kind, source, appKey);
+      setResult(r);
+      report(r.warden);
+    } catch (e: unknown) {
+      setResult({ hack: kind, worked: false, lockOpened: null, defence: '', verdict: `hack failed: ${String(e)}`, lesson: '', warden: null });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const off = disabled || busy !== null;
+  return (
+    <div className="hk" aria-label="honest hacks">
+      <div className="hk-h">
+        <span className="hk-title">honest hacks</span>
+        <span className="hk-sub">each one is tested on the server; it only wins if it is genuinely strong enough</span>
       </div>
+      <div className="hk-row">
+        {HACKS.map((h) => (
+          <button key={h.kind} type="button" className="hk-btn" disabled={off} onClick={() => void tryHack(h.kind)}>
+            {busy === h.kind ? h.busy : h.idle}
+          </button>
+        ))}
+      </div>
+      {result && <HackVerdict result={result} />}
+    </div>
+  );
+}
+
+function HackVerdict({ result }: Readonly<{ result: HackResult }>) {
+  return (
+    <output className={result.worked ? 'hk-res won' : 'hk-res held'}>
+      <span className="hk-res-h">
+        <b>{result.worked ? 'IT WORKED' : 'THE DEFENCE HELD'}</b>
+        {result.defence && <span className="hk-def">verifier {result.defence}</span>}
+      </span>
+      <span className="hk-verdict">{result.verdict}</span>
+      {result.lesson && <span className="hk-lesson">{result.lesson}</span>}
+    </output>
+  );
+}
+
+// The level's real app: step 1 runs it against the typed key on the CURRENT build (the server decides opened /
+// genuine and only hands back a flag on a genuine unlock); step 2 submits that flag.
+function AppPanel({ level, port, source, appKey, onKey, disabled, report, onShown }: Readonly<{
+  level: number;
+  port: WorkbenchPort;
+  source: string;
+  appKey: string;
+  onKey: (k: string) => void;
+  disabled: boolean;
+  report: Report;
+  onShown: (source: string) => void;
+}>) {
+  const [app, setApp] = useState<AppRun | null>(null);
+  const [busy, setBusy] = useState(false);
+  const meta = metaFor(level);
+  const state = appStateOf(app);
+
+  const launch = async () => {
+    setBusy(true);
+    try {
+      const r = await port.app(source, appKey);
+      onShown(source);
+      setApp(r);
+      report(r.warden);
+    } catch (e: unknown) {
+      setApp({ compiled: false, opened: false, genuine: false, flag: null, output: [`app run failed: ${String(e)}`], diagnostics: [] });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className={`nb nb-${state}`}>
+      <div className="nb-h">
+        <span className="nb-title">
+          <span className="wb-dots" aria-hidden="true"><i /><i /><i /></span>
+          <span className="wb-file">{meta.name}</span>
+        </span>
+        <span className="nb-sub">runs your current build</span>
+      </div>
+
+      <div className="nb-body">
+        <TargetApp level={level} open={state === 'unlocked' || state === 'bypass'} />
+
+        <div className="nb-step">
+          <div className="nb-step-h"><span className="nb-num">1</span> {meta.field} <span className="nb-step-sub">unlocks the app</span></div>
+          <div className="nb-row">
+            <input
+              id="nb-key"
+              className="nb-key"
+              aria-label={`${meta.field}, unlocks the app`}
+              placeholder={meta.placeholder}
+              value={appKey}
+              spellCheck={false}
+              autoComplete="off"
+              onChange={(e) => onKey(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !busy && !disabled) void launch(); }}
+            />
+            <button type="button" className="nb-go" onClick={() => void launch()} disabled={busy || disabled}>
+              {busy ? 'checking...' : 'Activate'}
+            </button>
+          </div>
+          <div className="nb-hint">The real {meta.field} is hidden in the code. The grey text only shows its format, not the key.</div>
+          <div className={`nb-status nb-status-${state}`}>{statusOf(state, meta.field)}</div>
+        </div>
+
+        {state === 'unlocked' && <FlagStep earned={app?.flag ?? ''} port={port} report={report} />}
+      </div>
+    </div>
+  );
+}
+
+// Step 2: submit the earned flag; the server verifies it (and, in the gauntlet, the fight may morph onward).
+function FlagStep({ earned, port, report }: Readonly<{ earned: string; port: WorkbenchPort; report: Report }>) {
+  const [flag, setFlag] = useState(earned);
+  const [solved, setSolved] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    setSubmitting(true);
+    setMessage(null);
+    try {
+      const res = await port.submit(flag.trim());
+      report(res.warden);
+      if (res.correct) setSolved(res.solved ?? 'Cleared.');
+      setMessage(res.message);
+    } catch (e: unknown) {
+      setMessage(`submit failed: ${String(e)}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="nb-step br">
+      <div className="nb-step-h"><span className="nb-num">2</span> flag BR&#123;...&#125; <span className="nb-step-sub">submit it to clear the level</span></div>
+      <code className="br-flag">{earned}</code>
+      {solved
+        ? <div className="br-solved">{solved}</div>
+        : (
+          <div className="nb-row">
+            <input
+              className="nb-key"
+              aria-label="flag to submit"
+              value={flag}
+              spellCheck={false}
+              onChange={(e) => setFlag(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !submitting) void submit(); }}
+            />
+            <button type="button" className="nb-go br-submit" onClick={() => void submit()} disabled={submitting || !flag.trim()}>
+              {submitting ? 'submitting...' : 'Submit flag'}
+            </button>
+          </div>
+        )}
+      {message && <div className="br-msg">{message}</div>}
     </div>
   );
 }

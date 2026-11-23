@@ -3,29 +3,28 @@
 
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
-  fetchWorkbenchSource, runWorkbenchApp, runWorkbenchPatch, submitFlag,
-  type AppRun, type PatchRun, type WorkbenchMethod,
+  fetchWorkbenchSource, observeWarden, runWorkbenchApp, runWorkbenchHack, runWorkbenchPatch, submitFlag,
+  type AppRun, type HackKind, type HackResult, type PatchRun, type WardenView, type WorkbenchMethod,
 } from '../api';
 import type { EditorJump } from './MonacoEditor';
+import { TargetApp } from './TargetApp';
 
 // Monaco is heavy, so it is pulled in lazily: the chunk loads the first time the workbench renders (in the
 // arena), never on the launcher. This is the one place that imports it.
 const MonacoEditor = lazy(() => import('./MonacoEditor'));
 
-// What the player did, for the warden to react to. The warden state and the activity feed live in the parent;
-// the workbench just reports the move. The Phase 3 app adds launch / bypass / unlocked / solved on top of the
-// Phase 2 read / edit / run moves, so the warden can get suspicious about the actual crack, not just typing.
-export type ActivityKind =
-  'open' | 'read' | 'edit' | 'run' | 'held' | 'cracked' | 'error'
-  | 'launch' | 'bypass' | 'unlocked' | 'solved';
-export interface WorkbenchActivity { kind: ActivityKind; text: string; focus?: string; }
+// How long the player must pause typing before the warden is shown their edit, so he judges a thought, not every
+// keystroke.
+const EDIT_PAUSE_MS = 1200;
 
-// The in-arena dnSpy-lite plus the level's REAL app. You read/patch the code on the left, then LAUNCH the app
-// and type a key: patch IsValid and any key opens it (the showcase), or recover the real key and the app hands
-// you the BR{...} flag to submit. The crack, the unlock and the flag are all decided on the server.
-export function Workbench({ level, onActivity, onSolved }: Readonly<{
+// The in-arena dnSpy-lite plus the level's REAL app. You read and patch the code on the left, then run the app
+// with a key: patch IsValid and any key opens it (the showcase), or recover the real key and the app hands you
+// the BR{...} flag to submit. The crack, the unlock and the flag are all decided on the server, and since Phase
+// 4 so is the warden: every answer from the server carries his reaction, and the browser only reports what it
+// alone sees (a method opened, an edit) for HIM to judge.
+export function Workbench({ level, onWarden, onSolved }: Readonly<{
   level: number;
-  onActivity: (a: WorkbenchActivity) => void;
+  onWarden: (w: WardenView) => void;
   onSolved?: (level: number) => void;
 }>) {
   const [fileName, setFileName] = useState('');
@@ -37,20 +36,27 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<PatchRun | null>(null);
 
-  // The in-arena app (the licence dialog) and the flag it earns.
+  // The in-arena app (step 1: the licence key) and the flag it earns (step 2).
   const [appKey, setAppKey] = useState('');
   const [app, setApp] = useState<AppRun | null>(null);
   const [appBusy, setAppBusy] = useState(false);
-  const [flag, setFlag] = useState('');                  // the earned flag, to submit for progression
+  const [flag, setFlag] = useState('');
   const [solved, setSolved] = useState(false);
   const [submitMsg, setSubmitMsg] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const jumpRef = useRef<EditorJump | null>(null);        // reveal a line in the editor (set on editor mount)
-  const editedOnce = useRef(false);                        // so only the FIRST edit is reported as activity
+  // Phase 4b, the honest hacks.
+  const [hack, setHack] = useState<HackResult | null>(null);
+  const [hacking, setHacking] = useState<HackKind | null>(null);
 
-  // Fetch the level's real source on mount. The parent keys this component by level, so a new target remounts
-  // it fresh. onActivity is stable (useCallback in the parent), so this stays a one-shot fetch, not a loop.
+  const jumpRef = useRef<EditorJump | null>(null);        // reveal a line in the editor (set on editor mount)
+  const lastShown = useRef('');                            // the last source the warden was shown
+
+  // A reaction from the server, if it carried one, goes to the warden's rail.
+  const report = useCallback((w: WardenView | null | undefined) => { if (w) onWarden(w); }, [onWarden]);
+
+  // Fetch the level's real source on mount; opening it begins the fight, so his greeting comes with it. The
+  // parent keys this component by level, so a new target remounts it fresh.
   useEffect(() => {
     let cancelled = false;
     fetchWorkbenchSource(level)
@@ -60,8 +66,9 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
         setMethods(ws.methods);
         setSource(ws.source);
         setBaseline(ws.source);
+        lastShown.current = ws.source;
         setLoading(false);
-        onActivity({ kind: 'open', text: `opened ${ws.fileName}` });
+        report(ws.warden);
       })
       .catch((e: unknown) => {
         if (cancelled) return;
@@ -69,30 +76,31 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [level, onActivity]);
+  }, [level, report]);
 
-  const onEditorChange = useCallback((next: string) => {
-    setSource(next);
-    if (!editedOnce.current && next !== baseline) {
-      editedOnce.current = true;
-      onActivity({ kind: 'edit', text: 'edited the source' });
-    }
-  }, [baseline, onActivity]);
+  // Show the warden the player's edit once they pause, and only if it changed since he last saw it: his
+  // forensics on the server decide what the edit actually did.
+  useEffect(() => {
+    if (loading || source === lastShown.current) return;
+    const timer = setTimeout(() => {
+      lastShown.current = source;
+      observeWarden(level, 'edit', undefined, source).then(report).catch(() => { /* he can miss a beat */ });
+    }, EDIT_PAUSE_MS);
+    return () => clearTimeout(timer);
+  }, [source, level, loading, report]);
 
   const openMethod = (m: WorkbenchMethod) => {
     jumpRef.current?.(m.line);
-    onActivity({ kind: 'read', text: `read ${m.name}`, focus: m.name });
+    observeWarden(level, 'read', m.name).then(report).catch(() => { /* he can miss a beat */ });
   };
 
   const run = async () => {
     setRunning(true);
-    onActivity({ kind: 'run', text: 'ran a patch' });
     try {
       const r = await runWorkbenchPatch(level, source);
+      lastShown.current = source;
       setResult(r);
-      if (!r.compiled) onActivity({ kind: 'error', text: 'build failed' });
-      else if (r.cracked) onActivity({ kind: 'cracked', text: 'the gate fell' });
-      else onActivity({ kind: 'held', text: 'the check held' });
+      report(r.warden);
     } catch (e: unknown) {
       setResult({ compiled: false, cracked: false, output: [`run failed: ${String(e)}`], diagnostics: [] });
     } finally {
@@ -100,19 +108,17 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
     }
   };
 
-  // Launch the app against the typed key, on the CURRENT build. The server decides opened/genuine and only
-  // hands back a flag on a genuine unlock. We report the honest move to the warden: a bypass-open is still a
-  // win for the lock-is-dead showcase, but the warden knows you never found the key.
+  // Step 1: run the app against the typed key, on the CURRENT build. The server decides opened / genuine and only
+  // hands back a flag on a genuine unlock.
   const launch = async () => {
     setAppBusy(true);
     setSubmitMsg(null);
     try {
       const r = await runWorkbenchApp(level, source, appKey);
+      lastShown.current = source;
       setApp(r);
-      if (!r.compiled) onActivity({ kind: 'error', text: 'the app would not build' });
-      else if (r.genuine && r.flag) { setFlag(r.flag); onActivity({ kind: 'unlocked', text: 'unlocked with the real key' }); }
-      else if (r.opened) onActivity({ kind: 'bypass', text: 'forced the app open with a junk key' });
-      else onActivity({ kind: 'launch', text: 'the app rejected the key' });
+      if (r.genuine && r.flag) setFlag(r.flag);
+      report(r.warden);
     } catch (e: unknown) {
       setApp({ compiled: false, opened: false, genuine: false, flag: null, output: [`app run failed: ${String(e)}`], diagnostics: [] });
     } finally {
@@ -120,15 +126,16 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
     }
   };
 
+  // Step 2: submit the earned flag; the server verifies it and clears the level.
   const submit = async () => {
     setSubmitting(true);
     setSubmitMsg(null);
     try {
       const res = await submitFlag(level, flag.trim());
+      report(res.warden);
       if (res.correct) {
         setSolved(true);
-        setSubmitMsg('Flag accepted. This level is cleared - the next rung is open.');
-        onActivity({ kind: 'solved', text: 'submitted the flag and cleared the level' });
+        setSubmitMsg('Flag accepted. This level is cleared, the next rung is open.');
         onSolved?.(level);
       } else {
         setSubmitMsg('That flag is not right for this target.');
@@ -137,6 +144,21 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
       setSubmitMsg(`submit failed: ${String(e)}`);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Phase 4b: try a hack against the live defence. The server decides whether it was strong enough.
+  const tryHack = async (kind: HackKind) => {
+    setHacking(kind);
+    try {
+      const r = await runWorkbenchHack(level, kind, source, appKey);
+      setHack(r);
+      report(r.warden);
+      if (r.worked) onSolved?.(level);
+    } catch (e: unknown) {
+      setHack({ hack: kind, worked: false, lockOpened: null, defence: '', verdict: `hack failed: ${String(e)}`, lesson: '', warden: null });
+    } finally {
+      setHacking(null);
     }
   };
 
@@ -154,7 +176,7 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
   const edited = source !== baseline && !loading;
   const errors = result?.diagnostics.filter((d) => d.isError) ?? [];
 
-  // The app's one-line status, by what the server decided.
+  // The app's state, by what the server decided.
   let appState: 'idle' | 'locked' | 'bypass' | 'unlocked' | 'error' = 'idle';
   if (app) {
     if (!app.compiled) appState = 'error';
@@ -162,13 +184,14 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
     else if (app.opened) appState = 'bypass';
     else appState = 'locked';
   }
+  const appOpen = appState === 'unlocked' || appState === 'bypass';
 
-  // Each level's real app wears its own name and field, so Level 2 is Ledger with a serial, not NoteBox.
+  // Each level's app wears its own field: Level 2 is Ledger with a serial, not NoteBox with a licence key.
   const meta = ({
-    1: { name: 'NoteBox', field: 'Licence key', placeholder: 'BR-XXXX-XXXX' },
-    2: { name: 'Ledger', field: 'Serial number', placeholder: '000000000' },
+    1: { name: 'NoteBox', field: 'licence key', placeholder: 'BR-XXXX-XXXX' },
+    2: { name: 'Ledger', field: 'serial number', placeholder: '000000000' },
   } as Record<number, { name: string; field: string; placeholder: string }>)[level]
-    ?? { name: 'Target app', field: 'Licence key', placeholder: '' };
+    ?? { name: 'Target app', field: 'licence key', placeholder: '' };
 
   return (
     <div className="wb-split">
@@ -211,7 +234,7 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
               ? <div className="wb-editor-loading">fetching the target source...</div>
               : (
                 <Suspense fallback={<div className="wb-editor-loading">loading the editor...</div>}>
-                  <MonacoEditor value={source} onChange={onEditorChange} onReady={(j) => { jumpRef.current = j; }} />
+                  <MonacoEditor value={source} onChange={setSource} onReady={(j) => { jumpRef.current = j; }} />
                 </Suspense>
               )}
           </div>
@@ -220,8 +243,8 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
         <div className="wb-term" aria-label="run output">
           {!result && (
             <div className="wb-term-idle">
-              Read the key out of IsValid, or patch the check to always pass, then run. The server compiles your
-              edit and decides if the gate fell. The warden is watching.
+              Find the key in IsValid, or patch the check to always pass, then run. The server compiles your edit and
+              decides if the gate fell. The warden reads every edit you make.
             </div>
           )}
           {result?.output.map((line) => <div key={line} className="wb-term-line">{line}</div>)}
@@ -240,47 +263,81 @@ export function Workbench({ level, onActivity, onSolved }: Readonly<{
             </div>
           )}
         </div>
+
+        {/* Phase 4b: the honest hacks, tested on the server against the live defence. */}
+        <div className="hk" aria-label="honest hacks">
+          <div className="hk-h">
+            <span className="hk-title">honest hacks</span>
+            <span className="hk-sub">each one is tested on the server; it only wins if it is genuinely strong enough</span>
+          </div>
+          <div className="hk-row">
+            <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('patch')}>
+              {hacking === 'patch' ? 'patching...' : 'patch the check'}
+            </button>
+            <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('forge')}>
+              {hacking === 'forge' ? 'forging...' : "forge the server's answer"}
+            </button>
+            <button type="button" className="hk-btn" disabled={loading || hacking !== null} onClick={() => tryHack('outage')}>
+              {hacking === 'outage' ? 'cutting...' : 'cut the database line'}
+            </button>
+          </div>
+          {hack && (
+            <div className={`hk-res ${hack.worked ? 'won' : 'held'}`} role="status">
+              <div className="hk-res-h">
+                <b>{hack.worked ? 'IT WORKED' : 'THE DEFENCE HELD'}</b>
+                {hack.defence && <span className="hk-def">verifier {hack.defence}</span>}
+              </div>
+              <div className="hk-verdict">{hack.verdict}</div>
+              {hack.lesson && <div className="hk-lesson">{hack.lesson}</div>}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* The level's real app, run server-side against whatever key you type on your current build. */}
+      {/* The level's real app, run server-side against whatever key you type, on your current build. */}
       <div className={`nb nb-${appState}`}>
         <div className="nb-h">
           <span className="nb-title">
             <span className="wb-dots" aria-hidden="true"><i /><i /><i /></span>
-            <span className="wb-file">{meta.name} &middot; Activate</span>
+            <span className="wb-file">{meta.name}</span>
           </span>
           <span className="nb-sub">runs your current build</span>
         </div>
 
         <div className="nb-body">
-          <label className="nb-label" htmlFor="nb-key">{meta.field}</label>
-          <div className="nb-row">
-            <input
-              id="nb-key"
-              className="nb-key"
-              placeholder={meta.placeholder}
-              value={appKey}
-              spellCheck={false}
-              autoComplete="off"
-              onChange={(e) => setAppKey(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !appBusy && !loading) void launch(); }}
-            />
-            <button type="button" className="nb-go" onClick={launch} disabled={appBusy || loading}>
-              {appBusy ? 'checking...' : 'Activate'}
-            </button>
-          </div>
+          <TargetApp level={level} open={appOpen} />
 
-          <div className={`nb-status nb-status-${appState}`}>
-            {appState === 'idle' && `The app is locked. Enter a ${meta.field.toLowerCase()} to activate.`}
-            {appState === 'locked' && `Invalid ${meta.field.toLowerCase()}. The app stayed shut.`}
-            {appState === 'bypass' && `Unlocked - the lock is bypassed, any ${meta.field.toLowerCase()} opens it now. But you never recovered the real one, so the warden kept the flag.`}
-            {appState === 'unlocked' && `Unlocked with the real ${meta.field.toLowerCase()}. The flag is yours.`}
-            {appState === 'error' && 'Your build would not compile, so the app never ran.'}
+          <div className="nb-step">
+            <div className="nb-step-h"><span className="nb-num">1</span> {meta.field} <span className="nb-step-sub">unlocks the app</span></div>
+            <div className="nb-row">
+              <input
+                id="nb-key"
+                className="nb-key"
+                aria-label={`${meta.field}, unlocks the app`}
+                placeholder={meta.placeholder}
+                value={appKey}
+                spellCheck={false}
+                autoComplete="off"
+                onChange={(e) => setAppKey(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !appBusy && !loading) void launch(); }}
+              />
+              <button type="button" className="nb-go" onClick={launch} disabled={appBusy || loading}>
+                {appBusy ? 'checking...' : 'Activate'}
+              </button>
+            </div>
+            <div className="nb-hint">The real {meta.field} is hidden in the code. The grey text only shows its format, not the key.</div>
+            <div className={`nb-status nb-status-${appState}`}>
+              {appState === 'idle' && `The app is locked. Enter a ${meta.field} to activate it.`}
+              {appState === 'locked' && `Invalid ${meta.field}. The app stayed shut.`}
+              {appState === 'bypass' && `Opened by a patch: any ${meta.field} works now. A patch earns no flag, though; only the real ${meta.field} does.`}
+              {appState === 'unlocked' && `Unlocked with the real ${meta.field}. Step 2 is yours.`}
+              {appState === 'error' && 'Your build would not compile, so the app never ran.'}
+            </div>
           </div>
 
           {appState === 'unlocked' && (
-            <div className="br">
-              <div className="br-h">Flag earned</div>
+            <div className="nb-step br">
+              <div className="nb-step-h"><span className="nb-num">2</span> flag BR&#123;...&#125; <span className="nb-step-sub">submit it to clear the level</span></div>
               <code className="br-flag">{app?.flag}</code>
               {!solved && (
                 <div className="nb-row">

@@ -2,20 +2,28 @@
 // Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
 
 import { useCallback, useRef, useState } from 'react';
-import { type Level } from '../api';
-import { Hexwarden, type HexState } from './Hexwarden';
-import { Workbench, type WorkbenchActivity } from './Workbench';
+import { type Level, type WardenView } from '../api';
+import { HarassLayer, type HarassItem } from './Harassment';
+import { Hexwarden } from './Hexwarden';
+import { Workbench } from './Workbench';
+import './phase4.css';
 
-// The arena: a compact warden rail (the warden, the level switcher, the warden's feed) beside the in-arena
-// dnSpy workbench, which opens full-size like a window inside a window so it is actually usable. The warden
-// REACTS here (step 4): every workbench move is reported and nudges his state, rage and the feed. The real
-// MAPE-K brain (ArenaEngine) re-points in Phase 3; this is an honest, bounded client-side escalation.
-
-// The order of escalation, so the warden never visibly calms down mid-fight.
-const RANK: Record<HexState, number> = { contempt: 0, enraged: 1, wrath: 2, server: 3 };
-const atLeast = (current: HexState, floor: HexState): HexState => (RANK[current] >= RANK[floor] ? current : floor);
+// The arena: a compact warden rail (the warden, what he thinks, the level switcher, his feed) beside the in-arena
+// dnSpy workbench, which opens full-size like a window inside a window. Since Phase 4 the warden here is exactly
+// what the SERVER decided: his mood, rage, the member he watches, his words, his read on the player and his
+// MAPE-K reasoning all arrive with each answer, so this component only shows him; it decides nothing.
 
 interface FeedLine { id: number; text: string; tone: 'watch' | 'hit' | 'hold' | 'crack'; }
+
+// How long a harassment stays up before it leaves by itself, and how long the flicker lasts.
+const HARASS_MS = 6000;
+const FLICKER_MS = 700;
+
+function toneOf(w: WardenView): FeedLine['tone'] {
+  if (w.surprised || w.mood === 'wrath') return 'crack';
+  if (w.mood === 'enraged') return 'hit';
+  return w.calledIt ? 'hold' : 'watch';
+}
 
 export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSolved }: Readonly<{
   level: Level | null;
@@ -25,91 +33,72 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSo
   solved: Set<number>;
   onSolved?: (level: number) => void;
 }>) {
-  const [hex, setHex] = useState<HexState>('contempt');
-  const [rage, setRage] = useState(0);
-  const [watching, setWatching] = useState('');
+  const [warden, setWarden] = useState<WardenView | null>(null);
   const [feed, setFeed] = useState<FeedLine[]>([]);
+  const [harass, setHarass] = useState<HarassItem[]>([]);
+  const [flicker, setFlicker] = useState(false);
+  const [fightOn, setFightOn] = useState(activeNumber);
   const seq = useRef(0);
 
-  // One place the workbench's moves turn into the warden's reaction. Stable (no deps, functional updates), so
-  // the workbench's fetch effect does not re-fire on every render.
-  const onActivity = useCallback((a: WorkbenchActivity) => {
-    const add = (text: string, tone: FeedLine['tone']) => {
-      seq.current += 1;
-      const id = seq.current;
-      setFeed((f) => [{ id, text, tone }, ...f].slice(0, 10));
-    };
-    const provoke = (floor: HexState) => {
-      setHex((s) => atLeast(s, floor));
-      setRage((r) => Math.min(9, r + 1));
-    };
+  // A new target is a new fight: clear his rail while rendering (React's "adjust state when a prop changes"),
+  // not in an effect, so there is no extra render. His greeting arrives when the workbench opens the target.
+  if (activeNumber !== fightOn) {
+    setFightOn(activeNumber);
+    setWarden(null);
+    setFeed([]);
+    setHarass([]);
+  }
 
-    switch (a.kind) {
-      case 'open':
-        setHex('contempt');
-        setRage(0);
-        setWatching('');
-        seq.current += 1;
-        setFeed([{ id: seq.current, text: a.text, tone: 'watch' }]);
-        break;
-      case 'read':
-        setWatching(a.focus ?? '');
-        add(a.text, 'watch');
-        break;
-      case 'edit':
-        setHex((s) => atLeast(s, 'enraged'));
-        setRage((r) => Math.max(r, 2));
-        add(a.text, 'hit');
-        break;
-      case 'run':
-        provoke('enraged');
-        add(a.text, 'hit');
-        break;
-      case 'held':
-        provoke('enraged');
-        add('the check held - he is still standing', 'hold');
-        break;
-      case 'error':
-        provoke('enraged');
-        add('your patch did not build', 'hold');
-        break;
-      case 'cracked':
-        setHex('wrath');
-        setRage(9);
-        add('the gate fell - you are through', 'crack');
-        break;
-      case 'launch':
-        provoke('enraged');
-        add('he watched you run the app', 'hit');
-        break;
-      case 'bypass':
-        setHex('wrath');
-        setRage(9);
-        add('the lock is bypassed - any key opens it. he is furious, but he kept the flag', 'crack');
-        break;
-      case 'unlocked':
-        setHex('wrath');
-        setRage(9);
-        add('you recovered the real key - the app is genuinely yours', 'crack');
-        break;
-      case 'solved':
-        setHex('wrath');
-        setRage(9);
-        add('the flag is submitted - this rung is broken', 'crack');
-        break;
+  const dismiss = useCallback((id: number) => setHarass((h) => h.filter((x) => x.id !== id)), []);
+
+  // Every reaction the server sends lands here. Stable (functional updates only), so the workbench's effects that
+  // depend on it do not re-fire on every render.
+  const onWarden = useCallback((w: WardenView) => {
+    seq.current += 1;
+    const id = seq.current;
+    setWarden(w);
+    setFeed((f) => [{ id, text: w.line, tone: toneOf(w) }, ...f].slice(0, 12));
+
+    const thrown = w.harass;
+    if (thrown) {
+      setHarass((h) => [...h, { id, harass: thrown }].slice(-3));
+      setTimeout(() => setHarass((h) => h.filter((x) => x.id !== id)), HARASS_MS);
+      if (thrown.kind === 'flicker') {
+        setFlicker(true);
+        setTimeout(() => setFlicker(false), FLICKER_MS);
+      }
     }
   }, []);
 
   return (
-    <div className="arena-focus" aria-label="the arena">
+    <div className={`arena-focus${flicker ? ' af-flicker' : ''}`} aria-label="the arena">
       <aside className="af-rail">
         <div className="af-warden">
           <div className="af-h">
             <span className="label">the warden</span>
-            {level && <span className="af-watch">watching &middot; {watching || level.name}</span>}
+            {level && <span className="af-watch">watching &middot; {warden?.watching || level.name}</span>}
           </div>
-          <Hexwarden state={hex} rage={rage} watching={{ line: watching }} />
+          <Hexwarden state={warden?.mood ?? 'contempt'} rage={warden?.rage ?? 0} watching={{ line: warden?.watching ?? '' }} line={warden?.line} />
         </div>
+
+        {warden && (
+          <div className="af-mind" aria-label="what the warden thinks">
+            <div className="af-mind-h">what he thinks</div>
+            <div className="af-mind-read">
+              <span>you are {warden.thinks}</span>
+              <span className="af-mind-pct">{Math.round(warden.confidence * 100)}%</span>
+              {warden.calledIt && <span className="af-tag">called it</span>}
+              {warden.surprised && <span className="af-tag af-tag-hot">surprised</span>}
+            </div>
+            {warden.expects && <div className="af-mind-exp">he expects {warden.expects} next</div>}
+            <ol className="af-mapek">
+              <li><b>M</b>{warden.reasoning.monitor}</li>
+              <li><b>A</b>{warden.reasoning.analyse}</li>
+              <li><b>P</b>{warden.reasoning.plan}</li>
+              <li><b>E</b>{warden.reasoning.execute}</li>
+            </ol>
+          </div>
+        )}
 
         <div className="af-levels">
           <label className="af-levels-h" htmlFor="af-level-select">target</label>
@@ -128,7 +117,7 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSo
         </div>
 
         <div className="af-feed" aria-label="the warden's feed">
-          <div className="af-feed-h">the warden sees</div>
+          <div className="af-feed-h">the warden says</div>
           {feed.length === 0
             ? <div className="af-feed-empty">nothing yet. make a move.</div>
             : (
@@ -140,7 +129,7 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSo
       </aside>
 
       <div className="af-main">
-        {level && level.available && <Workbench key={level.number} level={level.number} onActivity={onActivity} onSolved={onSolved} />}
+        {level && level.available && <Workbench key={level.number} level={level.number} onWarden={onWarden} onSolved={onSolved} />}
         {level && !level.available && (
           <div className="wb">
             <div className="wb-h"><span className="wb-file">{level.name} &middot; in-arena workbench</span></div>
@@ -153,6 +142,8 @@ export function ArenaFocus({ level, levels, activeNumber, onSelect, solved, onSo
           </div>
         )}
       </div>
+
+      <HarassLayer items={harass} onDismiss={dismiss} />
     </div>
   );
 }

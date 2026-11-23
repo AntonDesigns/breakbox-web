@@ -25,11 +25,12 @@ const PHASES: Record<HexState, Phase> = {
   server: { label: 'the server', taunt: 'Nothing on your machine reaches me.' },
 };
 
-export function Hexwarden({ state = 'contempt', rage = 0, watching, beaten = [] }: Readonly<{
+export function Hexwarden({ state = 'contempt', rage = 0, watching, beaten = [], line }: Readonly<{
   state?: HexState;
   rage?: number;
   watching?: { line: string };   // the line the warden is fixed on (Phase 3 aims eyes/beams here)
   beaten?: string[];             // anti-cheats whose plate has been shattered (Phase 3 cracks the plate)
+  line?: string;                 // what he actually said, decided on the server (Phase 4); else his phase taunt
 }>) {
   const phase = PHASES[state];
   const pct = Math.max(0, Math.min(100, (rage / 9) * 100));
@@ -49,7 +50,7 @@ export function Hexwarden({ state = 'contempt', rage = 0, watching, beaten = [] 
         <div className="hx-rage" aria-label={`rage ${rage} of 9`}>
           <span className="hx-rage-fill" style={{ width: `${pct}%` }} />
         </div>
-        <p className="hx-taunt">&ldquo;{phase.taunt}&rdquo;</p>
+        <p className="hx-taunt">&ldquo;{line ?? phase.taunt}&rdquo;</p>
       </div>
     </div>
   );

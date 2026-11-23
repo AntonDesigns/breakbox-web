@@ -1,0 +1,108 @@
+/* BreakBox. Written by Max-Anton Horvat. Complex Software Systems (S6).
+   Signature 0x4D414836 = "MAH6" in ASCII (my initials + semester 6). I wrote this.
+
+   Phase 4: the Hexwarden's mind on screen. Everything here only SHOWS what the server decided: what he thinks
+   (his read on you, the move he expects, his MAPE-K reasoning), his harassment, the honest hacks and the level's
+   real app. Built on the shared tokens, so the arena's red re-key reaches all of it. */
+
+.af-mind { border: 1px solid var(--glass-brd); border-radius: var(--radius); background: var(--glass); box-shadow: var(--glass-shadow); padding: 12px 14px; flex: none; }
+.af-mind-h { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 8px; }
+.af-mind-read { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; font-family: var(--mono); font-size: 0.78rem; color: var(--ink); }
+.af-mind-pct { color: var(--cyan); font-weight: 700; }
+.af-tag { font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 1px 6px; border: 1px solid var(--cyan-line); border-radius: 999px; color: var(--ink-2); }
+.af-tag-hot { border-color: var(--cyan); color: var(--cyan); }
+.af-mind-exp { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-3); margin-top: 6px; }
+.af-mapek { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.af-mapek li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; font-family: var(--mono); font-size: 0.66rem; color: var(--ink-2); line-height: 1.35; }
+.af-mapek b { color: var(--cyan); }
+
+/* The flicker: a brief stutter of the whole arena when he loses his line or you crack the lock. */
+.af-flicker { animation: af-flicker 0.7s steps(2, end) 1; }
+@keyframes af-flicker { 0%, 100% { opacity: 1; } 20% { opacity: 0.55; } 40% { opacity: 0.95; } 60% { opacity: 0.4; } 80% { opacity: 0.9; } }
+
+/* Harassment: a corner stack that never covers the editor and lets every pointer event through but its own close
+   buttons, so it can never block, steal focus or eat a keystroke. */
+.hz { position: fixed; right: 18px; bottom: 18px; z-index: 50; display: flex; flex-direction: column; gap: 8px; width: min(320px, calc(100vw - 36px)); pointer-events: none; }
+.hz-toast { position: relative; pointer-events: none; padding: 10px 30px 10px 12px; border-radius: var(--radius); border: 1px solid var(--cyan-line); background: rgba(14, 29, 49, 0.96); box-shadow: var(--glass-shadow); animation: hz-in 0.25s ease-out; }
+.hz-head { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.14em; color: var(--cyan); margin-bottom: 3px; }
+.hz-text { font-family: var(--mono); font-size: 0.72rem; color: var(--ink); line-height: 1.35; }
+.hz-x { position: absolute; top: 6px; right: 8px; pointer-events: auto; background: none; border: 0; color: var(--ink-3); font-size: 1rem; line-height: 1; cursor: pointer; }
+.hz-trace { border-left: 3px solid var(--cyan); }
+.hz-countdown .hz-text { font-weight: 700; }
+.hz-av { border-color: var(--edge); background: #f3f5f8; }
+.hz-av .hz-head { color: #1c5aa6; font-family: var(--sans); letter-spacing: 0.02em; font-size: 0.72rem; font-weight: 700; }
+.hz-av .hz-text { color: #1b2533; font-family: var(--sans); }
+.hz-av .hz-x { color: #5d6b7c; }
+.hz-scan { margin-top: 7px; height: 3px; border-radius: 2px; background: var(--cyan-soft); overflow: hidden; }
+.hz-scan i { display: block; width: 35%; height: 100%; background: var(--cyan); animation: hz-scan 1.4s ease-in-out infinite; }
+@keyframes hz-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes hz-scan { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+
+/* Phase 4 made the app and the hacks taller, so the split no longer fits one screen. Let it grow (the page
+   scrolls) and give the dnSpy a real minimum, instead of squeezing the editor to a few lines. Scoped under .af-main
+   on purpose: main.tsx loads index.css AFTER the app's modules, so its equally specific ".wb-split .wb" rule would
+   win; the extra class makes these win on specificity whatever order the stylesheets load in. */
+.af-main .wb-split { height: auto; }
+.af-main .wb-split .wb { flex: none; min-height: 640px; }
+.af-main .wb-split .wb-body { min-height: 360px; }
+
+/* The honest hacks panel, under the dnSpy. Scoped to the arena, because the console's Hack tab also uses .hk. */
+.af-main .hk { flex: none; border-top: 1px solid var(--glass-brd); padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px; }
+.hk-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.hk-title { font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-2); }
+.hk-sub { font-size: 0.7rem; color: var(--ink-3); }
+.hk-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.hk-btn { font-family: var(--mono); font-size: 0.72rem; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--cyan-line); background: var(--cyan-soft); color: var(--ink); cursor: pointer; }
+.hk-btn:hover:not(:disabled) { border-color: var(--cyan); }
+.hk-btn:disabled { opacity: 0.5; cursor: default; }
+.hk-res { border-radius: var(--radius-sm); padding: 8px 10px; border: 1px solid var(--edge); background: rgba(0, 0, 0, 0.18); }
+.hk-res.won { border-color: var(--hard); }
+.hk-res.held { border-color: var(--cyan-line); }
+.hk-res-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; font-family: var(--mono); font-size: 0.72rem; color: var(--ink); }
+.hk-res.won b { color: var(--hard); }
+.hk-res.held b { color: var(--cyan); }
+.hk-def { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+.hk-verdict { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-2); margin-top: 4px; }
+.hk-lesson { font-size: 0.74rem; color: var(--ink-3); margin-top: 4px; }
+
+/* The two steps of the app: the licence key unlocks, the BR{...} flag clears. Never the same box. */
+.nb-step { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border: 1px solid var(--glass-brd); border-radius: var(--radius-sm); }
+.nb-step-h { display: flex; align-items: center; gap: 8px; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-2); }
+.nb-step-sub { text-transform: none; letter-spacing: 0; color: var(--ink-3); }
+.nb-num { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--cyan-soft); border: 1px solid var(--cyan-line); color: var(--cyan); font-family: var(--mono); font-size: 0.66rem; }
+.nb-hint { font-size: 0.7rem; color: var(--ink-3); }
+
+/* The level's real app (NoteBox, Ledger), with its premium feature. */
+.ta { border: 1px solid var(--edge); border-radius: var(--radius-sm); background: #f5f6f8; color: #1b2533; overflow: hidden; position: relative; }
+.ta-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #dde3ea; }
+.ta-name { font-family: var(--sans); font-weight: 700; font-size: 0.92rem; }
+.ta-plan { font-size: 0.7rem; color: #5d6b7c; padding: 1px 8px; border: 1px solid #ccd4de; border-radius: 999px; }
+.ta-plan.pro { color: #1c5aa6; border-color: #1c5aa6; }
+.ta-notes { width: 100%; min-height: 96px; resize: vertical; border: 0; padding: 10px 12px; font-family: var(--sans); font-size: 0.8rem; color: #1b2533; background: #fff; box-sizing: border-box; }
+.ta-notes:focus { outline: 2px solid #1c5aa6; outline-offset: -2px; }
+.ta-foot { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-top: 1px solid #dde3ea; }
+.ta-stat { font-size: 0.72rem; color: #5d6b7c; }
+.ta-pro { font-family: var(--sans); font-size: 0.76rem; padding: 6px 12px; border-radius: 5px; border: 1px solid #1c5aa6; background: #1c5aa6; color: #fff; cursor: pointer; }
+.ta-pro:disabled { background: #e3e8ee; border-color: #ccd4de; color: #8a96a6; cursor: not-allowed; }
+.ta-balance { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 12px 4px; font-size: 0.74rem; color: #5d6b7c; }
+.ta-balance b { font-size: 1.1rem; color: #1b2533; }
+.ta-ledger { width: 100%; border-collapse: collapse; font-size: 0.74rem; }
+.ta-ledger td { padding: 5px 12px; border-top: 1px solid #e6ebf1; }
+.ta-ledger td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.ta-ledger .neg { color: #a5443c; }
+.ta-ledger .pos { color: #2f7a5b; }
+.ta-out { position: absolute; inset: 0; background: rgba(27, 37, 51, 0.55); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px; }
+.ta-page { width: min(100%, 320px); background: #fff; border-radius: 4px; padding: 12px 14px; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5); }
+.ta-page-h { font-size: 0.7rem; color: #1c5aa6; font-weight: 700; margin-bottom: 8px; }
+.ta-page-body { margin: 0; white-space: pre-wrap; font-family: var(--sans); font-size: 0.74rem; color: #1b2533; }
+.ta-bars { display: flex; flex-direction: column; gap: 6px; }
+.ta-barrow { display: grid; grid-template-columns: 60px 1fr auto; align-items: center; gap: 8px; font-size: 0.72rem; color: #1b2533; }
+.ta-barrow i { display: block; height: 8px; border-radius: 4px; background: #2f7a5b; }
+.ta-barrow i.neg { background: #a5443c; }
+.ta-close { font-size: 0.72rem; padding: 4px 10px; border-radius: 5px; border: 1px solid #ccd4de; background: #fff; color: #1b2533; cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) {
+  .af-flicker { animation: none; }
+  .hz-toast { animation: none; }
+  .hz-scan i { animation: none; width: 100%; opacity: 0.6; }
+}

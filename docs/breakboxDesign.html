@@ -434,7 +434,7 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
 <div class="topbar">
   <header class="rule">
     <span class="name">BreakBox <span class="d">// design sheet</span></span>
-    <span class="rev">living sheet &middot; Sprint 3 &middot; the arena finished (Phases 4-6), and Level 4 Protected (real obfuscation + anti-debug) built</span>
+    <span class="rev">living sheet &middot; Sprint 3 &middot; the arena finished (Phases 4-6), Level 4 Protected (real obfuscation + anti-debug) built, and Level 5 Overflow (native pwn, nsjail host) designed</span>
     <span class="sig" title="my mark: MAH6">0x4D414836</span>
   </header>
   <nav class="tabs" role="tablist" aria-label="sections">
@@ -914,6 +914,186 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
     <div class="comp"><h4>Runtime abuse defence<span class="tag">Sprint 3</span></h4><p>The live system also defends itself: per-IP rate limiting, lockdown and session revocation enforced in the ASP.NET Core middleware, so it covers every endpoint and holds across instances. The honest line: volumetric DDoS is an edge/infra control.</p></div>
     <div class="comp"><h4>RED observability<span class="tag">Sprint 2</span></h4><p>Rate, errors and duration (p50/p95/p99), plus DB query timings and size, so I can watch the system's health while it is under attack, not just after.</p></div>
     <div class="comp"><h4>Integrity beacons (Sentinel)<span class="tag">Sprint 4 vision</span></h4><p>Instrumented targets that phone home when their integrity check is tampered, so offline tampering that does reach back becomes visible. The one honest gap stays honest: a purely offline attacker is never seen.</p></div>
+
+    <h2 data-n="05">Level 5 Overflow, the native capstone (designed)</h2>
+    <div class="sub">Sprint 4, designed and locked. The capstone: a per-player hardened Linux binary, served and hosted behind a real untrusted-execution sandbox, that you defeat with a leak-and-ROP chain and then re-harden to watch the exploit fail.</div>
+    <p>Level 5 steps out of managed .NET into native memory, so it is the one level that cannot go through the Roslyn pipeline: it adds a whole native path. The insight that makes it safe to run in the arena is simple. The server runs my vulnerable target, never your code. Your exploit is input that drives my target, a payload and then a ROP chain, crafted on your side with Ghidra and pwntools. A buffer overflow only corrupts my target's own memory, contained to one sandboxed process, and the win is always ret2win, never a shell: a hidden <code>win()</code> prints <code>BR{seed-flag}</code>, and every rung is a way to redirect execution to it. That is why being on Windows is fine, the dangerous Linux execution is server-side; I craft a payload and the server runs it.</p>
+    <p>The arms race here is the mitigation stack, armed one wall at a time, and each wall kills the previous exploit. None gives ret2win; a stack canary forces you to leak it; NX forces a ROP chain built from the binary's own gadgets; ASLR and PIE force you to leak an address first and only then ROP. That is the exact escalation that defines modern exploitation, and the first figure draws the whole climb. The defend-it half closes the loop: you re-arm a wall, a single recompile flag, and watch your own earlier payload die, so what a canary, NX or ASLR actually costs an attacker is felt, not told. The Hexwarden presides over it with a native observe contract, tracking exploitation milestones instead of code edits.</p>
+    <p>The second figure is the part I am proudest of as a security engineer: the safe host. The forge lives in breakbox-security so the C toolchain never touches the deployed API; it emits a per-seed vulnerable binary, publishes it over the same GitHub-Packages channel the API already uses, and the API both serves it to download and hosts it as a live target behind nsjail, the sandbox CTF pwn judges use. A server-side judge reads the flag from the target's stdout and credits you, the same verdict shape the managed levels get. Building that host for semi-untrusted execution is arguably more of an achievement than the level on top of it. This is designed and locked, not built; the build is Sprint 4 and phased, with Phase 1 (ret2win end to end) first.</p>
+
+<figure data-status="design" data-sprint="4">
+      <div class="fig-media big"><svg class="dg" viewBox="0 0 1240 520" role="img" aria-label="The Level 5 mitigation ladder, left to right, a rising staircase of four phases. Each phase arms one more real compiler or loader mitigation (the wall) and forces one harder exploitation technique. Phase 1: no protections, won by ret2win, overwrite the saved return address with the address of win. Phase 2: a stack canary, forces you to leak the canary first, then overwrite the return address. Phase 3: NX plus an argument check on win, forces a Return Oriented Programming chain built from the binary's own gadgets. Phase 4: ASLR and PIE, every address randomised, forces you to leak a live address, compute the real address of win, then fire the ROP chain. Underneath, a summary that the same vulnerable binary is used the whole way up, unique per download so no walkthrough copies, designed for Sprint 4 and not built.">
+        <defs><marker id="l5a" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,0 8,4.5 0,9" class="arr-c"/></marker></defs>
+
+        <text class="t-sm hd" x="40" y="26">THE MITIGATION LADDER &middot; arm one wall, force one harder technique</text>
+        <text class="t-xs mut" x="40" y="46">the same small vulnerable binary the whole way up; only the walls and the win condition tighten. a real binary-exploitation course in four rungs.</text>
+
+        <!-- the rising staircase of phase headers (the climb) -->
+        <rect class="box" x="40" y="84" width="272" height="30" rx="5"/><text class="t-xs hd" x="176" y="104" text-anchor="middle">PHASE 1 &middot; ret2win</text>
+        <rect class="box" x="336" y="76" width="272" height="30" rx="5"/><text class="t-xs hd" x="472" y="96" text-anchor="middle">PHASE 2 &middot; + stack canary</text>
+        <rect class="box" x="632" y="66" width="272" height="30" rx="5"/><text class="t-xs hd" x="768" y="86" text-anchor="middle">PHASE 3 &middot; + NX</text>
+        <rect class="box" x="928" y="56" width="272" height="30" rx="5"/><text class="t-xs hd" x="1064" y="76" text-anchor="middle">PHASE 4 &middot; + ASLR &amp; PIE</text>
+        <line x1="314" y1="99" x2="334" y2="92" stroke="#77b8d1" stroke-width="1.6" marker-end="url(#l5a)"/>
+        <line x1="610" y1="91" x2="630" y2="82" stroke="#77b8d1" stroke-width="1.6" marker-end="url(#l5a)"/>
+        <line x1="906" y1="81" x2="926" y2="72" stroke="#77b8d1" stroke-width="1.6" marker-end="url(#l5a)"/>
+        <text class="t-xs mut" x="1200" y="46" text-anchor="end">harder each rung &rarr;</text>
+
+        <!-- phase 1 -->
+        <rect class="ctrlbox" x="40" y="120" width="272" height="104" rx="5"/>
+        <text class="t-xs ctrl" x="52" y="140">WALL &middot; none</text>
+        <text class="t-xs mut" x="52" y="160">no protections armed</text>
+        <text class="t-xs mut" x="52" y="178">-fno-stack-protector</text>
+        <text class="t-xs mut" x="52" y="196">-z execstack &middot; -no-pie</text>
+        <text class="t-xs mut" x="52" y="214">win() sits at a fixed addr</text>
+        <rect class="threatbox" x="40" y="238" width="272" height="120" rx="5"/>
+        <text class="t-xs threat" x="52" y="258">FORCES &middot; ret2win</text>
+        <text class="t-xs" x="52" y="278">overflow the buffer, overwrite</text>
+        <text class="t-xs" x="52" y="296">the saved return address with</text>
+        <text class="t-xs" x="52" y="314">&amp;win: one single payload.</text>
+        <text class="t-xs mut" x="52" y="338">no leak, no chain needed.</text>
+        <rect class="scr" x="40" y="372" width="272" height="38" rx="5"/>
+        <text class="t-xs ctrl" x="52" y="396">pld = b'A'*off + p64(win)</text>
+
+        <!-- phase 2 -->
+        <rect class="ctrlbox" x="336" y="120" width="272" height="104" rx="5"/>
+        <text class="t-xs ctrl" x="348" y="140">WALL &middot; stack canary</text>
+        <text class="t-xs mut" x="348" y="160">-fstack-protector-all</text>
+        <text class="t-xs mut" x="348" y="178">a random guard sits before</text>
+        <text class="t-xs mut" x="348" y="196">the return address; a straight</text>
+        <text class="t-xs mut" x="348" y="214">overflow trips __stack_chk_fail</text>
+        <rect class="threatbox" x="336" y="238" width="272" height="120" rx="5"/>
+        <text class="t-xs threat" x="348" y="258">FORCES &middot; leak it</text>
+        <text class="t-xs" x="348" y="278">leak the canary first, then</text>
+        <text class="t-xs" x="348" y="296">replay the real value so it</text>
+        <text class="t-xs" x="348" y="314">stays intact, THEN overwrite</text>
+        <text class="t-xs" x="348" y="332">the return address.</text>
+        <rect class="scr" x="336" y="372" width="272" height="38" rx="5"/>
+        <text class="t-xs ctrl" x="348" y="396">leak &rarr; A*off +canary+ p64(win)</text>
+
+        <!-- phase 3 -->
+        <rect class="ctrlbox" x="632" y="120" width="272" height="104" rx="5"/>
+        <text class="t-xs ctrl" x="644" y="140">WALL &middot; NX + arg check</text>
+        <text class="t-xs mut" x="644" y="160">-z noexecstack: nothing on</text>
+        <text class="t-xs mut" x="644" y="178">the stack executes. win() now</text>
+        <text class="t-xs mut" x="644" y="196">reveals the flag only for two</text>
+        <text class="t-xs mut" x="644" y="214">per-seed magic arguments.</text>
+        <rect class="threatbox" x="632" y="238" width="272" height="120" rx="5"/>
+        <text class="t-xs threat" x="644" y="258">FORCES &middot; ROP</text>
+        <text class="t-xs" x="644" y="278">chain the binary's own gadgets:</text>
+        <text class="t-xs" x="644" y="296">pop rdi;ret + pop rsi;ret to</text>
+        <text class="t-xs" x="644" y="314">load the args, then return</text>
+        <text class="t-xs" x="644" y="332">into win(). no injected code.</text>
+        <rect class="scr" x="632" y="372" width="272" height="38" rx="5"/>
+        <text class="t-xs ctrl" x="644" y="396">rop: pop rdi; pop rsi; &rarr; win()</text>
+
+        <!-- phase 4 -->
+        <rect class="ctrlbox" x="928" y="120" width="272" height="104" rx="5"/>
+        <text class="t-xs ctrl" x="940" y="140">WALL &middot; ASLR + PIE</text>
+        <text class="t-xs mut" x="940" y="160">built -pie, ASLR on at the host.</text>
+        <text class="t-xs mut" x="940" y="178">every address is randomised</text>
+        <text class="t-xs mut" x="940" y="196">each run; nothing can be</text>
+        <text class="t-xs mut" x="940" y="214">hardcoded any more.</text>
+        <rect class="threatbox" x="928" y="238" width="272" height="120" rx="5"/>
+        <text class="t-xs threat" x="940" y="258">FORCES &middot; leak &rarr; ROP</text>
+        <text class="t-xs" x="940" y="278">leak a live code/libc address,</text>
+        <text class="t-xs" x="940" y="296">compute win()'s real address</text>
+        <text class="t-xs" x="940" y="314">from a known offset, THEN fire</text>
+        <text class="t-xs" x="940" y="332">the ROP chain. the full workflow.</text>
+        <rect class="scr" x="928" y="372" width="272" height="38" rx="5"/>
+        <text class="t-xs ctrl" x="940" y="396">leak &rarr; base+off=win &rarr; rop</text>
+
+        <rect class="ctrlbox" x="40" y="430" width="1160" height="54" rx="5"/>
+        <text class="t-xs ctrl" x="52" y="452">Each wall is a real compiler or loader mitigation; each bypass is its exact, principled defeat. The climb from a one-line overwrite to leak-and-ROP is the escalation that defines modern exploitation.</text>
+        <text class="t-xs mut" x="52" y="472">The gadgets, offsets, canary and win() arguments are all unique per download, so no copied walkthrough works. Phase 4 is the rung I want the teacher to sit at. Designed for Sprint 4, not built.</text>
+      </svg></div>
+      <figcaption><b>The mitigation ladder.</b> Left to right, each rung arms one more real mitigation and forces one harder technique: none to ret2win, plus a stack canary to leak it, plus NX to a ROP chain, plus ASLR and PIE to leak then ROP against a hardened binary. The same small vulnerable binary the whole way up, unique per download so no walkthrough copies. Phase 1 builds the whole machine (forge, publish, host, judge) around that first payload; everything after is one more wall. Designed for Sprint 4, not built.</figcaption>
+      <div class="pophint">Arm one wall, force one harder technique: the climb from a one-line overwrite to leak-and-ROP.</div>
+    </figure>
+
+<figure data-status="design" data-sprint="4">
+      <div class="fig-media big"><svg class="dg" viewBox="0 0 1280 470" role="img" aria-label="The safe host for Level 5, drawn left to right. Top row, a pipeline: the forge in breakbox-security emits a per-seed vulnerable C binary with gcc and records its flag and win() address; it publishes over GitHub Packages; the breakbox API serves the ELF to download and hosts it as a live target on a per-session socket; nsjail wraps each connection in a fresh locked-down process with seccomp, rlimits, a two second timeout and no network or filesystem; and you pwn it remotely, your payload or ROP chain is input over the socket, crafted client-side with Ghidra and pwntools, corrupting only my target's own memory. The flow wraps to a second row: win() prints the flag by ret2win, never a shell; a server-side judge reads it, credits the player and feeds the warden; the warden presides with a native observe contract over milestones. A strip at the bottom explains the defend-it arms race and why the target is hosted rather than taking one payload blob.">
+        <defs><marker id="l5b" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><polygon points="0,0 8,4.5 0,9" class="arr-c"/></marker></defs>
+
+        <text class="t-sm hd" x="24" y="24">THE SAFE HOST &middot; the server runs MY target, never your code; your exploit is only INPUT</text>
+        <text class="t-xs mut" x="24" y="44">a buffer overflow corrupts only my target's own memory, in one sandboxed process; the win is ret2win, never a shell.</text>
+
+        <!-- row 1: the pipeline -->
+        <rect class="box" x="24" y="76" width="214" height="134" rx="5"/>
+        <text class="t-xs hd" x="36" y="98">breakbox-security</text>
+        <text class="t-xs ctrl" x="36" y="118">THE FORGE</text>
+        <text class="t-xs mut" x="36" y="138">per-seed vulnerable C</text>
+        <text class="t-xs mut" x="36" y="156">gcc &rarr; static Linux ELF</text>
+        <text class="t-xs mut" x="36" y="174">walls armed; records the</text>
+        <text class="t-xs mut" x="36" y="192">flag + win() address</text>
+
+        <rect class="box" x="262" y="76" width="180" height="134" rx="5"/>
+        <text class="t-xs hd" x="274" y="98">GitHub Packages</text>
+        <text class="t-xs mut" x="274" y="122">publishes each</text>
+        <text class="t-xs mut" x="274" y="140">variant over the</text>
+        <text class="t-xs mut" x="274" y="158">same channel the</text>
+        <text class="t-xs mut" x="274" y="176">API already shares</text>
+
+        <rect class="box" x="466" y="76" width="206" height="134" rx="5"/>
+        <text class="t-xs hd" x="478" y="98">breakbox API</text>
+        <text class="t-xs mut" x="478" y="122">serves the ELF to</text>
+        <text class="t-xs mut" x="478" y="140">download, AND hosts</text>
+        <text class="t-xs mut" x="478" y="158">it as a live target on</text>
+        <text class="t-xs mut" x="478" y="176">a per-session socket</text>
+
+        <rect class="ctrlbox" x="696" y="76" width="236" height="134" rx="5"/>
+        <text class="t-xs ctrl" x="708" y="98">nsjail SANDBOX</text>
+        <text class="t-xs mut" x="708" y="122">a fresh locked-down</text>
+        <text class="t-xs mut" x="708" y="140">process per connection:</text>
+        <text class="t-xs mut" x="708" y="158">seccomp (no execve /</text>
+        <text class="t-xs mut" x="708" y="176">fork / network), rlimits,</text>
+        <text class="t-xs mut" x="708" y="194">~2s timeout, no filesystem</text>
+
+        <rect class="threatbox" x="956" y="76" width="300" height="134" rx="5"/>
+        <text class="t-xs threat" x="968" y="98">YOU PWN IT, REMOTELY</text>
+        <text class="t-xs" x="968" y="122">your payload / ROP chain is the</text>
+        <text class="t-xs" x="968" y="140">INPUT over the socket, crafted</text>
+        <text class="t-xs" x="968" y="158">client-side (Ghidra + pwntools,</text>
+        <text class="t-xs" x="968" y="176">in WSL). it corrupts only my</text>
+        <text class="t-xs" x="968" y="194">target's own memory.</text>
+
+        <line x1="238" y1="143" x2="260" y2="143" stroke="#77b8d1" stroke-width="1.6" marker-end="url(#l5b)"/>
+        <line x1="442" y1="143" x2="464" y2="143" stroke="#77b8d1" stroke-width="1.6" marker-end="url(#l5b)"/>
+        <line x1="672" y1="143" x2="694" y2="143" stroke="#77b8d1" stroke-width="1.6" marker-end="url(#l5b)"/>
+        <line x1="932" y1="143" x2="954" y2="143" stroke="#77b8d1" stroke-width="1.6" marker-end="url(#l5b)"/>
+
+        <!-- wrap down to row 2 -->
+        <polyline points="1106,210 1106,234 214,234 214,264" fill="none" stroke="#77b8d1" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#l5b)"/>
+        <text class="t-xs mut" x="640" y="228" text-anchor="middle">the win fires on the server</text>
+
+        <!-- row 2: win, judge, warden -->
+        <rect class="ctrlbox" x="24" y="266" width="364" height="92" rx="5"/>
+        <text class="t-xs ctrl" x="36" y="288">win() PRINTS BR{seed-flag}</text>
+        <text class="t-xs" x="36" y="310">ret2win, never a shell. statically linked:</text>
+        <text class="t-xs" x="36" y="328">no system / execve reachable, so even a</text>
+        <text class="t-xs" x="36" y="346">creative chain only computes and prints.</text>
+
+        <rect class="ctrlbox" x="412" y="266" width="372" height="92" rx="5"/>
+        <text class="t-xs ctrl" x="424" y="288">THE JUDGE &middot; server-side</text>
+        <text class="t-xs" x="424" y="310">reads the target's stdout for the flag,</text>
+        <text class="t-xs" x="424" y="328">credits the player, feeds the warden:</text>
+        <text class="t-xs" x="424" y="346">the verdict shape RoslynPatchRunner gives L1-4.</text>
+
+        <rect class="threatbox" x="808" y="266" width="448" height="92" rx="5"/>
+        <text class="t-xs threat" x="820" y="288">THE WARDEN PRESIDES</text>
+        <text class="t-xs" x="820" y="310">a native observe contract: he tracks milestones,</text>
+        <text class="t-xs" x="820" y="328">connected &rarr; leaked a value &rarr; took RIP &rarr; won,</text>
+        <text class="t-xs" x="820" y="346">and reaches his verdict server-side, as for L1-4.</text>
+
+        <line x1="388" y1="312" x2="410" y2="312" stroke="#77b8d1" stroke-width="1.6" marker-end="url(#l5b)"/>
+        <line x1="784" y1="312" x2="806" y2="312" stroke="#77b8d1" stroke-width="1.6" marker-end="url(#l5b)"/>
+
+        <rect class="ctrlbox" x="24" y="384" width="1232" height="56" rx="5"/>
+        <text class="t-xs ctrl" x="36" y="408">DEFEND IT (the arms race, in the Console): re-arm a wall, a single recompile flag, and your own earlier payload now dies, the cost of a canary, NX or ASLR, felt not told.</text>
+        <text class="t-xs mut" x="36" y="428">Why host the target, not take one payload blob? The leak rungs (canary, ASLR) need a conversation: send, read the leak, send again. The socket gives that for free, and the server still never runs your code.</text>
+      </svg></div>
+      <figcaption><b>Served, hosted, judged: the safe host.</b> The server runs my vulnerable target, never your code; your exploit is input that drives it, over a socket, inside an nsjail sandbox (seccomp, rlimits, a two second timeout, no network or filesystem). win() prints BR{seed-flag} by ret2win, never a shell; a server-side judge reads it, credits you and feeds the warden, who presides over native milestones. Re-arm a wall and your own exploit dies. Building this safe host for semi-untrusted execution is itself a senior security-engineering artifact (LO1 + LO4). Designed for Sprint 4, not built.</figcaption>
+      <div class="pophint">The server runs my target behind nsjail; your exploit is only input. ret2win prints the flag.</div>
+    </figure>
 
   </section>
 
@@ -1686,9 +1866,9 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
       <p><b>Main flow:</b> Level 4 is Pixler with real armour on top. A true obfuscator (Obfuscar) renames and encrypts the build after it compiles, and a refuse-and-exit anti-debug guards it. de4dot only gets part of the way on a custom-renamed build, so the real work is reading it in dnSpy and getting past the anti-debug in x64dbg before I reach the check. Only possible because I cracked the unprotected version first.</p></div>
 
     <div class="finding"><h4>UC4 &middot; Exploit a native bug</h4>
-      <p class="uc-meta"><span class="a">Attack</span> <span class="s">S3</span> <span class="plan">planned</span></p>
+      <p class="uc-meta"><span class="a">Attack</span> <span class="s">S3</span> <span class="plan">designed</span></p>
       <p><b>Goal:</b> step out of managed .NET into native memory.</p>
-      <p><b>Main flow:</b> Level 5 (Overflow) is a small C program with a planted buffer overflow; I find it in Ghidra, exploit it in x64dbg, then learn how to defend it. The hardest reverse engineering on the ladder.</p></div>
+      <p><b>Main flow:</b> Level 5 (Overflow) is a per-seed native Linux binary with a planted stack overflow, hosted on the server behind an nsjail sandbox. I find the bug in Ghidra and win by ret2win with pwntools, then the mitigation stack is armed one wall at a time (canary, NX, ASLR and PIE), each forcing a harder technique up to a full leak-and-ROP chain, and I re-arm a wall to watch my own exploit die. The capstone; arena-integrated, the warden presides. Designed and locked, built in Sprint 4.</p></div>
 
     <div class="finding"><h4>UC5 &middot; Harden the data layer (attack it first) <span class="uc-exp">EXPERT</span></h4>
       <p class="uc-meta"><span class="a">Defend</span> <span class="s">S3</span> <span class="plan">designed</span></p>
@@ -1726,8 +1906,8 @@ body[data-sprint="4"] .dg .q-s4 { display: inline; }
       <p class="uc-meta"><span class="a">Expert</span> <span class="s">S3</span> <span class="plan">designed</span></p>
       <p>Pixler again, with real armour over the check: a true obfuscator (Obfuscar) run after compile, plus a refuse-and-exit anti-debug. I get past the protection first. de4dot only cleans part of a custom-renamed build, so dnSpy and x64dbg do the real work. <b>Tools:</b> dnSpy, x64dbg, de4dot.</p></div>
     <div class="finding"><h4>Level 5 &middot; Overflow</h4>
-      <p class="uc-meta"><span class="a">Expert</span> <span class="s">S3</span> <span class="plan">planned</span></p>
-      <p>A small native C program with a planted bug. I crash it, exploit it, then defend it. <b>Tools:</b> Ghidra, x64dbg.</p></div>
+      <p class="uc-meta"><span class="a">Expert</span> <span class="s">S3</span> <span class="plan">designed</span></p>
+      <p>A per-seed native Linux binary with a planted stack overflow, hosted behind an nsjail sandbox. I win by ret2win, then beat an armed mitigation stack (canary, NX, ASLR and PIE) up to a leak-and-ROP chain, and re-arm a wall to defend it. <b>Tools:</b> Ghidra, pwntools, gdb. Built in Sprint 4.</p></div>
     <div class="finding"><h4>Level 6 &middot; Cipher</h4>
       <p class="uc-meta"><span class="a">Hard</span> <span class="s">later</span> <span class="plan">planned</span></p>
       <p>The key is hidden with weak crypto. I break it, then redo it properly. <b>Tools:</b> dnSpy, CyberChef.</p></div>
